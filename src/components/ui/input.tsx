@@ -23,7 +23,7 @@ function Input({ className, type = "text", startAdornment, endAdornment, ...prop
   return (
     <div className="relative w-full">
       {hasStart && (
-        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-primary-gold-brand">
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-bold">
           {startAdornment}
         </div>
       )}

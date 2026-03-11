@@ -29,7 +29,6 @@ export type PortfolioTableRow = Record<string, string | number> & {
 type TabConfig = {
   value: PortfolioTabValue;
   label: string;
-  actionLabel?: string;
 };
 
 export const portfolioStats: PortfolioStat[] = [
@@ -44,17 +43,14 @@ export const portfolioTabs: TabConfig[] = [
   {
     value: "portfolio-inventory",
     label: "Portfolio Inventory",
-    actionLabel: "Add New Asset",
   },
   {
     value: "asset-brands",
     label: "Asset Brands",
-    actionLabel: "Add New Brand",
   },
   {
     value: "asset-categories",
     label: "Asset Categories",
-    actionLabel: "Add New Category",
   },
   {
     value: "purchase-requests",

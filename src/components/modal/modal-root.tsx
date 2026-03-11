@@ -8,13 +8,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 type ModalRootProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  trigger?: React.ReactElement;
+  keepMounted?: boolean;
+  closeOnBackdropClick?: boolean;
   title?: React.ReactNode;
   description?: React.ReactNode;
   showCloseButton?: boolean;
@@ -26,7 +26,8 @@ type ModalRootProps = {
 export function ModalRoot({
   open,
   onOpenChange,
-  trigger,
+  keepMounted = false,
+  closeOnBackdropClick = true,
   title,
   description,
   showCloseButton = false,
@@ -35,10 +36,16 @@ export function ModalRoot({
   children,
 }: ModalRootProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {trigger ? <DialogTrigger render={trigger} /> : null}
-
-      <DialogContent className={contentClassName} showCloseButton={showCloseButton}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      disablePointerDismissal={!closeOnBackdropClick}
+    >
+      <DialogContent
+        className={contentClassName}
+        showCloseButton={showCloseButton}
+        keepMounted={keepMounted}
+      >
         {title || description ? (
           <DialogHeader className={headerClassName}>
             {title ? <DialogTitle>{title}</DialogTitle> : null}

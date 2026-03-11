@@ -4,15 +4,21 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Plus } from "lucide-react";
 
+import { SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME, SuccessModalContent } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { FormControl, FormField, FormSelectTrigger } from "@/components/util/form-controller";
-import { ModalRoot, SuccessModal } from "@/components/modal";
+import {
+  FormControl,
+  FormField,
+  FormSelectTrigger,
+  FormSwitchField,
+} from "@/components/util/form-controller";
+import { ModalRoot } from "@/components/modal/modal-root";
 
 type AddAssetModalProps = {
-  triggerLabel?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 type AddAssetFormValues = {
@@ -67,6 +73,8 @@ const yesNoOptions = [
 
 const uploadSlots = Array.from({ length: 5 }, (_, index) => index + 1);
 
+type AddAssetStage = "FORM" | "SUCCESS";
+
 function UploadShell() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -90,60 +98,43 @@ function UploadShell() {
   );
 }
 
-export function AddAssetModal({ triggerLabel = "Add New Asset" }: AddAssetModalProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isSuccessOpen, setIsSuccessOpen] = React.useState(false);
+export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
+  const [currentStage, setCurrentStage] = React.useState<AddAssetStage>("FORM");
 
-  const { control, handleSubmit, reset } = useForm<AddAssetFormValues>({
+  const { control, handleSubmit } = useForm<AddAssetFormValues>({
     defaultValues: DEFAULT_VALUES,
     mode: "onChange",
   });
 
-  const handleModalChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      reset(DEFAULT_VALUES);
-    }
-  };
-
-  const handleSuccessChange = (open: boolean) => {
-    setIsSuccessOpen(open);
-  };
-
   const onSubmit = (values: AddAssetFormValues) => {
     console.log("Add asset payload", values);
-    setIsOpen(false);
-    setIsSuccessOpen(true);
-    reset(DEFAULT_VALUES);
+    setCurrentStage("SUCCESS");
   };
 
-  return (
-    <>
-      <ModalRoot
-        open={isOpen}
-        onOpenChange={handleModalChange}
-        showCloseButton={false}
-        trigger={<Button className="h-12 rounded-2xl px-5">{triggerLabel}</Button>}
-        contentClassName="max-w-[1024px] p-4 sm:p-6"
-      >
+  const stageConfig: Record<
+    AddAssetStage,
+    { contentClassName: string; closeOnBackdropClick: boolean; content: React.ReactNode }
+  > = {
+    FORM: {
+      closeOnBackdropClick: false,
+      contentClassName: "max-w-[1024px] p-4 sm:p-6",
+      content: (
         <div className="space-y-5">
-          <div className="border-b border-primary-grey-stroke pb-5">
+          <div className="border-b border-white pb-5">
             <div className="flex items-start gap-4">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 rounded-2xl border border-primary-grey-stroke bg-primary-white text-text-black hover:bg-primary-grey-undertone"
-                onClick={() => handleModalChange(false)}
+                className="h-12 w-12 rounded-2xl border border-primary-grey-stroke bg-primary-white hover:bg-primary-grey-undertone"
+                onClick={() => onOpenChange(false)}
               >
                 <ArrowLeft className="h-6 w-6" />
               </Button>
 
               <div>
-                <h2 className="text-text-black text-4xl font-semibold leading-tight">
-                  Asset Item Information
-                </h2>
-                <p className="text-text-black mt-1 text-lg">Upload and manage luxury asset item.</p>
+                <h2 className="text-[32px] font-bold leading-tight">Asset Item Information</h2>
+                <p className="mt-1 text-sm">Upload and manage luxury asset item.</p>
               </div>
             </div>
           </div>
@@ -154,7 +145,7 @@ export function AddAssetModal({ triggerLabel = "Add New Asset" }: AddAssetModalP
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-6 rounded-2xl bg-primary-white p-4 sm:p-6"
           >
-            <h3 className="text-text-black text-3xl font-medium">Item Description</h3>
+            <h3 className="font-semibold">Item Description</h3>
 
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
               <FormField control={control} name="nameOfItem" label="Name of Item" required>
@@ -290,48 +281,57 @@ export function AddAssetModal({ triggerLabel = "Add New Asset" }: AddAssetModalP
               </FormField>
             </div>
 
-            <FormField
+            <FormSwitchField
               control={control}
               name="saveAndPublish"
               orientation="horizontal"
-              className="justify-end pt-2"
-            >
-              {({ field }) => (
-                <div className="flex items-center gap-3">
-                  <FormControl>
-                    <Switch
-                      checked={Boolean(field.value)}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-                    />
-                  </FormControl>
-                  <span className="text-text-grey text-lg font-semibold">Save and Publish</span>
-                </div>
-              )}
-            </FormField>
-
-            <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-12 min-w-[220px] rounded-3xl border border-primary-grey-stroke bg-primary-grey-stroke text-lg text-text-black hover:bg-primary-grey-undertone"
-                onClick={() => handleModalChange(false)}
-              >
-                Close
-              </Button>
-              <Button type="submit" className="h-12 min-w-[220px] rounded-3xl text-lg">
-                Upload
-              </Button>
-            </div>
+              className="pt-2"
+              contentClassName="ml-auto"
+              size="sm"
+              label="Save and Publish"
+            />
           </form>
-        </div>
-      </ModalRoot>
 
-      <SuccessModal
-        open={isSuccessOpen}
-        onOpenChange={handleSuccessChange}
-        title="Item added to Inventory"
-        description="New luxury asset item has been added to asset inventory"
-      />
-    </>
+          <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
+            <Button
+              type="button"
+              className="min-w-[187px]"
+              variant="grey-stroke"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </Button>
+            <Button type="submit" className="min-w-[187px]">
+              Upload
+            </Button>
+          </div>
+        </div>
+      ),
+    },
+    SUCCESS: {
+      closeOnBackdropClick: true,
+      contentClassName: SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
+      content: (
+        <SuccessModalContent
+          title="Item added to Inventory"
+          description="New luxury asset item has been added to asset inventory"
+          onClose={() => onOpenChange(false)}
+        />
+      ),
+    },
+  };
+
+  const { contentClassName, closeOnBackdropClick, content } = stageConfig[currentStage];
+
+  return (
+    <ModalRoot
+      open={open}
+      onOpenChange={onOpenChange}
+      showCloseButton={false}
+      closeOnBackdropClick={closeOnBackdropClick}
+      contentClassName={contentClassName}
+    >
+      {content}
+    </ModalRoot>
   );
 }

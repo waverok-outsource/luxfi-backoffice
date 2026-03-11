@@ -77,6 +77,7 @@ body {
 
   .form-control-base::placeholder {
     color: var(--color-text-grey);
+    font-size: 15px;
   }
 
   .form-control-base:disabled {

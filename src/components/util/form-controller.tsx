@@ -18,6 +18,8 @@ import {
   FieldDescription,
   FieldError,
 } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 import { SelectTrigger } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
@@ -183,5 +185,80 @@ export function FormCheckbox({ value, onChange, ...props }: FormCheckboxProps) {
       checked={!!value}
       onCheckedChange={(v) => onChange?.(Boolean(v))}
     />
+  );
+}
+
+type FormSwitchFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = {
+  control: Control<TFieldValues>;
+  name: TName;
+  label: React.ReactNode;
+  description?: React.ReactNode;
+  orientation?: "vertical" | "horizontal" | "responsive";
+  className?: string;
+  required?: boolean;
+  size?: "sm" | "default";
+  disabled?: boolean;
+  contentClassName?: string;
+  labelClassName?: string;
+  switchClassName?: string;
+};
+
+function FormSwitchLabel({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const { id } = useFormField();
+
+  return (
+    <Label htmlFor={id} className={cn("cursor-pointer font-semibold", className)}>
+      {children}
+    </Label>
+  );
+}
+
+export function FormSwitchField<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+>({
+  control,
+  name,
+  label,
+  description,
+  orientation = "horizontal",
+  className,
+  required,
+  size = "default",
+  disabled,
+  contentClassName,
+  labelClassName,
+  switchClassName,
+}: FormSwitchFieldProps<TFieldValues, TName>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      description={description}
+      orientation={orientation}
+      className={className}
+      required={required}
+    >
+      {({ field }) => (
+        <div className={cn("flex items-center gap-3", contentClassName)}>
+          <FormControl>
+            <Switch
+              size={size}
+              disabled={disabled}
+              className={switchClassName}
+              checked={Boolean(field.value)}
+              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+            />
+          </FormControl>
+          <FormSwitchLabel className={labelClassName}>{label}</FormSwitchLabel>
+        </div>
+      )}
+    </FormField>
   );
 }

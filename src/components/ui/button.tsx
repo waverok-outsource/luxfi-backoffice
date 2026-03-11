@@ -12,11 +12,13 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary-black text-primary-white hover:opacity-90",
         gold: "bg-primary-gold-brand text-primary-white hover:opacity-90",
+        "grey-stroke": "bg-primary-grey-stroke text-text-black hover:bg-primary-grey-stroke/80",
         outline:
           "border-2 border-primary-black bg-transparent text-text-black hover:bg-primary-black/5",
         "outline-gold":
           "border-2 border-primary-gold-brand bg-transparent text-primary-gold-brand hover:bg-primary-gold-brand/10",
-        ghost: "bg-transparent text-text-grey hover:bg-primary-grey-undertone hover:text-text-black",
+        ghost:
+          "bg-transparent text-text-grey hover:bg-primary-grey-undertone hover:text-text-black",
         "table-action":
           "border border-primary-grey-stroke bg-primary-grey-undertone text-primary-gold-brand hover:bg-primary-white",
       },

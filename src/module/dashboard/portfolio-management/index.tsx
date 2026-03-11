@@ -10,7 +10,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { AddAssetModal } from "@/module/dashboard/portfolio-management/components/modals";
 import { PORTFOLIO_TAB_COMPONENTS } from "@/module/dashboard/portfolio-management/components/tab-table-components";
 import {
   DEFAULT_PORTFOLIO_TAB,
@@ -37,16 +36,10 @@ export function PortfolioManagementDashboard() {
   });
 
   const activeTab = isPortfolioTab(value.tab) ? value.tab : DEFAULT_PORTFOLIO_TAB;
-  const activeTabConfig = portfolioTabs.find((tab) => tab.value === activeTab) ?? portfolioTabs[0];
-  const ActiveTabTable = PORTFOLIO_TAB_COMPONENTS[activeTab];
-  const actionButton =
-    activeTabConfig.actionLabel && activeTab === "portfolio-inventory" ? (
-      <AddAssetModal triggerLabel={activeTabConfig.actionLabel} />
-    ) : activeTabConfig.actionLabel ? (
-      <Button variant="default" className="h-12 rounded-2xl px-5">
-        {activeTabConfig.actionLabel}
-      </Button>
-    ) : null;
+  const activeTabConfig = PORTFOLIO_TAB_COMPONENTS[activeTab];
+  const ActiveTabFilters = activeTabConfig.slots.filters;
+  const ActiveTabAction = activeTabConfig.slots.action;
+  const ActiveTabContent = activeTabConfig.slots.content;
 
   const handleTabChange = (nextTab: string) => {
     if (!isPortfolioTab(nextTab)) {
@@ -132,6 +125,7 @@ export function PortfolioManagementDashboard() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {ActiveTabFilters ? <ActiveTabFilters /> : null}
             <Button
               variant="ghost"
               className="h-12 rounded-2xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"
@@ -140,11 +134,11 @@ export function PortfolioManagementDashboard() {
               <ChevronDown className="h-4 w-4 text-text-grey" />
             </Button>
 
-            {actionButton}
+            {ActiveTabAction ? <ActiveTabAction /> : null}
           </div>
         </div>
 
-        <ActiveTabTable />
+        <ActiveTabContent />
       </div>
     </div>
   );

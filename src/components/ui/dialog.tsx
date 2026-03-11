@@ -23,12 +23,16 @@ function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
+const overlayTransition =
+  "transition-opacity duration-200 ease-out data-starting-style:opacity-0 data-ending-style:opacity-0";
+
 function DialogOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-overlay-black/60 data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 duration-150 supports-backdrop-filter:backdrop-blur-[2px]",
+        "fixed inset-0 isolate z-50 bg-overlay-black/60 supports-backdrop-filter:backdrop-blur-[2px]",
+        overlayTransition,
         className,
       )}
       {...props}
@@ -40,17 +44,19 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  keepMounted = false,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
+  keepMounted?: boolean;
 }) {
   return (
-    <DialogPortal>
+    <DialogPortal keepMounted={keepMounted}>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-[28px] border border-primary-grey-stroke bg-primary-grey-undertone p-5 text-text-black shadow-[0_24px_64px_rgba(0,0,0,0.24)] outline-none data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 duration-150",
+          "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-[28px] border border-primary-grey-stroke bg-primary-grey-undertone p-5 text-text-black shadow-[0_24px_64px_rgba(0,0,0,0.24)] outline-none transition-[opacity,transform] duration-200 ease-out data-starting-style:opacity-0 data-starting-style:scale-95 data-ending-style:opacity-0 data-ending-style:scale-95",
           className,
         )}
         {...props}
@@ -97,10 +103,7 @@ function DialogFooter({
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
-        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end",
-        className,
-      )}
+      className={cn("flex flex-col-reverse gap-3 sm:flex-row sm:justify-end", className)}
       {...props}
     >
       {children}
