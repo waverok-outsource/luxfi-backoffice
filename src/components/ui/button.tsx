@@ -12,6 +12,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary-black text-primary-white hover:opacity-90",
         gold: "bg-primary-gold-brand text-primary-white hover:opacity-90",
+        success: "bg-text-green text-primary-white hover:opacity-90",
+        danger: "bg-text-red text-primary-white hover:opacity-90",
         "grey-stroke": "bg-primary-grey-stroke text-text-black hover:bg-primary-grey-stroke/80",
         outline:
           "border-2 border-primary-black bg-transparent text-text-black hover:bg-primary-black/5",

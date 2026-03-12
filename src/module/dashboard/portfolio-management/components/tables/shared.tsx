@@ -36,9 +36,21 @@ function StatusBadge({ status }: { status: PortfolioStatus }) {
   );
 }
 
-function ActionCell() {
+function ActionCell({
+  onView,
+  ariaLabel = "View row details",
+}: {
+  onView?: () => void;
+  ariaLabel?: string;
+}) {
   return (
-    <Button aria-label="View row details" variant="table-action" size="table-action">
+    <Button
+      type="button"
+      aria-label={ariaLabel}
+      variant="table-action"
+      size="table-action"
+      onClick={onView}
+    >
       <Eye className="h-4 w-4" />
     </Button>
   );
@@ -102,10 +114,33 @@ export function createStatusColumn(header: string): ColumnDef<PortfolioTableRow,
 }
 
 export function createActionColumn(): ColumnDef<PortfolioTableRow, unknown> {
+  return createActionColumnWithOptions();
+}
+
+export function createActionColumnWithOptions(options?: {
+  ariaLabel?: string;
+  onView?: (row: PortfolioTableRow) => void;
+}): ColumnDef<PortfolioTableRow, unknown> {
   return {
     id: "action",
     header: "Action",
-    cell: () => <ActionCell />,
+    cell: ({ row }) => {
+      const ariaLabel =
+        options && typeof options.ariaLabel === "string" ? options.ariaLabel : "View row details";
+
+      const handleView = () => {
+        if (options && options.onView) {
+          options.onView(row.original);
+        }
+      };
+
+      return (
+        <ActionCell
+          ariaLabel={ariaLabel}
+          onView={options && options.onView ? handleView : undefined}
+        />
+      );
+    },
   };
 }
 

@@ -2,7 +2,8 @@
 
 import type { ReactElement } from "react";
 
-import { Button } from "@/components/ui/button";
+import { AssetBrandsAction } from "@/module/dashboard/portfolio-management/components/tab-actions/asset-brands-action";
+import { AssetCategoriesAction } from "@/module/dashboard/portfolio-management/components/tab-actions/asset-categories-action";
 import { PortfolioInventoryAction } from "@/module/dashboard/portfolio-management/components/tab-actions/portfolio-inventory-action";
 import { AssetBrandsTable } from "@/module/dashboard/portfolio-management/components/tables/asset-brands-table";
 import { AssetCategoriesTable } from "@/module/dashboard/portfolio-management/components/tables/asset-categories-table";
@@ -19,22 +20,6 @@ type PortfolioTabView = {
     content: () => ReactElement;
   };
 };
-
-function TabActionButton({ label }: { label: string }) {
-  return (
-    <Button variant="default" className="h-12 rounded-2xl px-5">
-      {label}
-    </Button>
-  );
-}
-
-function AssetBrandsAction() {
-  return <TabActionButton label="Add New Brand" />;
-}
-
-function AssetCategoriesAction() {
-  return <TabActionButton label="Add New Category" />;
-}
 
 export const PORTFOLIO_TAB_COMPONENTS: Record<PortfolioTabValue, PortfolioTabView> = {
   "portfolio-inventory": {

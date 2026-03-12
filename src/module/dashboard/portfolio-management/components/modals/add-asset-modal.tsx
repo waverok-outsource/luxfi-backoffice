@@ -2,9 +2,14 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-import { SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME, SuccessModalContent } from "@/components/modal";
+import {
+  ModalShell,
+  SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
+  SuccessModalContent,
+} from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
@@ -14,27 +19,11 @@ import {
   FormSelectTrigger,
   FormSwitchField,
 } from "@/components/util/form-controller";
-import { ModalRoot } from "@/components/modal/modal-root";
+import { addAssetSchema, type AddAssetFormValues } from "@/schema/portfolio-management.schema";
 
 type AddAssetModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-};
-
-type AddAssetFormValues = {
-  nameOfItem: string;
-  priceAmount: string;
-  assetBrand: string;
-  assetCategory: string;
-  condition: string;
-  year: string;
-  papers: string;
-  box: string;
-  caseColour: string;
-  caseSize: string;
-  weight: string;
-  dialColour: string;
-  saveAndPublish: boolean;
 };
 
 const DEFAULT_VALUES: AddAssetFormValues = {
@@ -100,10 +89,16 @@ function UploadShell() {
 
 export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   const [currentStage, setCurrentStage] = React.useState<AddAssetStage>("FORM");
+  const formId = React.useId();
 
-  const { control, handleSubmit } = useForm<AddAssetFormValues>({
+  const {
+    control,
+    handleSubmit,
+    formState: { isValid },
+  } = useForm<AddAssetFormValues>({
+    resolver: zodResolver(addAssetSchema),
     defaultValues: DEFAULT_VALUES,
-    mode: "onChange",
+    mode: "all",
   });
 
   const onSubmit = (values: AddAssetFormValues) => {
@@ -120,191 +115,177 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
       contentClassName: "max-w-[1024px] p-4 sm:p-6",
       content: (
         <div className="space-y-5">
-          <div className="border-b border-white pb-5">
-            <div className="flex items-start gap-4">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-12 w-12 rounded-2xl border border-primary-grey-stroke bg-primary-white hover:bg-primary-grey-undertone"
-                onClick={() => onOpenChange(false)}
-              >
-                <ArrowLeft className="h-6 w-6" />
-              </Button>
-
-              <div>
-                <h2 className="text-[32px] font-bold leading-tight">Asset Item Information</h2>
-                <p className="mt-1 text-sm">Upload and manage luxury asset item.</p>
-              </div>
-            </div>
-          </div>
+          <ModalShell.Header
+            title="Asset Item Information"
+            description="Upload and manage luxury asset item."
+            showBackButton
+            onBack={() => onOpenChange(false)}
+          />
 
           <UploadShell />
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6 rounded-2xl bg-primary-white p-4 sm:p-6"
-          >
-            <h3 className="font-semibold">Item Description</h3>
+          <ModalShell.Body>
+            <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <h3 className="font-semibold">Item Description</h3>
 
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-              <FormField control={control} name="nameOfItem" label="Name of Item" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+                <FormField control={control} name="nameOfItem" label="Name of Item" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="priceAmount" label="Price Amount" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" startAdornment="$" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="priceAmount" label="Price Amount" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="0.00" startAdornment="$" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="assetBrand" label="Asset Brand" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="assetBrand" label="Asset Brand" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="assetCategory" label="Asset Category" required>
-                {({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormSelectTrigger>
-                      <SelectValue placeholder="Select Options" />
-                    </FormSelectTrigger>
-                    <SelectContent>
-                      {assetCategoryOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
+                <FormField control={control} name="assetCategory" label="Asset Category" required>
+                  {({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormSelectTrigger>
+                        <SelectValue placeholder="Select Options" />
+                      </FormSelectTrigger>
+                      <SelectContent>
+                        {assetCategoryOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="condition" label="Condition" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="condition" label="Condition" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="year" label="Year" required>
-                {({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormSelectTrigger>
-                      <SelectValue placeholder="Select Options" />
-                    </FormSelectTrigger>
-                    <SelectContent>
-                      {yearOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
+                <FormField control={control} name="year" label="Year" required>
+                  {({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormSelectTrigger>
+                        <SelectValue placeholder="Select Options" />
+                      </FormSelectTrigger>
+                      <SelectContent>
+                        {yearOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="papers" label="Papers" required>
-                {({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormSelectTrigger>
-                      <SelectValue placeholder="Select Options" />
-                    </FormSelectTrigger>
-                    <SelectContent>
-                      {yesNoOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
+                <FormField control={control} name="papers" label="Papers" required>
+                  {({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormSelectTrigger>
+                        <SelectValue placeholder="Select Options" />
+                      </FormSelectTrigger>
+                      <SelectContent>
+                        {yesNoOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="box" label="Box" required>
-                {({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormSelectTrigger>
-                      <SelectValue placeholder="Select Options" />
-                    </FormSelectTrigger>
-                    <SelectContent>
-                      {yesNoOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
+                <FormField control={control} name="box" label="Box" required>
+                  {({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormSelectTrigger>
+                        <SelectValue placeholder="Select Options" />
+                      </FormSelectTrigger>
+                      <SelectContent>
+                        {yesNoOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="caseColour" label="Case Colour" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="caseColour" label="Case Colour" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="caseSize" label="Case Size" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="caseSize" label="Case Size" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="weight" label="Weight" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
+                <FormField control={control} name="weight" label="Weight" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
 
-              <FormField control={control} name="dialColour" label="Dial Colour" required>
-                {({ field }) => (
-                  <FormControl>
-                    <Input {...field} placeholder="Enter here" />
-                  </FormControl>
-                )}
-              </FormField>
-            </div>
+                <FormField control={control} name="dialColour" label="Dial Colour" required>
+                  {({ field }) => (
+                    <FormControl>
+                      <Input {...field} placeholder="Enter here" />
+                    </FormControl>
+                  )}
+                </FormField>
+              </div>
 
-            <FormSwitchField
-              control={control}
-              name="saveAndPublish"
-              orientation="horizontal"
-              className="pt-2"
-              contentClassName="ml-auto"
-              size="sm"
-              label="Save and Publish"
-            />
-          </form>
+              <FormSwitchField
+                control={control}
+                name="saveAndPublish"
+                orientation="horizontal"
+                className="pt-2"
+                contentClassName="ml-auto"
+                size="sm"
+                label="Save and Publish"
+              />
+            </form>
+          </ModalShell.Body>
 
-          <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
-            <Button
+          <ModalShell.Footer>
+            <ModalShell.Action
               type="button"
-              className="min-w-[187px]"
               variant="grey-stroke"
               onClick={() => onOpenChange(false)}
             >
               Close
-            </Button>
-            <Button type="submit" className="min-w-[187px]">
+            </ModalShell.Action>
+            <ModalShell.Action type="submit" form={formId} disabled={!isValid}>
               Upload
-            </Button>
-          </div>
+            </ModalShell.Action>
+          </ModalShell.Footer>
         </div>
       ),
     },
@@ -324,14 +305,14 @@ export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
   const { contentClassName, closeOnBackdropClick, content } = stageConfig[currentStage];
 
   return (
-    <ModalRoot
+    <ModalShell.Root
       open={open}
       onOpenChange={onOpenChange}
       showCloseButton={false}
       closeOnBackdropClick={closeOnBackdropClick}
-      contentClassName={contentClassName}
+      shellClassName={contentClassName}
     >
       {content}
-    </ModalRoot>
+    </ModalShell.Root>
   );
 }
