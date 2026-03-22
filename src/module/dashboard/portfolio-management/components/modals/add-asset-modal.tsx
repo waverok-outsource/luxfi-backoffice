@@ -88,7 +88,7 @@ function UploadShell() {
 }
 
 export function AddAssetModal({ open, onOpenChange }: AddAssetModalProps) {
-  const [currentStage, setCurrentStage] = React.useState<AddAssetStage>("FORM");
+  const [currentStage, setCurrentStage] = React.useState<AddAssetStage>("SUCCESS");
   const formId = React.useId();
 
   const {

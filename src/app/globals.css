@@ -13,6 +13,7 @@
   --color-text-amber: #4a3b00;
   --color-text-blue: #003f76;
   --color-text-green: #0f3d19;
+  --color-text-orange: #7a3b00;
   --color-text-red: #4a0d0d;
   --color-alert-success: #4caf50;
   --color-alert-error: #d9534f;
@@ -20,6 +21,7 @@
   --color-alert-neutral: #2196f3;
   --color-alert-disabled: #b6b6b6;
   --color-alertSoft-success: #e8f7ee;
+  --color-alertSoft-caution: #fde7d1;
   --color-alertSoft-error: #f5d1d1;
   --color-alertSoft-warning: #f5edd1;
   --color-alertSoft-neutral: #eaf4ff;

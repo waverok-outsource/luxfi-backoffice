@@ -8,6 +8,7 @@ import { LogOut } from "lucide-react";
 
 const labelToPath: Record<string, string> = {
   Home: "/",
+  Customers: "/customers",
   "Portfolio Management": "/portfolio-management",
 };
 

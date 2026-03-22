@@ -23,6 +23,8 @@ const badgeVariants = cva(
   },
 );
 
+export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
+
 type BadgeProps = ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & {
     showStatusDot?: boolean;

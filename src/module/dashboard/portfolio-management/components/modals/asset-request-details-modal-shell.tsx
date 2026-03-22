@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 
 import { ModalShell } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
+import { DataRow } from "@/components/ui/data-row";
 import type { PortfolioStatus } from "@/module/dashboard/portfolio-management/data";
 
 export type SaleDetailsConfig = {
@@ -57,15 +58,6 @@ function getStatusBadge(status?: PortfolioStatus) {
     default:
       return { label: "Unknown", variant: "neutral" as const };
   }
-}
-
-function RowItem({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 text-sm">
-      <span className="text-text-grey">{label}</span>
-      <div className="text-right font-semibold">{value}</div>
-    </div>
-  );
 }
 
 function normalizeToEmail(name?: string) {
@@ -130,7 +122,7 @@ export function AssetRequestDetailsModalShell(props: AssetRequestDetailsModalShe
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-text-black">Sale Details</h3>
           <ModalShell.Body className="space-y-4">
-            <RowItem
+            <DataRow
               label="Status"
               value={
                 <Badge showStatusDot variant={statusBadge.variant}>
@@ -139,15 +131,15 @@ export function AssetRequestDetailsModalShell(props: AssetRequestDetailsModalShe
               }
             />
 
-            <RowItem
+            <DataRow
               label={saleDetails.requestIdLabel}
               value={saleDetails.requestId ? `ID ${saleDetails.requestId}` : "-"}
             />
-            <RowItem
+            <DataRow
               label={saleDetails.partyNameLabel}
               value={String(saleDetails.partyName ?? "-")}
             />
-            <RowItem label={saleDetails.partyIdLabel} value={resolvedPartyId} />
+            <DataRow label={saleDetails.partyIdLabel} value={resolvedPartyId} />
 
             <div className="border-t border-primary-grey-stroke pt-4">
               <div className="flex items-end justify-between gap-4">
@@ -157,8 +149,8 @@ export function AssetRequestDetailsModalShell(props: AssetRequestDetailsModalShe
             </div>
 
             <div className="space-y-3 border-t border-primary-grey-stroke pt-4">
-              <RowItem label={requestDateLabel} value={requestDateValue} />
-              <RowItem label={approvedDateLabel} value={approvedDateValue} />
+              <DataRow label={requestDateLabel} value={requestDateValue} />
+              <DataRow label={approvedDateLabel} value={approvedDateValue} />
             </div>
           </ModalShell.Body>
         </div>
@@ -183,17 +175,17 @@ export function AssetRequestDetailsModalShell(props: AssetRequestDetailsModalShe
             </div>
 
             <div className="space-y-3 border-t border-primary-grey-stroke pt-4">
-              <RowItem label="Asset Name:" value={assetName} />
-              <RowItem label="Brand (Category):" value={brandCategory} />
+              <DataRow label="Asset Name:" value={assetName} />
+              <DataRow label="Brand (Category):" value={brandCategory} />
             </div>
 
             <div className="space-y-3 border-t border-primary-grey-stroke pt-4">
-              <RowItem label="Year" value="2024" />
-              <RowItem label="Box" value="Yes" />
-              <RowItem label="Dial Colour" value="Blue" />
-              <RowItem label="Case Colour" value="Rose Gold" />
-              <RowItem label="Weight" value="7kg" />
-              <RowItem label="Case Size" value="42mm" />
+              <DataRow label="Year" value="2024" />
+              <DataRow label="Box" value="Yes" />
+              <DataRow label="Dial Colour" value="Blue" />
+              <DataRow label="Case Colour" value="Rose Gold" />
+              <DataRow label="Weight" value="7kg" />
+              <DataRow label="Case Size" value="42mm" />
             </div>
           </ModalShell.Body>
         </div>

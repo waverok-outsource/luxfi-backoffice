@@ -1,0 +1,4 @@
+interface:
+  display_name: "Figma UI Structure Review"
+  short_description: "Review implemented UI structure against Figma"
+  default_prompt: "Use $figma-ui-structure-review to review a local UI against a linked Figma node for structural and visual fidelity."

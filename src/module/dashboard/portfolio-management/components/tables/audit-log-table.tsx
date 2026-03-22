@@ -5,7 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { PortfolioTableRow } from "@/module/dashboard/portfolio-management/data";
 import {
   PortfolioBaseTable,
-  createActionColumn,
+  createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
   createTextColumn,
@@ -62,7 +62,7 @@ const columns: ColumnDef<PortfolioTableRow, unknown>[] = [
   createTextColumn("Initiator Role", "initiatorRole"),
   createTextColumn("Action Date", "actionDate"),
   createTextColumn("Action Timestamp", "actionTimestamp"),
-  createActionColumn(),
+  createActionColumnWithOptions({ header: "" }),
 ];
 
 export function AuditLogTable() {

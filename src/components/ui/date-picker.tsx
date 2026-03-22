@@ -14,6 +14,7 @@ type SingleDatePickerProps = {
   onDateChange: (value: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  triggerProps?: Omit<React.ComponentProps<"button">, "type" | "children" | "className">;
 };
 
 type RangeDatePickerProps = {
@@ -23,6 +24,7 @@ type RangeDatePickerProps = {
   placeholder?: string;
   className?: string;
   numberOfMonths?: number;
+  triggerProps?: Omit<React.ComponentProps<"button">, "type" | "children" | "className">;
 };
 
 type DatePickerProps = SingleDatePickerProps | RangeDatePickerProps;
@@ -49,18 +51,34 @@ export function DatePicker(props: DatePickerProps) {
         render={
           <button
             type="button"
+            {...props.triggerProps}
             className={cn(
-              "flex h-12 items-center gap-2 rounded-xl bg-primary-white px-4 text-sm text-text-grey",
+              isRange
+                ? "flex h-12 items-center gap-2 rounded-xl bg-primary-white px-4 text-sm text-text-grey"
+                : "relative flex h-12 w-full items-center rounded-[28px] border border-primary-grey-stroke bg-primary-white px-5 text-base text-text-grey transition-colors hover:border-primary-grey-stroke",
               props.className,
             )}
           >
-            <CalendarDays className="h-5 w-5 text-primary-black" />
-            <span className="truncate">{label}</span>
-            <ChevronDownIcon data-icon="inline-end" className="h-4 w-4 shrink-0" />
+            {isRange ? (
+              <>
+                <CalendarDays className="h-5 w-5 text-primary-black" />
+                <span className="truncate">{label}</span>
+                <ChevronDownIcon data-icon="inline-end" className="h-4 w-4 shrink-0" />
+              </>
+            ) : (
+              <>
+                <CalendarDays className="absolute left-5 h-6 w-6 text-text-black" />
+                <span className="w-full truncate pl-12 pr-10 text-left">{label}</span>
+                <ChevronDownIcon className="absolute right-5 h-5 w-5 shrink-0 text-text-grey" />
+              </>
+            )}
           </button>
         }
       />
-      <PopoverContent className="w-auto border border-primary-black/20 bg-primary-white p-0" align="end">
+      <PopoverContent
+        className="w-auto border border-primary-black/20 bg-primary-white p-0"
+        align="end"
+      >
         {isRange ? (
           <Calendar
             mode="range"

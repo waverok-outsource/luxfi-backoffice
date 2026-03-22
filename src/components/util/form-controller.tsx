@@ -6,6 +6,7 @@ import {
   type Control,
   type FieldPath,
   type FieldValues,
+  type RegisterOptions,
   type ControllerRenderProps,
   type ControllerFieldState,
 } from "react-hook-form";
@@ -20,6 +21,8 @@ import {
 } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Textarea } from "@/components/ui/textarea";
 
 import { SelectTrigger } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
@@ -60,6 +63,7 @@ type FormFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TF
   orientation?: "vertical" | "horizontal" | "responsive";
   className?: string;
   required?: boolean;
+  rules?: RegisterOptions<TFieldValues, TName>;
   children: (props: FormFieldRenderProps<TFieldValues, TName>) => React.ReactNode;
 };
 
@@ -73,6 +77,7 @@ export function FormField<TFieldValues extends FieldValues, TName extends FieldP
   orientation = "vertical",
   className,
   required,
+  rules,
   children,
 }: FormFieldProps<TFieldValues, TName>) {
   const rid = React.useId();
@@ -82,6 +87,7 @@ export function FormField<TFieldValues extends FieldValues, TName extends FieldP
     <Controller
       control={control}
       name={name}
+      rules={rules}
       render={({ field, fieldState }) => {
         const invalid = !!fieldState.error;
 
@@ -148,6 +154,36 @@ export function FormControl({
   });
 }
 
+export function FormTextarea(props: React.ComponentProps<typeof Textarea>) {
+  const { id, invalid, describedBy } = useFormField();
+
+  return (
+    <Textarea
+      id={id}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
+      {...props}
+    />
+  );
+}
+
+export function FormDatePicker(props: React.ComponentProps<typeof DatePicker>) {
+  const { id, invalid, describedBy } = useFormField();
+
+  return (
+    <DatePicker
+      {...props}
+      className={cn(invalid ? "border-text-red" : "", props.className)}
+      triggerProps={{
+        id,
+        "aria-invalid": invalid || undefined,
+        "aria-describedby": describedBy,
+        ...props.triggerProps,
+      }}
+    />
+  );
+}
+
 /* ----------------------------- Select Trigger ----------------------------- */
 
 export function FormSelectTrigger(props: React.ComponentProps<typeof SelectTrigger>) {
@@ -167,19 +203,20 @@ export function FormSelectTrigger(props: React.ComponentProps<typeof SelectTrigg
 
 type FormCheckboxProps = Omit<
   React.ComponentProps<typeof Checkbox>,
-  "checked" | "onCheckedChange"
+  "checked" | "onCheckedChange" | "value"
 > & {
   value?: boolean;
   onChange?: (value: boolean) => void;
+  id?: string;
 };
 
-export function FormCheckbox({ value, onChange, ...props }: FormCheckboxProps) {
+export function FormCheckbox({ value, onChange, id: idProp, ...props }: FormCheckboxProps) {
   const { id, invalid, describedBy } = useFormField();
 
   return (
     <Checkbox
       {...props}
-      id={id}
+      id={idProp ?? id}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
       checked={!!value}
@@ -188,7 +225,10 @@ export function FormCheckbox({ value, onChange, ...props }: FormCheckboxProps) {
   );
 }
 
-type FormSwitchFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = {
+type FormSwitchFieldProps<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> = {
   control: Control<TFieldValues>;
   name: TName;
   label: React.ReactNode;
