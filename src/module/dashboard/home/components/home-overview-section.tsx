@@ -1,6 +1,6 @@
 import { CardSectionHeader } from "@/components/dashboard/card-section-header";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { LiquidityPieChart } from "@/module/dashboard/home/components/liquidity-pie-chart";
-import { StatCard } from "@/module/dashboard/home/components/stat-card";
 import { stats } from "@/module/dashboard/home/data";
 import LiquidityIcon from "./icons/liquidity";
 

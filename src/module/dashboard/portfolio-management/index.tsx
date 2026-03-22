@@ -5,6 +5,7 @@ import type { DateRange } from "react-day-picker";
 import { ChevronDown, Download, Search } from "lucide-react";
 
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,6 @@ import {
   portfolioStats,
   portfolioTabs,
 } from "@/module/dashboard/portfolio-management/data";
-import { StatCard } from "@/module/dashboard/home/components/stat-card";
 
 type PortfolioQuery = {
   tab?: string;

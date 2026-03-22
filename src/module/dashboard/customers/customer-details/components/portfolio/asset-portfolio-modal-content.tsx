@@ -148,13 +148,7 @@ function BinaryChoiceField({
   ] as const;
 
   return (
-    <FormField
-      control={control}
-      name={name}
-      label={label}
-      required
-      className={className}
-    >
+    <FormField control={control} name={name} label={label} required className={className}>
       {({ field, fieldState }) => (
         <div
           className={cn(
@@ -180,7 +174,7 @@ function BinaryChoiceField({
                   id={optionId}
                   value={active}
                   onChange={() => field.onChange(option.value)}
-                  className="size-3.5 rounded-full data-checked:border-text-green data-checked:bg-text-green data-checked:text-transparent [&_[data-slot=checkbox-indicator]]:hidden"
+                  className="size-3.5 rounded-full data-checked:border-text-green data-checked:bg-text-green data-checked:text-transparent **:data-[slot=checkbox-indicator]:hidden"
                 />
               </label>
             );
@@ -523,12 +517,7 @@ export function AssetPortfolioRejectStepContent({
       />
 
       <ModalShell.Body className="rounded-3xl p-6">
-        <FormField
-          control={control}
-          name="reason"
-          label="Reason for Rejection"
-          required
-        >
+        <FormField control={control} name="reason" label="Reason for Rejection" required>
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>

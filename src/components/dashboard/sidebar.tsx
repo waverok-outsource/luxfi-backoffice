@@ -10,6 +10,8 @@ const labelToPath: Record<string, string> = {
   Home: "/",
   Customers: "/customers",
   "Portfolio Management": "/portfolio-management",
+  "Risk Management": "/risk-management",
+  "Growth & Marketing": "/growth-marketing",
 };
 
 export function DashboardSidebar() {

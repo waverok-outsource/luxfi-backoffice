@@ -5,12 +5,12 @@ import type { DateRange } from "react-day-picker";
 import { ChevronDown, Download, Search } from "lucide-react";
 
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { StatCard } from "@/module/dashboard/home/components/stat-card";
 import { CustomerChannelCard } from "@/module/dashboard/customers/components/customer-channel-card";
 import { CUSTOMERS_TAB_COMPONENTS } from "@/module/dashboard/customers/components/tab-table-components";
 import {
