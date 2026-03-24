@@ -5,13 +5,15 @@ import { usePathname } from "next/navigation";
 import { sideMenu } from "@/module/dashboard/home/data";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
+import route from "@/util/route";
 
 const labelToPath: Record<string, string> = {
-  Home: "/",
-  Customers: "/customers",
-  "Portfolio Management": "/portfolio-management",
-  "Risk Management": "/risk-management",
-  "Growth & Marketing": "/growth-marketing",
+  Home: route.dashboard.home,
+  Customers: route.dashboard.customers,
+  "Portfolio Management": route.dashboard.portfolioManagement,
+  "Risk Management": route.dashboard.riskManagement,
+  "Payments & Settlements": route.dashboard.paymentsSettlements,
+  "Growth & Marketing": route.dashboard.growthMarketing,
 };
 
 export function DashboardSidebar() {

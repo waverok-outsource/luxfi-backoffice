@@ -10,6 +10,7 @@ export type DashboardStatCardProps = {
   tone: "positive" | "negative";
   featured?: boolean;
   className?: string;
+  valueClassName?: string;
 };
 
 export function StatCard({
@@ -20,6 +21,7 @@ export function StatCard({
   tone,
   featured = false,
   className,
+  valueClassName,
 }: DashboardStatCardProps) {
   const isNegative = tone === "negative";
 
@@ -37,6 +39,7 @@ export function StatCard({
         className={cn(
           "font-semibold text-text-black",
           featured ? "mt-6 text-[36px]" : "mt-2 text-lg",
+          valueClassName,
         )}
       >
         {value}
