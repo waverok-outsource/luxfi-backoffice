@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ type SuccessModalContentProps = {
   onClose?: () => void;
   secondaryLabel?: string;
   onSecondary?: () => void;
+  icon?: ReactNode;
+  iconWrapperClassName?: string;
 };
 
 export function SuccessModalContent({
@@ -25,14 +28,21 @@ export function SuccessModalContent({
   onClose,
   secondaryLabel,
   onSecondary,
+  icon,
+  iconWrapperClassName,
 }: SuccessModalContentProps) {
   const hasSecondary = Boolean(secondaryLabel && onSecondary);
 
   return (
     <div className="flex flex-col items-center text-center justify-between">
       <div className="flex flex-col items-center">
-        <div className="mb-10 flex size-16 items-center justify-center rounded-full bg-alert-success text-primary-white">
-          <Check className="size-9" />
+        <div
+          className={cn(
+            "mb-10 flex size-16 items-center justify-center rounded-full bg-alert-success text-primary-white",
+            iconWrapperClassName,
+          )}
+        >
+          {icon ?? <Check className="size-9" />}
         </div>
 
         <h3 className="text-[32px] font-bold">{title}</h3>

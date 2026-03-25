@@ -10,6 +10,7 @@ const route = {
     riskManagement: "/risk-management",
     paymentsSettlements: "/payments-settlements",
     growthMarketing: "/growth-marketing",
+    helpSupport: "/help-support",
   },
 };
 

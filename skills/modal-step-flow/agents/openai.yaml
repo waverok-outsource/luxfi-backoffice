@@ -1,0 +1,4 @@
+interface:
+  display_name: "Modal Step Flow"
+  short_description: "Build one-modal multi-state flows with step mapping"
+  default_prompt: "Use $modal-step-flow when implementing a modal with multiple UI states, such as detail, form, confirm, or success, and keep them inside one modal using typed steps and a stage config object."

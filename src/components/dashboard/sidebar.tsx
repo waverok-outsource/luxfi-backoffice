@@ -14,6 +14,7 @@ const labelToPath: Record<string, string> = {
   "Risk Management": route.dashboard.riskManagement,
   "Payments & Settlements": route.dashboard.paymentsSettlements,
   "Growth & Marketing": route.dashboard.growthMarketing,
+  "Help & Support": route.dashboard.helpSupport,
 };
 
 export function DashboardSidebar() {
