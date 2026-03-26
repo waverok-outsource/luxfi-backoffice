@@ -7,37 +7,37 @@ import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { HelpSupportMetrics } from "@/module/dashboard/help-support/components/help-support-metrics";
-import { HELP_SUPPORT_TAB_COMPONENTS } from "@/module/dashboard/help-support/components/tab-table-components";
+import { AssetLoanMetrics } from "@/module/dashboard/asset-loans/components/asset-loan-metrics";
+import { ASSET_LOANS_TAB_COMPONENTS } from "@/module/dashboard/asset-loans/components/tab-table-components";
 import {
-  DEFAULT_HELP_SUPPORT_TAB,
-  helpSupportMetrics,
-  helpSupportTabs,
-  type HelpSupportTabValue,
-} from "@/module/dashboard/help-support/data";
+  assetLoansMetrics,
+  assetLoansTabs,
+  DEFAULT_ASSET_LOANS_TAB,
+  type AssetLoanTabValue,
+} from "@/module/dashboard/asset-loans/data";
 
-type HelpSupportQuery = {
+type AssetLoansQuery = {
   tab?: string;
   page?: string;
   search?: string;
 };
 
-function isHelpSupportTab(value: string | null | undefined): value is HelpSupportTabValue {
-  return helpSupportTabs.some((tab) => tab.value === value);
+function isAssetLoanTab(value: string | null | undefined): value is AssetLoanTabValue {
+  return assetLoansTabs.some((tab) => tab.value === value);
 }
 
-export function HelpSupportDashboard() {
-  const { value, setURLQuery } = useURLQuery<HelpSupportQuery>();
+export function AssetLoansDashboard() {
+  const { value, setURLQuery } = useURLQuery<AssetLoansQuery>();
   const [range, setRange] = React.useState<DateRange | undefined>({
     from: new Date(2023, 0, 1),
     to: new Date(2023, 6, 20),
   });
 
-  const activeTab = isHelpSupportTab(value.tab) ? value.tab : DEFAULT_HELP_SUPPORT_TAB;
-  const ActiveTabContent = HELP_SUPPORT_TAB_COMPONENTS[activeTab].slots.content;
+  const activeTab = isAssetLoanTab(value.tab) ? value.tab : DEFAULT_ASSET_LOANS_TAB;
+  const ActiveTabContent = ASSET_LOANS_TAB_COMPONENTS[activeTab].slots.content;
 
   const handleTabChange = (nextTab: string) => {
-    if (!isHelpSupportTab(nextTab)) {
+    if (!isAssetLoanTab(nextTab)) {
       return;
     }
 
@@ -51,13 +51,13 @@ export function HelpSupportDashboard() {
   return (
     <div className="space-y-4">
       <DashboardPageHeader
-        title="Help & Support"
+        title="Asset Loan Operations"
         description="Real time analytics and overview at a glance"
       />
 
       <AnalyticsToolbar range={range} onRangeChange={setRange} />
 
-      <HelpSupportMetrics metrics={helpSupportMetrics} />
+      <AssetLoanMetrics metrics={assetLoansMetrics} />
 
       <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -67,7 +67,7 @@ export function HelpSupportDashboard() {
                 variant="line"
                 className="inline-flex min-w-max justify-start gap-8 bg-transparent px-5"
               >
-                {helpSupportTabs.map((tab) => (
+                {assetLoansTabs.map((tab) => (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}

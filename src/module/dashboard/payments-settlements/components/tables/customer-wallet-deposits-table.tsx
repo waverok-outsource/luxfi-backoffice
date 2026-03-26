@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { WalletDepositDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/wallet-deposit-details-modal";
 import {
   createActionColumnWithOptions,
@@ -28,7 +29,7 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
 ];
 
 export function CustomerWalletDepositsTable() {
-  const [search, setSearch] = React.useState("");
+  const { search } = useURLTableSearch();
   const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
 
   const rows = useFilteredPaymentRows(customerWalletDepositRows, search, SEARCH_FIELDS);
@@ -54,7 +55,7 @@ export function CustomerWalletDepositsTable() {
   return (
     <>
       <div className="space-y-4">
-        <PaymentsTableToolbar search={search} onSearchChange={setSearch} />
+        <PaymentsTableToolbar />
         <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
       </div>
 

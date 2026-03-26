@@ -10,15 +10,10 @@ import {
   createSerialColumn as createSerialColumnBase,
   createStatusColumn as createStatusColumnBase,
   createTextColumn as createTextColumnBase,
+  type StatusConfig,
   useFilteredTableRows,
 } from "@/components/table";
-import { HELP_SUPPORT_STATUS_CONFIG } from "@/module/dashboard/help-support/components/status-config";
-import type { SupportTicketStatus } from "@/module/dashboard/help-support/data";
-
-type HelpSupportRowBase = {
-  id: string;
-  status: SupportTicketStatus;
-};
+import { formatCurrency } from "@/util/format-currency";
 
 export function createSerialColumn<TData>(): ColumnDef<TData, unknown> {
   return createSerialColumnBase<TData>();
@@ -39,10 +34,33 @@ export function createIdentifierColumn<TData extends Record<string, unknown>>(
   return createIdentifierColumnBase<TData>(header, accessorKey);
 }
 
-export function createStatusColumn<TData extends HelpSupportRowBase>(
+export function createCurrencyColumn<TData extends Record<string, unknown>>(
   header: string,
+  accessorKey: keyof TData & string,
 ): ColumnDef<TData, unknown> {
-  return createStatusColumnBase<TData, SupportTicketStatus>(header, HELP_SUPPORT_STATUS_CONFIG);
+  return {
+    accessorKey,
+    header,
+    cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
+  };
+}
+
+export function createPercentColumn<TData extends Record<string, unknown>>(
+  header: string,
+  accessorKey: keyof TData & string,
+): ColumnDef<TData, unknown> {
+  return {
+    accessorKey,
+    header,
+    cell: ({ getValue }) => <span>{Number(getValue() ?? 0).toFixed(1)}%</span>,
+  };
+}
+
+export function createStatusColumn<
+  TData extends { status?: TStatus },
+  TStatus extends string = string,
+>(header: string, config: StatusConfig<TStatus>) {
+  return createStatusColumnBase<TData, TStatus>(header, config);
 }
 
 export function createActionColumnWithOptions<TData>(options?: {
@@ -52,9 +70,9 @@ export function createActionColumnWithOptions<TData>(options?: {
 }): ColumnDef<TData, unknown> {
   return createActionColumnWithOptionsBase<TData>(options);
 }
-export { TableSearchToolbar as HelpSupportTableToolbar };
+export { TableSearchToolbar as AssetLoansTableToolbar };
 
-export function HelpSupportBaseTable<TData>({
+export function AssetLoansBaseTable<TData>({
   rows,
   columns,
   pageSize = 5,

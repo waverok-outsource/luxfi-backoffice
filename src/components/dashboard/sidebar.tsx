@@ -11,6 +11,7 @@ const labelToPath: Record<string, string> = {
   Home: route.dashboard.home,
   Customers: route.dashboard.customers,
   "Portfolio Management": route.dashboard.portfolioManagement,
+  "Asset Loans": route.dashboard.assetLoans,
   "Risk Management": route.dashboard.riskManagement,
   "Payments & Settlements": route.dashboard.paymentsSettlements,
   "Growth & Marketing": route.dashboard.growthMarketing,

@@ -4,6 +4,7 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 
+import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import {
   createIdentifierColumn,
   createSerialColumn,
@@ -75,7 +76,7 @@ function createActionColumnWithReset(options: {
 }
 
 export function PasswordResetRequestsTable() {
-  const [search, setSearch] = React.useState("");
+  const { search } = useURLTableSearch();
   const [requests, setRequests] = React.useState<PasswordResetRequestRow[]>(passwordResetRequestRows);
   const [selectedRequestId, setSelectedRequestId] = React.useState<string | null>(null);
 
@@ -112,7 +113,7 @@ export function PasswordResetRequestsTable() {
   return (
     <>
       <div className="space-y-4">
-        <HelpSupportTableToolbar search={search} onSearchChange={setSearch} />
+        <HelpSupportTableToolbar />
         <HelpSupportBaseTable rows={rows} columns={columns} />
       </div>
 

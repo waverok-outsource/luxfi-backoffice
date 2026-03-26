@@ -98,7 +98,7 @@ export function RiskGradientBar({
           <div className="relative">
             <div
               className={cn(
-                "rounded-lg px-3 py-1 text-xs font-semibold shadow-sm",
+                "rounded-lg px-3 py-1 text-xs font-semibold shadow-sm min-w-[100px] max-w-[150px]",
                 markerTone.backgroundClassName,
                 markerTone.textClassName,
               )}

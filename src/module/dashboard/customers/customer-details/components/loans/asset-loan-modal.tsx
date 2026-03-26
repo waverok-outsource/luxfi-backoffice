@@ -7,7 +7,7 @@ import {
   SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
   SuccessModalContent,
 } from "@/components/modal";
-import type { AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-information-modal";
+import type { AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
 import {
   ApproveConfirmStepContent,
   InfoStepContent,

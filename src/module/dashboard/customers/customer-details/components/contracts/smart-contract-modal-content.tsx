@@ -17,7 +17,7 @@ import {
   FormField,
   FormSelectTrigger,
 } from "@/components/util/form-controller";
-import { CollateralValueBar } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-information-modal";
+import { CollateralValueBar } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
 import type { SmartContractRecord } from "@/module/dashboard/customers/customer-details/components/contracts/smart-contract-types";
 import type {
   LoanCaseApprovalPayload,

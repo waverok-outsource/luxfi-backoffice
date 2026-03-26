@@ -38,7 +38,9 @@ export const useURLQuery = <T extends Record<string, string | null | undefined>>
       }
     });
 
-    router.replace(`${pathname}?${url.toString()}`);
+    const nextQuery = url.toString();
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   };
 
   return {

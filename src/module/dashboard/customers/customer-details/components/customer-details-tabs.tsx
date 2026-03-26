@@ -41,7 +41,7 @@ const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
 };
 
 export function CustomerDetailsTabs() {
-  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string }>();
+  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; search?: string }>();
 
   const tabQuery = value.tab;
   const activeTab: CustomerDetailsTabValue =
@@ -54,6 +54,7 @@ export function CustomerDetailsTabs() {
       tab: nextTab,
       // Reset table pagination when switching tabs.
       page: undefined,
+      search: undefined,
     });
   };
 

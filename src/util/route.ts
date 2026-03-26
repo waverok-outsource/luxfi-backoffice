@@ -7,6 +7,7 @@ const route = {
     home: "/",
     customers: "/customers",
     portfolioManagement: "/portfolio-management",
+    assetLoans: "/asset-loans",
     riskManagement: "/risk-management",
     paymentsSettlements: "/payments-settlements",
     growthMarketing: "/growth-marketing",

@@ -47,7 +47,7 @@ function getTableStatusBadge(status: SmartContractStatus) {
     case "rejected":
       return { variant: "disabled" as const, label: "Rejected" };
     case "completed":
-      return { variant: "neutral" as const, label: "Completed" };
+      return { variant: "success" as const, label: "Completed" };
     default:
       return { variant: "disabled" as const, label: "-" };
   }

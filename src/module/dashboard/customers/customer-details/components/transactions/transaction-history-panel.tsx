@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { AlertTriangle, ChevronDown, Copy, Eye, Search } from "lucide-react";
+import { AlertTriangle, Copy, Eye } from "lucide-react";
 
+import { TableSearchToolbar } from "@/components/table";
 import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   TransactionDetailsModal,
@@ -97,18 +98,13 @@ function LogIdCell({ value, onCopy }: { value: string; onCopy: (value: string) =
 }
 
 export function TransactionHistoryPanel() {
-  const { value, setURLQuery } = useURLQuery<{ page?: string }>();
-  const [search, setSearch] = React.useState("");
+  const { value } = useURLQuery<{ page?: string }>();
+  const { search } = useURLTableSearch();
   const [transactions, setTransactions] = React.useState<TransactionRow[]>(() =>
     generateTransactions(1000),
   );
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const { copy } = useCopyToClipboard();
-
-  React.useEffect(() => {
-    setURLQuery({ page: "1" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
 
   const filtered = React.useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -213,27 +209,9 @@ export function TransactionHistoryPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-md">
-          <Input
-            placeholder="Search Transaction ID"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-12 rounded-2xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"
-          >
-            Filter Options
-            <ChevronDown className="h-4 w-4 text-text-grey" />
-          </Button>
-        </div>
-      </div>
+      <TableSearchToolbar
+        placeholder="Search Transaction ID"
+      />
 
       <DataTable<TransactionRow, unknown>
         columns={columns}

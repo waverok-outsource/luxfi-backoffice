@@ -18,7 +18,7 @@ import {
   AssetLoanModal,
   type AssetLoanStep,
 } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal";
-import { type AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-information-modal";
+import { type AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
 
 type LoanStatus = AssetLoan["status"];
 
@@ -51,7 +51,7 @@ function getStatusBadge(status: LoanStatus) {
     case "rejected":
       return { variant: "disabled" as const, label: "Rejected" };
     case "completed":
-      return { variant: "neutral" as const, label: "Completed" };
+      return { variant: "success" as const, label: "Completed" };
     default:
       return { variant: "disabled" as const, label: "-" };
   }

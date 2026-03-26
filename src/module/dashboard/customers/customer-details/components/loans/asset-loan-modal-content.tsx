@@ -9,12 +9,7 @@ import { ModalShell } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import {
   FormControl,
   FormDatePicker,
@@ -22,9 +17,10 @@ import {
   FormSelectTrigger,
 } from "@/components/util/form-controller";
 import {
+  CollateralDetailsCard,
   CollateralValueBar,
   type AssetLoan,
-} from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-information-modal";
+} from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
 import type {
   AssetLoanApprovalPayload,
   AssetLoanStep,
@@ -34,7 +30,6 @@ import {
   getLoanCaseStatusBadge,
   LoanCaseCard,
   LoanCaseDetailList,
-  LoanCaseDetailRow,
   LoanCaseNotice,
   LoanCaseSection,
 } from "@/module/dashboard/customers/customer-details/components/shared/loan-case-ui";
@@ -71,7 +66,11 @@ function getLoanApprovalDefaults(loan: AssetLoan): LoanCaseApprovalFormInputValu
 }
 
 function LiquidatedBanner() {
-  return <LoanCaseNotice variant="error">Collateral asset Item has been liquidated to repay this loan.</LoanCaseNotice>;
+  return (
+    <LoanCaseNotice variant="error">
+      Collateral asset Item has been liquidated to repay this loan.
+    </LoanCaseNotice>
+  );
 }
 
 function LoanDetailsCard({ loan }: { loan: AssetLoan }) {
@@ -116,65 +115,6 @@ function LoanDetailsCard({ loan }: { loan: AssetLoan }) {
             { label: "Repayment Due", value: loan.repaymentDueLabel },
           ]}
         />
-      </LoanCaseCard>
-    </LoanCaseSection>
-  );
-}
-
-function CollateralDetailsCard({ loan }: { loan: AssetLoan }) {
-  return (
-    <LoanCaseSection title="Collateral Asset Details">
-      <LoanCaseCard>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-[220px] rounded-2xl bg-primary-grey-undertone p-4">
-            <p className="text-sm font-semibold text-text-grey">Collateral Asset Value</p>
-            <p className="mt-2 text-2xl font-bold text-text-black">
-              {formatLoanCaseMoney(loan.collateralValue)}
-            </p>
-            <Badge variant="success" className="mt-2 text-xs" showStatusDot>
-              {loan.collateralTrendLabel}
-            </Badge>
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="flex items-center gap-2">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-[84px] w-[84px] overflow-hidden rounded-2xl border border-primary-grey-stroke bg-primary-grey-undertone"
-                >
-                  <div className="h-full w-full bg-[linear-gradient(135deg,rgba(0,0,0,0.05),rgba(0,0,0,0.0))]" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 border-t border-primary-grey-stroke pt-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 space-y-2">
-              <LoanCaseDetailList
-                className="space-y-2"
-                items={[
-                  { label: "Asset Name:", value: loan.collateralAssetName },
-                  { label: "Brand (Category):", value: loan.collateralBrandCategory },
-                ]}
-              />
-            </div>
-            {loan.collateralVerified ? (
-              <Badge variant="success" showStatusDot>
-                Verified
-              </Badge>
-            ) : null}
-          </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 border-t border-primary-grey-stroke pt-4 md:grid-cols-2">
-            <LoanCaseDetailRow label="Year" value={loan.collateralYear} />
-            <LoanCaseDetailRow label="Box" value={loan.collateralBox} />
-            <LoanCaseDetailRow label="Dial Colour" value={loan.collateralDialColour} />
-            <LoanCaseDetailRow label="Case Colour" value={loan.collateralCaseColour} />
-            <LoanCaseDetailRow label="Weight" value={loan.collateralWeight} />
-            <LoanCaseDetailRow label="Case Size" value={loan.collateralCaseSize} />
-          </div>
-        </div>
       </LoanCaseCard>
     </LoanCaseSection>
   );

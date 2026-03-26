@@ -29,7 +29,7 @@ export function getLoanCaseStatusBadge(status: LoanCaseStatus) {
     case "rejected":
       return { variant: "disabled" as const, label: "Rejected" };
     case "completed":
-      return { variant: "neutral" as const, label: "Completed" };
+      return { variant: "success" as const, label: "Completed" };
     default:
       return { variant: "disabled" as const, label: "-" };
   }
@@ -101,16 +101,7 @@ export function LoanCaseCard({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-primary-grey-stroke bg-primary-white p-5",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn("rounded-xl bg-primary-white p-5", className)}>{children}</div>;
 }
 
 export function LoanCaseNotice({

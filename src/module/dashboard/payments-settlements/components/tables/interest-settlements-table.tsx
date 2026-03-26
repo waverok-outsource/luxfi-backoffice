@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { InterestDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/interest-details-modal";
 
 import {
@@ -29,7 +30,7 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
 ];
 
 export function InterestSettlementsTable() {
-  const [search, setSearch] = React.useState("");
+  const { search } = useURLTableSearch();
   const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
 
   const rows = useFilteredPaymentRows(interestSettlementRows, search, SEARCH_FIELDS);
@@ -54,7 +55,7 @@ export function InterestSettlementsTable() {
   return (
     <>
       <div className="space-y-4">
-        <PaymentsTableToolbar search={search} onSearchChange={setSearch} />
+        <PaymentsTableToolbar />
         <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
       </div>
 
