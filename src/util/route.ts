@@ -8,10 +8,12 @@ const route = {
     customers: "/customers",
     portfolioManagement: "/portfolio-management",
     assetLoans: "/asset-loans",
+    smartContracts: "/smart-contracts",
     riskManagement: "/risk-management",
     paymentsSettlements: "/payments-settlements",
     growthMarketing: "/growth-marketing",
     helpSupport: "/help-support",
+    systemSettings: "/system-settings",
   },
 };
 

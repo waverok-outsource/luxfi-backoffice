@@ -12,10 +12,12 @@ const labelToPath: Record<string, string> = {
   Customers: route.dashboard.customers,
   "Portfolio Management": route.dashboard.portfolioManagement,
   "Asset Loans": route.dashboard.assetLoans,
+  "Smart Contracts": route.dashboard.smartContracts,
   "Risk Management": route.dashboard.riskManagement,
   "Payments & Settlements": route.dashboard.paymentsSettlements,
   "Growth & Marketing": route.dashboard.growthMarketing,
   "Help & Support": route.dashboard.helpSupport,
+  "System Settings": route.dashboard.systemSettings,
 };
 
 export function DashboardSidebar() {
