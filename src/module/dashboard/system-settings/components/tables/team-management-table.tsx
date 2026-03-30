@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 
 import {
   BaseTable,
@@ -14,7 +15,6 @@ import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   TEAM_MANAGEMENT_TOTAL_ENTRIES,
-  teamMembers,
   type TeamMemberRecord,
   type TeamMemberStatus,
 } from "@/module/dashboard/system-settings/data";
@@ -55,24 +55,25 @@ function createTruncatedTextColumn<TData extends Record<string, unknown>>(
   };
 }
 
-export function TeamManagementTable() {
+export function TeamManagementTable({ members }: { members: TeamMemberRecord[] }) {
+  const router = useRouter();
   const { value } = useURLQuery<TeamManagementQuery>();
   const { search } = useURLTableSearch();
 
   const searchQuery = search.trim().toLowerCase();
   const filteredMembers = React.useMemo(() => {
     if (!searchQuery) {
-      return teamMembers;
+      return members;
     }
 
-    return teamMembers.filter(
+    return members.filter(
       (member) =>
         member.memberId.toLowerCase().includes(searchQuery) ||
         member.memberName.toLowerCase().includes(searchQuery) ||
         member.emailAddress.toLowerCase().includes(searchQuery) ||
         member.assignedRole.toLowerCase().includes(searchQuery),
     );
-  }, [searchQuery]);
+  }, [members, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / PAGE_SIZE));
   const parsedPage = Number(value.page);
@@ -126,9 +127,12 @@ export function TeamManagementTable() {
       },
       createActionColumnWithOptions<TeamManagementTableRow>({
         ariaLabel: "View team member details",
+        onView: (row) => {
+          router.push(`/system-settings/${encodeURIComponent(row.id)}`);
+        },
       }),
     ],
-    [],
+    [router],
   );
 
   return (
@@ -136,7 +140,11 @@ export function TeamManagementTable() {
       data={rows}
       columns={columns}
       pageSize={PAGE_SIZE}
-      totalEntries={searchQuery ? filteredMembers.length : TEAM_MANAGEMENT_TOTAL_ENTRIES}
+      totalEntries={
+        searchQuery
+          ? filteredMembers.length
+          : Math.max(members.length, TEAM_MANAGEMENT_TOTAL_ENTRIES)
+      }
       emptyStateLabel="No team members found."
     />
   );

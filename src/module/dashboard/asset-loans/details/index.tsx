@@ -3,14 +3,13 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useParams, useRouter } from "next/navigation";
 
-import BackIcon from "@/components/icon/back";
 import { ModalRoot, SuccessModalContent } from "@/components/modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DetailBreadcrumbHeader } from "@/components/ui/detail-breadcrumb-header";
 import { Input } from "@/components/ui/input";
 import { RiskGradientBar } from "@/components/ui/risk-gradient-bar";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
@@ -179,26 +178,12 @@ function getRepaymentMarkerPosition(
 
 function AssetLoanDetailsHeader({ loanId, onBack }: { loanId: string; onBack: () => void }) {
   return (
-    <div className="flex items-center gap-3">
-      <Button
-        type="button"
-        variant="grey-stroke"
-        size="icon"
-        className="h-12 w-12 rounded-2xl border border-primary-grey-stroke bg-primary-white hover:bg-primary-grey-undertone"
-        onClick={onBack}
-        aria-label="Go back"
-      >
-        <BackIcon />
-      </Button>
-
-      <div className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-primary-grey-stroke bg-primary-grey-undertone px-4 text-sm">
-        <span className="text-text-grey">Asset loan Details</span>
-        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-grey-stroke text-text-grey">
-          <ChevronRight className="h-3.5 w-3.5" />
-        </span>
-        <span className="truncate font-semibold text-text-black">ID {loanId}</span>
-      </div>
-    </div>
+    <DetailBreadcrumbHeader
+      title="Asset loan Details"
+      entityId={loanId}
+      onBack={onBack}
+      idPrefix="ID"
+    />
   );
 }
 

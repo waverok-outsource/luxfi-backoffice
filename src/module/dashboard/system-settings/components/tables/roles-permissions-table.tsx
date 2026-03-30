@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { PencilLine } from "lucide-react";
 
-import { BaseTable, createActionColumnWithOptions, createSerialColumn } from "@/components/table";
+import { BaseTable, createIdentifierColumn, createSerialColumn, createTextColumn } from "@/components/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
-  rolePermissionSettings,
   type RolePermissionRecord,
   type RolePermissionStatus,
 } from "@/module/dashboard/system-settings/data";
@@ -23,44 +24,34 @@ function getStatusBadge(status: RolePermissionStatus) {
   switch (status) {
     case "active":
       return { variant: "success" as const, label: "Active" };
-    case "draft":
-      return { variant: "warning" as const, label: "Draft" };
     default:
-      return { variant: "disabled" as const, label: "-" };
+      return { variant: "error" as const, label: "Deactivated" };
   }
 }
 
-function createTruncatedColumn<TData extends Record<string, unknown>>(
-  header: string,
-  accessorKey: keyof TData & string,
-  className: string,
-): ColumnDef<TData, unknown> {
-  return {
-    accessorKey,
-    header,
-    cell: ({ getValue }) => (
-      <span className={className}>{String(getValue() ?? "-")}</span>
-    ),
-  };
-}
-
-export function RolesPermissionsTable() {
+export function RolesPermissionsTable({
+  roles,
+  onEdit,
+}: {
+  roles: RolePermissionRecord[];
+  onEdit: (role: RolePermissionRecord) => void;
+}) {
   const { value } = useURLQuery<RolesPermissionsQuery>();
   const { search } = useURLTableSearch();
 
   const searchQuery = search.trim().toLowerCase();
   const filteredRoles = React.useMemo(() => {
     if (!searchQuery) {
-      return rolePermissionSettings;
+      return roles;
     }
 
-    return rolePermissionSettings.filter(
+    return roles.filter(
       (role) =>
-        role.roleName.toLowerCase().includes(searchQuery) ||
-        role.accessScope.toLowerCase().includes(searchQuery) ||
-        role.permissionsSummary.toLowerCase().includes(searchQuery),
+        role.roleTag.toLowerCase().includes(searchQuery) ||
+        role.roleId.toLowerCase().includes(searchQuery) ||
+        role.status.toLowerCase().includes(searchQuery),
     );
-  }, [searchQuery]);
+  }, [roles, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRoles.length / PAGE_SIZE));
   const parsedPage = Number(value.page);
@@ -78,31 +69,14 @@ export function RolesPermissionsTable() {
   const columns = React.useMemo<ColumnDef<RolePermissionRecord, unknown>[]>(
     () => [
       createSerialColumn<RolePermissionRecord>(),
-      createTruncatedColumn<RolePermissionRecord>(
-        "Role Name",
-        "roleName",
-        "block max-w-[160px] truncate",
-      ),
-      createTruncatedColumn<RolePermissionRecord>(
-        "Access Scope",
-        "accessScope",
-        "block max-w-[220px] truncate",
-      ),
+      createIdentifierColumn<RolePermissionRecord>("Role ID", "roleId"),
+      createTextColumn<RolePermissionRecord>("Role Tag", "roleTag", "max-w-[220px]"),
       {
-        accessorKey: "assignedMembers",
-        header: "Assigned Members",
+        accessorKey: "permissions",
+        header: "Permissions",
         cell: ({ getValue }) => <span>{Number(getValue() ?? 0)}</span>,
       },
-      createTruncatedColumn<RolePermissionRecord>(
-        "Permissions",
-        "permissionsSummary",
-        "block max-w-[260px] truncate",
-      ),
-      createTruncatedColumn<RolePermissionRecord>(
-        "Last Updated",
-        "lastUpdated",
-        "block whitespace-nowrap",
-      ),
+      createTextColumn<RolePermissionRecord>("Date Added", "dateAdded", "whitespace-nowrap"),
       {
         accessorKey: "status",
         header: "Status",
@@ -116,11 +90,23 @@ export function RolesPermissionsTable() {
           );
         },
       },
-      createActionColumnWithOptions<RolePermissionRecord>({
-        ariaLabel: "View role details",
-      }),
+      {
+        id: "rowActions",
+        header: "Action",
+        cell: ({ row }) => (
+          <Button
+            type="button"
+            variant="table-action"
+            size="table-action"
+            aria-label="Edit role details"
+            onClick={() => onEdit(row.original)}
+          >
+            <PencilLine className="h-4 w-4" />
+          </Button>
+        ),
+      },
     ],
-    [],
+    [onEdit],
   );
 
   return (
@@ -129,7 +115,7 @@ export function RolesPermissionsTable() {
       columns={columns}
       pageSize={PAGE_SIZE}
       totalEntries={filteredRoles.length}
-      enableCheckbox={false}
+      enableCheckbox
       emptyStateLabel="No roles found."
     />
   );

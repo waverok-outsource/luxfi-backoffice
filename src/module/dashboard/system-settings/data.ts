@@ -43,13 +43,33 @@ export const memberPresence = {
 
 export type TeamMemberStatus = "active" | "deactivated";
 
+export const teamRoleOptions = [
+  "Marketing Officer",
+  "Compliance Officer",
+  "Risk Manager",
+  "Finance Manager",
+  "Business Operations",
+  "Operations Analyst",
+] as const;
+
+export const teamRoleDepartments: Record<(typeof teamRoleOptions)[number], string> = {
+  "Marketing Officer": "Marketing",
+  "Compliance Officer": "Compliance",
+  "Risk Manager": "Risk",
+  "Finance Manager": "Finance",
+  "Business Operations": "Operations",
+  "Operations Analyst": "Operations",
+};
+
 export type TeamMemberRecord = {
   id: string;
   memberId: string;
   memberName: string;
   emailAddress: string;
   assignedRole: string;
+  department: string;
   dateAdded: string;
+  memberSinceLabel: string;
   status: TeamMemberStatus;
 };
 
@@ -57,99 +77,203 @@ export const TEAM_MANAGEMENT_TOTAL_ENTRIES = 1000;
 
 export const teamMembers: TeamMemberRecord[] = [
   {
-    id: "tm-1",
+    id: "CU802725424233",
     memberId: "8909554221",
     memberName: "Dare Abdullahi",
     emailAddress: "dare.abdullahi@pawnshopbyblu.com",
     assignedRole: "Marketing Officer",
+    department: "Marketing",
     dateAdded: "10 - 01 - 2026",
+    memberSinceLabel: "10 January, 2026",
     status: "active",
   },
   {
-    id: "tm-2",
+    id: "CU802725424234",
     memberId: "8909554222",
     memberName: "Oreoluwa Akinnagbe",
     emailAddress: "oreoluwa.akinnagbe@pawnshopbyblu.com",
     assignedRole: "Compliance Officer",
+    department: "Compliance",
     dateAdded: "10 - 01 - 2026",
+    memberSinceLabel: "10 January, 2026",
     status: "deactivated",
   },
   {
-    id: "tm-3",
+    id: "CU802725424235",
     memberId: "8909554223",
     memberName: "John Ndubuisi",
     emailAddress: "johndubuisi@pawnshopbyblu.com",
     assignedRole: "Risk Manager",
+    department: "Risk",
     dateAdded: "10 - 01 - 2026",
+    memberSinceLabel: "10 January, 2026",
     status: "active",
   },
   {
-    id: "tm-4",
+    id: "CU802725424236",
     memberId: "8909554224",
     memberName: "Hannah Amarachi",
     emailAddress: "hannahamarachi@pawnshopbyblu.com",
     assignedRole: "Finance Manager",
+    department: "Finance",
     dateAdded: "10 - 01 - 2026",
+    memberSinceLabel: "10 January, 2026",
     status: "active",
   },
   {
-    id: "tm-5",
+    id: "CU802725424237",
     memberId: "8909554225",
     memberName: "Fred Bassey",
     emailAddress: "fred.bassey@pawnshopbyblu.com",
     assignedRole: "Business Operations",
+    department: "Operations",
     dateAdded: "10 - 01 - 2026",
+    memberSinceLabel: "10 January, 2026",
     status: "active",
   },
 ];
 
-export type RolePermissionStatus = "active" | "draft";
+export const rolePermissionModules = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "customers", label: "Customers" },
+  { key: "kycCompliance", label: "KYC & Compliance" },
+  { key: "portfolioManagement", label: "Portfolio Management" },
+  { key: "loansSmartContracts", label: "Loans & Smart Contracts" },
+  { key: "riskManagement", label: "Risk Management" },
+  { key: "paymentsSettlements", label: "Payments & Settlements" },
+  { key: "growthMarketing", label: "Growth & Marketing" },
+  { key: "helpSupport", label: "Help & Support" },
+  { key: "systemSettings", label: "System Settings" },
+] as const;
+
+export type RolePermissionModuleKey = (typeof rolePermissionModules)[number]["key"];
+
+export type RolePermissionStatus = "active" | "deactivated";
+
+export type RolePermissionAccess = {
+  moduleKey: RolePermissionModuleKey;
+  moduleLabel: string;
+  viewerOnly: boolean;
+  initiatorApprover: boolean;
+};
 
 export type RolePermissionRecord = {
   id: string;
-  roleName: string;
-  accessScope: string;
-  assignedMembers: number;
-  permissionsSummary: string;
-  lastUpdated: string;
+  roleId: string;
+  roleTag: string;
+  permissions: number;
+  dateAdded: string;
   status: RolePermissionStatus;
+  access: RolePermissionAccess[];
 };
+
+export function createRolePermissionAccess(
+  selection: Partial<Record<RolePermissionModuleKey, "viewerOnly" | "initiatorApprover">> = {},
+): RolePermissionAccess[] {
+  return rolePermissionModules.map((module) => {
+    const value = selection[module.key];
+
+    return {
+      moduleKey: module.key,
+      moduleLabel: module.label,
+      viewerOnly: value === "viewerOnly",
+      initiatorApprover: value === "initiatorApprover",
+    };
+  });
+}
 
 export const rolePermissionSettings: RolePermissionRecord[] = [
   {
-    id: "rp-1",
-    roleName: "Finance Manager",
-    accessScope: "Treasury and settlements",
-    assignedMembers: 3,
-    permissionsSummary: "Wallet approvals, settlements, reconciliations",
-    lastUpdated: "22 - 03 - 2026",
+    id: "8909554221",
+    roleId: "8909554221",
+    roleTag: "Marketing Officer",
+    permissions: 10,
+    dateAdded: "10 - 01 - 2026",
     status: "active",
+    access: createRolePermissionAccess({
+      dashboard: "initiatorApprover",
+      customers: "initiatorApprover",
+      kycCompliance: "viewerOnly",
+      portfolioManagement: "viewerOnly",
+      loansSmartContracts: "initiatorApprover",
+      riskManagement: "initiatorApprover",
+      paymentsSettlements: "initiatorApprover",
+      growthMarketing: "viewerOnly",
+      helpSupport: "viewerOnly",
+      systemSettings: "viewerOnly",
+    }),
   },
   {
-    id: "rp-2",
-    roleName: "Compliance Officer",
-    accessScope: "KYC and customer reviews",
-    assignedMembers: 4,
-    permissionsSummary: "KYC review, document access, escalation queue",
-    lastUpdated: "18 - 03 - 2026",
-    status: "active",
+    id: "8909554222",
+    roleId: "8909554222",
+    roleTag: "Compliance Officer",
+    permissions: 8,
+    dateAdded: "10 - 01 - 2026",
+    status: "deactivated",
+    access: createRolePermissionAccess({
+      dashboard: "viewerOnly",
+      customers: "initiatorApprover",
+      kycCompliance: "initiatorApprover",
+      portfolioManagement: "viewerOnly",
+      riskManagement: "initiatorApprover",
+      paymentsSettlements: "viewerOnly",
+      helpSupport: "viewerOnly",
+      systemSettings: "viewerOnly",
+    }),
   },
   {
-    id: "rp-3",
-    roleName: "Risk Manager",
-    accessScope: "Credit and exposure controls",
-    assignedMembers: 2,
-    permissionsSummary: "LTV overrides, liquidation rules, risk reports",
-    lastUpdated: "14 - 03 - 2026",
+    id: "8909554223",
+    roleId: "8909554223",
+    roleTag: "Risk Manager",
+    permissions: 7,
+    dateAdded: "10 - 01 - 2026",
     status: "active",
+    access: createRolePermissionAccess({
+      dashboard: "initiatorApprover",
+      customers: "viewerOnly",
+      kycCompliance: "viewerOnly",
+      loansSmartContracts: "initiatorApprover",
+      riskManagement: "initiatorApprover",
+      paymentsSettlements: "viewerOnly",
+      systemSettings: "viewerOnly",
+    }),
   },
   {
-    id: "rp-4",
-    roleName: "Operations Analyst",
-    accessScope: "Workflow operations",
-    assignedMembers: 5,
-    permissionsSummary: "Case routing, queue management, audit visibility",
-    lastUpdated: "09 - 03 - 2026",
-    status: "draft",
+    id: "8909554224",
+    roleId: "8909554224",
+    roleTag: "Finance Manager",
+    permissions: 10,
+    dateAdded: "10 - 01 - 2026",
+    status: "active",
+    access: createRolePermissionAccess({
+      dashboard: "initiatorApprover",
+      customers: "initiatorApprover",
+      kycCompliance: "viewerOnly",
+      portfolioManagement: "viewerOnly",
+      loansSmartContracts: "initiatorApprover",
+      riskManagement: "initiatorApprover",
+      paymentsSettlements: "initiatorApprover",
+      growthMarketing: "viewerOnly",
+      helpSupport: "viewerOnly",
+      systemSettings: "viewerOnly",
+    }),
+  },
+  {
+    id: "8909554225",
+    roleId: "8909554225",
+    roleTag: "Business Operations",
+    permissions: 8,
+    dateAdded: "10 - 01 - 2026",
+    status: "active",
+    access: createRolePermissionAccess({
+      dashboard: "viewerOnly",
+      customers: "initiatorApprover",
+      portfolioManagement: "initiatorApprover",
+      loansSmartContracts: "viewerOnly",
+      riskManagement: "viewerOnly",
+      paymentsSettlements: "initiatorApprover",
+      growthMarketing: "viewerOnly",
+      helpSupport: "viewerOnly",
+    }),
   },
 ];
