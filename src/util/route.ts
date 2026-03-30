@@ -1,6 +1,7 @@
 const route = {
   auth: {
     login: "/auth/login",
+    logout: "/logout",
     reset: "/auth/reset-password",
   },
   dashboard: {

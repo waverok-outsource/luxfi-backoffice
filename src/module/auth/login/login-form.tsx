@@ -7,23 +7,23 @@ import { Input } from "@/components/ui/input";
 import { FormField, FormControl } from "@/components/util/form-controller";
 import { AuthFormLayout } from "@/module/auth/shared/auth-form-layout";
 import { loginSchema, LoginType } from "@/schema/auth.schema";
+import useAuthFns from "@/services/functions/auth.fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import route from "@/util/route";
 
 export default function LoginForm() {
+  const { login, loading } = useAuthFns();
   const {
     control,
     handleSubmit,
-    formState: { isDirty, isValid },
+    formState: { isValid },
   } = useForm<LoginType>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "admin@pawnshopbyblu.com", password: "motihaha$yeAG@baby" },
     mode: "all",
   });
 
-  const onSubmit = (data: LoginType) => {
-    console.log(data);
-  };
+  const onSubmit = async (data: LoginType) => login(data);
 
   return (
     <AuthFormLayout title="Log in" description="Log in details to access CRM back-office portal">
@@ -45,7 +45,12 @@ export default function LoginForm() {
           )}
         </FormField>
 
-        <Button type="submit" className="w-full" disabled={!isDirty || !isValid}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={!isValid || loading.LOGIN}
+          pending={loading.LOGIN}
+        >
           Log in
         </Button>
 

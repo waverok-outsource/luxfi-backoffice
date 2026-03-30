@@ -9,7 +9,6 @@ import {
   Landmark,
   Megaphone,
   Settings2,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 
@@ -22,7 +21,6 @@ export type SidebarMenuItem = {
 export const sideMenu: SidebarMenuItem[] = [
   { label: "Home", icon: Landmark, active: true },
   { label: "Customers", icon: Users },
-  { label: "KYC & Compliance", icon: ShieldCheck },
   { label: "Portfolio Management", icon: BriefcaseBusiness },
   { label: "Asset Loans", icon: HandCoins },
   { label: "Smart Contracts", icon: FileCheck2 },
@@ -63,7 +61,13 @@ export const stats: StatCard[] = [
     period: "Last 7 days",
     tone: "positive",
   },
-  { title: "Total Customers", value: "2,269", trend: "67%", period: "Last 7 days", tone: "positive" },
+  {
+    title: "Total Customers",
+    value: "2,269",
+    trend: "67%",
+    period: "Last 7 days",
+    tone: "positive",
+  },
   {
     title: "Verified Customers",
     value: "1,290",

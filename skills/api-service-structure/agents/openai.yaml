@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Service Structure"
+  short_description: "Apply the repo's API route, read-client, function, util, and type conventions"
+  default_prompt: "Use $api-service-structure when adding or refactoring the API layer so the work follows the repo convention for api-handler, route files, read-only client files, write-side function hooks, util helpers, and module type files."

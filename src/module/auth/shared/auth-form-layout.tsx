@@ -21,7 +21,7 @@ function AuthFormLayout({
       <div className="mx-auto grid h-full w-full max-w-[1440px] gap-6 min-[721px]:grid-cols-2 lg:gap-10 min-[1025px]:grid-cols-[0.92fr_1.08fr]">
         <div className="flex h-full min-h-0 flex-col">
           <div className="mb-8 flex items-center gap-5">
-            <Logo variant="gold" width={50} height={50} className="shrink-0" />
+            <Logo variant="gold" width={70} height={60} className="shrink-0" />
             <div>
               <h1 className="text-[32px] font-bold leading-none text-text-black">{title}</h1>
               <p className="mt-1 text-base leading-snug text-text-black">{description}</p>
