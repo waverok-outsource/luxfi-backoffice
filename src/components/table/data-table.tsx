@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TablePagination } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type PaginationConfig = {
@@ -33,9 +34,12 @@ interface DataTableProps<TData, TValue> {
   className?: string;
   tableClassName?: string;
   emptyStateLabel?: string;
+  loading?: boolean;
   pagination?: PaginationConfig;
   enableCheckbox?: boolean;
 }
+
+const skeletonWidthClasses = ["w-10", "w-24", "w-32", "w-40", "w-28", "w-20"];
 
 export function DataTable<TData, TValue>({
   columns,
@@ -43,6 +47,7 @@ export function DataTable<TData, TValue>({
   className,
   tableClassName,
   emptyStateLabel = "No results.",
+  loading = false,
   pagination,
   enableCheckbox = false,
 }: DataTableProps<TData, TValue>) {
@@ -51,19 +56,42 @@ export function DataTable<TData, TValue>({
   const totalEntries = pagination?.totalEntries ?? data.length;
   const pageSize = Math.max(1, pagination?.pageSize ?? (data.length || 1));
   const maxVisiblePages = Math.max(3, pagination?.maxVisiblePages ?? 3);
+  const skeletonRowCount = Math.max(1, Math.min(pageSize, 10));
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const tableColumns = React.useMemo<ColumnDef<TData, TValue>[]>(
+    () =>
+      loading
+        ? columns.map((column, index) => ({
+            ...column,
+            cell: () => (
+              <Skeleton
+                className={cn(
+                  "h-4 rounded-full",
+                  skeletonWidthClasses[index % skeletonWidthClasses.length],
+                )}
+              />
+            ),
+          }))
+        : columns,
+    [columns, loading],
+  );
+
+  const tableData = React.useMemo<TData[]>(
+    () => (loading ? Array.from({ length: skeletonRowCount }, () => ({}) as TData) : data),
+    [data, loading, skeletonRowCount],
+  );
 
   React.useEffect(() => {
-    if (!enableCheckbox) {
+    if (!enableCheckbox || loading) {
       setRowSelection({});
     }
-  }, [enableCheckbox, data]);
+  }, [enableCheckbox, loading, data]);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data,
-    columns,
-    enableRowSelection: enableCheckbox,
+    data: tableData,
+    columns: tableColumns,
+    enableRowSelection: enableCheckbox && !loading,
     onRowSelectionChange: setRowSelection,
     state: {
       rowSelection,
@@ -95,6 +123,7 @@ export function DataTable<TData, TValue>({
                           onCheckedChange={(checked) =>
                             table.toggleAllPageRowsSelected(Boolean(checked))
                           }
+                          disabled={loading}
                         />
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </div>
@@ -116,9 +145,12 @@ export function DataTable<TData, TValue>({
                     {enableCheckbox && cellIndex === 0 ? (
                       <div className="flex items-center gap-3">
                         <Checkbox
-                          aria-label={`Select row ${row.index + 1}`}
+                          aria-label={
+                            loading ? `Loading row ${row.index + 1}` : `Select row ${row.index + 1}`
+                          }
                           checked={row.getIsSelected()}
                           onCheckedChange={(checked) => row.toggleSelected(Boolean(checked))}
+                          disabled={loading}
                         />
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
@@ -139,7 +171,7 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
 
-      {pagination ? (
+      {pagination && !loading ? (
         <TablePagination
           totalEntries={totalEntries}
           pageSize={pageSize}

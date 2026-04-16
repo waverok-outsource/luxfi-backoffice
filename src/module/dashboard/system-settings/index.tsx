@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +16,8 @@ type SystemSettingsQuery = {
   tab?: string;
   page?: string;
   search?: string;
+  from?: string;
+  to?: string;
 };
 
 function isSystemSettingsTab(value: string | null | undefined): value is SystemSettingsTabValue {
@@ -27,10 +26,6 @@ function isSystemSettingsTab(value: string | null | undefined): value is SystemS
 
 export function SystemSettingsDashboard() {
   const { value, setURLQuery } = useURLQuery<SystemSettingsQuery>();
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
 
   const activeTab = isSystemSettingsTab(value.tab) ? value.tab : DEFAULT_SYSTEM_SETTINGS_TAB;
   const ActiveTabContent = SYSTEM_SETTINGS_TAB_COMPONENTS[activeTab].content;
@@ -44,6 +39,8 @@ export function SystemSettingsDashboard() {
       tab: nextTab,
       page: "1",
       search: undefined,
+      from: undefined,
+      to: undefined,
     });
   };
 
@@ -54,7 +51,7 @@ export function SystemSettingsDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar />
 
       <TeamManagementMetrics />
 

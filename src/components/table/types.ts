@@ -16,6 +16,7 @@ export type BaseTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[];
   pageSize: number;
   totalEntries?: number;
+  loading?: boolean;
   enableCheckbox?: boolean;
   tableClassName?: string;
   className?: string;

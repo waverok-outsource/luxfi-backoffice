@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +17,8 @@ type HelpSupportQuery = {
   tab?: string;
   page?: string;
   search?: string;
+  from?: string;
+  to?: string;
 };
 
 function isHelpSupportTab(value: string | null | undefined): value is HelpSupportTabValue {
@@ -28,10 +27,6 @@ function isHelpSupportTab(value: string | null | undefined): value is HelpSuppor
 
 export function HelpSupportDashboard() {
   const { value, setURLQuery } = useURLQuery<HelpSupportQuery>();
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
 
   const activeTab = isHelpSupportTab(value.tab) ? value.tab : DEFAULT_HELP_SUPPORT_TAB;
   const ActiveTabContent = HELP_SUPPORT_TAB_COMPONENTS[activeTab].slots.content;
@@ -45,6 +40,8 @@ export function HelpSupportDashboard() {
       tab: nextTab,
       page: "1",
       search: undefined,
+      from: undefined,
+      to: undefined,
     });
   };
 
@@ -55,7 +52,7 @@ export function HelpSupportDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar />
 
       <HelpSupportMetrics metrics={helpSupportMetrics} />
 

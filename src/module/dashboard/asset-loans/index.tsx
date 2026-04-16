@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +17,8 @@ type AssetLoansQuery = {
   tab?: string;
   page?: string;
   search?: string;
+  from?: string;
+  to?: string;
 };
 
 function isAssetLoanTab(value: string | null | undefined): value is AssetLoanTabValue {
@@ -28,10 +27,6 @@ function isAssetLoanTab(value: string | null | undefined): value is AssetLoanTab
 
 export function AssetLoansDashboard() {
   const { value, setURLQuery } = useURLQuery<AssetLoansQuery>();
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
 
   const activeTab = isAssetLoanTab(value.tab) ? value.tab : DEFAULT_ASSET_LOANS_TAB;
   const ActiveTabContent = ASSET_LOANS_TAB_COMPONENTS[activeTab].slots.content;
@@ -45,6 +40,8 @@ export function AssetLoansDashboard() {
       tab: nextTab,
       page: "1",
       search: undefined,
+      from: undefined,
+      to: undefined,
     });
   };
 
@@ -55,7 +52,7 @@ export function AssetLoansDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar />
 
       <AssetLoanMetrics metrics={assetLoansMetrics} />
 

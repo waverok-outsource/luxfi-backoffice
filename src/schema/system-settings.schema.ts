@@ -5,7 +5,7 @@ const requiredText = z.string().trim().min(1, "Required");
 export const addTeamMemberSchema = z.object({
   firstName: requiredText,
   lastName: requiredText,
-  emailAddress: requiredText.email("Enter a valid email address"),
+  emailAddress: requiredText.pipe(z.email("Enter a valid email address")),
   role: requiredText,
 });
 

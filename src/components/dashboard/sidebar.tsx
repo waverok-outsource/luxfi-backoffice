@@ -52,13 +52,13 @@ export function DashboardSidebar() {
                 key={item.label}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition",
+                  "flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm transition font-semibold",
                   isActive
                     ? "bg-primary-white text-primary-black"
                     : "text-primary-white/90 hover:bg-white/10",
                 )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-[18px] w-[18px]" />
                 <span>{item.label}</span>
               </Link>
             );

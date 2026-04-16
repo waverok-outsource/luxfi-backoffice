@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import {
@@ -16,11 +13,6 @@ import { RiskManagementLtvChart } from "@/module/dashboard/risk-management/compo
 import { RiskManagementMetrics } from "@/module/dashboard/risk-management/components/risk-management-metrics";
 
 export function RiskManagementDashboard() {
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
-
   return (
     <div className="space-y-4">
       <DashboardPageHeader
@@ -28,7 +20,7 @@ export function RiskManagementDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar resetPageOnChange={false} />
 
       <RiskManagementMetrics
         featuredMetrics={featuredMetrics}

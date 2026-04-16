@@ -1,3 +1,5 @@
+import { ApiResponse } from "./global";
+
 export type SystemPermissionType = {
   id: string;
   title: string;
@@ -32,9 +34,4 @@ export type AuthUserType = {
   permissions: UserPermissionsType;
 };
 
-export type LoginResponseType = {
-  code: string;
-  message: string;
-  status: "success";
-  data: AuthUserType;
-};
+export type LoginResponseType = ApiResponse<AuthUserType>;

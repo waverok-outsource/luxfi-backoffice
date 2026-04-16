@@ -10,6 +10,7 @@ export function BaseTable<TData>({
   columns,
   pageSize,
   totalEntries = DEFAULT_TOTAL_ENTRIES,
+  loading = false,
   enableCheckbox = true,
   tableClassName = "w-full",
   className,
@@ -23,6 +24,7 @@ export function BaseTable<TData>({
       tableClassName={tableClassName}
       className={className}
       emptyStateLabel={emptyStateLabel}
+      loading={loading}
       enableCheckbox={enableCheckbox}
       pagination={{
         totalEntries,

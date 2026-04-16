@@ -1,13 +1,11 @@
-"use client";
-
 import { AlertTriangle, BadgeCheck, PencilLine } from "lucide-react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { TeamMemberRecord } from "@/module/dashboard/system-settings/data";
+import type { SettingsTeamMemberType } from "@/types/settings.type";
+import { formatDate, getFullName, toTitleCase } from "@/util/helper";
 
 type TeamMemberOverviewCardProps = {
-  member: TeamMemberRecord;
+  member: SettingsTeamMemberType;
   onEdit: () => void;
   onToggleStatus: () => void;
 };
@@ -26,7 +24,8 @@ export function TeamMemberOverviewCard({
   onEdit,
   onToggleStatus,
 }: TeamMemberOverviewCardProps) {
-  const isDeactivated = member.status === "deactivated";
+  const isDeactivated = member.accountStatus.toLowerCase() !== "active";
+  const assignedRole = toTitleCase(member.roleTitle);
 
   return (
     <div className="grid gap-4 xl:grid-cols-[160px_minmax(0,1fr)_180px]">
@@ -50,13 +49,10 @@ export function TeamMemberOverviewCard({
         </h2>
 
         <div className="mt-4 space-y-3">
-          <DetailRow label="Full Name:" value={member.memberName} />
-          <DetailRow label="Email Address:" value={member.emailAddress} />
-          <DetailRow
-            label="Role (Department):"
-            value={`${member.assignedRole} (${member.department})`}
-          />
-          <DetailRow label="Member Since:" value={member.memberSinceLabel} />
+          <DetailRow label="Full Name:" value={getFullName(member)} />
+          <DetailRow label="Email Address:" value={member.email} />
+          <DetailRow label="Role (Department):" value={`${assignedRole} (${assignedRole})`} />
+          <DetailRow label="Member Since:" value={formatDate(member.createdAt, "dd MMMM, yyyy")} />
         </div>
       </article>
 
@@ -66,27 +62,20 @@ export function TeamMemberOverviewCard({
           Edit Details
         </Button>
 
-        {isDeactivated ? (
-          <Button
-            type="button"
-            variant="success"
-            className="h-12 rounded-2xl"
-            onClick={onToggleStatus}
-          >
+        <Button
+          type="button"
+          variant={isDeactivated ? "success" : "danger"}
+          className="h-12 rounded-2xl"
+          onClick={onToggleStatus}
+        >
+          {isDeactivated ? (
             <BadgeCheck className="h-5 w-5" />
-            Re-activate User
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="danger"
-            className="h-12 rounded-2xl"
-            onClick={onToggleStatus}
-          >
+          ) : (
             <AlertTriangle className="h-5 w-5" />
-            Deactivate User
-          </Button>
-        )}
+          )}
+
+          {isDeactivated ? "Re-activate User" : "Deactivate User"}
+        </Button>
       </div>
     </div>
   );

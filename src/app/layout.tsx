@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Urbanist } from "next/font/google";
 import { Toaster } from "sonner";
+
+import QueryClientProviderWrapper from "@/components/providers/query-provider";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
 import "./globals.css";
 
 const urbanist = Urbanist({
@@ -26,8 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${urbanist.variable} font-urbanist text-primary-black`}>
-        <Toaster position="top-right" richColors duration={5000} closeButton visibleToasts={1} />
-        {children}
+        <QueryClientProviderWrapper>
+          <ReactQueryDevtools initialIsOpen={false} />
+          <Toaster position="top-right" richColors duration={5000} closeButton visibleToasts={1} />
+          {children}
+        </QueryClientProviderWrapper>
       </body>
     </html>
   );

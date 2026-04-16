@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import {
@@ -17,11 +14,6 @@ import { GrowthMarketingMetrics } from "@/module/dashboard/growth-marketing/comp
 import { GrowthMarketingUserGrowthTrend } from "@/module/dashboard/growth-marketing/components/growth-marketing-user-growth-trend";
 
 export function GrowthMarketingDashboard() {
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
-
   return (
     <div className="space-y-4">
       <DashboardPageHeader
@@ -29,7 +21,7 @@ export function GrowthMarketingDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar resetPageOnChange={false} />
 
       <GrowthMarketingMetrics
         featuredMetrics={featuredMetrics}

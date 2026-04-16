@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-import { ChevronDown, Download, Search } from "lucide-react";
+import { ChevronDown, Download, RotateCcw, Search } from "lucide-react";
 
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -10,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useURLDateRange } from "@/hooks/useURLDateRange";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { CustomerChannelCard } from "@/module/dashboard/customers/components/customer-channel-card";
 import { CUSTOMERS_TAB_COMPONENTS } from "@/module/dashboard/customers/components/tab-table-components";
@@ -24,6 +23,8 @@ import {
 type CustomersQuery = {
   tab?: string;
   page?: string;
+  from?: string;
+  to?: string;
 };
 
 function isCustomersTab(value: string | null | undefined): value is CustomersTabValue {
@@ -32,10 +33,7 @@ function isCustomersTab(value: string | null | undefined): value is CustomersTab
 
 export function CustomersDashboard() {
   const { value, setURLQuery } = useURLQuery<CustomersQuery>();
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
+  const { range, setRange, resetRange, hasRange } = useURLDateRange();
 
   const activeTab = isCustomersTab(value.tab) ? value.tab : DEFAULT_CUSTOMERS_TAB;
   const ActiveTabContent = CUSTOMERS_TAB_COMPONENTS[activeTab].slots.content;
@@ -48,6 +46,8 @@ export function CustomersDashboard() {
     setURLQuery({
       tab: nextTab,
       page: undefined,
+      from: undefined,
+      to: undefined,
     });
   };
 
@@ -58,14 +58,7 @@ export function CustomersDashboard() {
         description="Real time analytics and overview at a glance"
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-md">
-          <Input
-            placeholder="Search ..."
-            startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-          />
-        </div>
-
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <DatePicker
             mode="range"
@@ -74,6 +67,17 @@ export function CustomersDashboard() {
             className="h-12 rounded-xl border border-primary-grey-stroke bg-primary-white text-text-grey"
             numberOfMonths={2}
           />
+          {hasRange ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-12 w-12 rounded-xl border border-primary-grey-stroke bg-primary-white p-0 text-text-grey hover:bg-primary-grey-undertone"
+              onClick={resetRange}
+              aria-label="Reset date range"
+            >
+              <RotateCcw className="h-4 w-4 text-primary-black" />
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             className="h-12 rounded-xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"

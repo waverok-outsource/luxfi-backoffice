@@ -1,34 +1,30 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  AlertTriangle,
-  BriefcaseBusiness,
-  CircleDollarSign,
-  FileCheck2,
-  HandCoins,
-  Headset,
-  Landmark,
-  Megaphone,
-  Settings2,
-  Users,
-} from "lucide-react";
+import { AlertTriangle, Headset, Megaphone } from "lucide-react";
+import type { ElementType, SVGProps } from "react";
+import AssetLoanIcon from "@/components/icon/sidebar/asset";
+import Contracts from "@/components/icon/sidebar/contracts";
+import CustomerIcon from "@/components/icon/sidebar/customer";
+import HomeIcon from "@/components/icon/sidebar/home";
+import PaymentIcon from "@/components/icon/sidebar/payment";
+import PortfolioIcon from "@/components/icon/sidebar/portfolio";
+import SettingsIcon from "@/components/icon/sidebar/settings";
 
 export type SidebarMenuItem = {
   label: string;
-  icon: LucideIcon;
+  icon: ElementType<SVGProps<SVGSVGElement>>;
   active?: boolean;
 };
 
 export const sideMenu: SidebarMenuItem[] = [
-  { label: "Home", icon: Landmark, active: true },
-  { label: "Customers", icon: Users },
-  { label: "Portfolio Management", icon: BriefcaseBusiness },
-  { label: "Asset Loans", icon: HandCoins },
-  { label: "Smart Contracts", icon: FileCheck2 },
+  { label: "Home", icon: HomeIcon, active: true },
+  { label: "Customers", icon: CustomerIcon },
+  { label: "Portfolio Management", icon: PortfolioIcon },
+  { label: "Asset Loans", icon: AssetLoanIcon },
+  { label: "Smart Contracts", icon: Contracts },
   { label: "Risk Management", icon: AlertTriangle },
-  { label: "Payments & Settlements", icon: CircleDollarSign },
+  { label: "Payments & Settlements", icon: PaymentIcon },
   { label: "Growth & Marketing", icon: Megaphone },
   { label: "Help & Support", icon: Headset },
-  { label: "System Settings", icon: Settings2 },
+  { label: "System Settings", icon: SettingsIcon },
 ];
 
 export type StatCard = {

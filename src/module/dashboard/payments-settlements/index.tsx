@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import type { DateRange } from "react-day-picker";
-
 import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +19,8 @@ type PaymentsSettlementsQuery = {
   tab?: string;
   page?: string;
   search?: string;
+  from?: string;
+  to?: string;
 };
 
 function isPaymentsHistoryTab(
@@ -32,10 +31,6 @@ function isPaymentsHistoryTab(
 
 export function PaymentsSettlementsDashboard() {
   const { value, setURLQuery } = useURLQuery<PaymentsSettlementsQuery>();
-  const [range, setRange] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 1),
-    to: new Date(2023, 6, 20),
-  });
 
   const activeTab = isPaymentsHistoryTab(value.tab)
     ? value.tab
@@ -51,6 +46,8 @@ export function PaymentsSettlementsDashboard() {
       tab: nextTab,
       page: "1",
       search: undefined,
+      from: undefined,
+      to: undefined,
     });
   };
 
@@ -61,7 +58,7 @@ export function PaymentsSettlementsDashboard() {
         description="Manage and track all transactions inflow and outflow"
       />
 
-      <AnalyticsToolbar range={range} onRangeChange={setRange} />
+      <AnalyticsToolbar />
 
       <PaymentsSettlementsMetrics
         leadingMetrics={leadingMetrics}

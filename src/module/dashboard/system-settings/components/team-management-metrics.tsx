@@ -1,30 +1,70 @@
 import { PresenceMeterCard } from "@/components/dashboard/presence-meter";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { memberPresence, systemSettingsMetrics } from "@/module/dashboard/system-settings/data";
+import { useURLQuery } from "@/hooks/useUrlQuery";
+import { useSettingsAnalytics } from "@/services/queries/settings.queries";
+import type { SettingsAnalyticsGrowthPattern, SettingsAnalyticsMetricType } from "@/types/settings.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+
+function formatValue(value: number | undefined) {
+  return typeof value === "number" ? value.toLocaleString() : "--";
+}
+
+function getMetricTone(pattern: SettingsAnalyticsGrowthPattern | undefined) {
+  return pattern === "downward" ? "negative" : "positive";
+}
+
+function getPresenceShare(value: number, total: number) {
+  if (!total) {
+    return 0;
+  }
+
+  return Math.round((value / total) * 100);
+}
+
+function buildMetricCard(metric: SettingsAnalyticsMetricType | undefined, title: string) {
+  return {
+    title,
+    value: formatValue(metric?.value),
+    trend: metric?.growth ?? "--",
+    period: metric?.growthDuration ?? "--",
+    tone: getMetricTone(metric?.growthPattern) as "positive" | "negative",
+  };
+}
 
 export function TeamManagementMetrics() {
+  const { value } = useURLQuery<{ from?: string; to?: string }>();
+  const analyticsQuery = convertObjectToQuery({
+    ...(value.from ? { from: value.from } : {}),
+    ...(value.to ? { to: value.to } : {}),
+  });
+  const { data } = useSettingsAnalytics(analyticsQuery);
+  const teamMembers = buildMetricCard(data?.teamMembers, "Total Team Members");
+  const roles = buildMetricCard(data?.roles, "Total Roles");
+  const assignedRoles = buildMetricCard(data?.assignedRoles, "Assigned Roles");
+  const totalPresence = (data?.teamMembers.online ?? 0) + (data?.teamMembers.offline ?? 0);
+
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1.65fr_1fr_1fr]">
       <StatCard
-        title={systemSettingsMetrics[0].title}
-        value={systemSettingsMetrics[0].value}
-        trend={systemSettingsMetrics[0].trend}
-        period={systemSettingsMetrics[0].period}
-        tone="positive"
+        title={teamMembers.title}
+        value={teamMembers.value}
+        trend={teamMembers.trend}
+        period={teamMembers.period}
+        tone={teamMembers.tone}
       />
 
       <PresenceMeterCard
         items={[
           {
-            label: memberPresence.online.label,
-            value: memberPresence.online.value,
-            percent: memberPresence.online.share,
+            label: "Members Online",
+            value: data?.teamMembers.online ?? 0,
+            percent: getPresenceShare(data?.teamMembers.online ?? 0, totalPresence),
             tone: "success",
           },
           {
-            label: memberPresence.offline.label,
-            value: memberPresence.offline.value,
-            percent: memberPresence.offline.share,
+            label: "Members Offline",
+            value: data?.teamMembers.offline ?? 0,
+            percent: getPresenceShare(data?.teamMembers.offline ?? 0, totalPresence),
             tone: "error",
           },
         ]}
@@ -33,14 +73,14 @@ export function TeamManagementMetrics() {
         trackClassName="h-1.5"
       />
 
-      {systemSettingsMetrics.slice(1).map((metric) => (
+      {[roles, assignedRoles].map((metric) => (
         <StatCard
           key={metric.title}
           title={metric.title}
           value={metric.value}
           trend={metric.trend}
           period={metric.period}
-          tone="positive"
+          tone={metric.tone}
         />
       ))}
     </div>

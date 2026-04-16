@@ -51,11 +51,13 @@ function IdentifierCell({ value }: { value: string }) {
   );
 }
 
-export function createSerialColumn<TData>(): ColumnDef<TData, unknown> {
+export function createSerialColumn<TData>(options?: {
+  offset?: number;
+}): ColumnDef<TData, unknown> {
   return {
     id: "serialNumber",
     header: "S/N",
-    cell: ({ row }) => <span>{row.index + 1}.</span>,
+    cell: ({ row }) => <span>{(options?.offset ?? 0) + row.index + 1}.</span>,
   };
 }
 

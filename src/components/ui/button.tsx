@@ -59,7 +59,7 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     >
-      {pending ? <Spinner aria-hidden className="size-4" /> : null}
+      {pending ? <Spinner aria-hidden /> : null}
       {children}
     </ButtonPrimitive>
   );

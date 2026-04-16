@@ -6,10 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 
 import { DetailBreadcrumbHeader } from "@/components/ui/detail-breadcrumb-header";
 import { EditTeamMemberModal } from "@/module/dashboard/system-settings/components/modals/add-team-member-modal";
-import { useTeamMembersStore, getTeamMemberFormDefaults } from "@/module/dashboard/system-settings/hooks/use-team-members-store";
 import { TeamMemberDetailsTabs } from "@/module/dashboard/system-settings/member-details/components/team-member-details-tabs";
 import { TeamMemberOverviewCard } from "@/module/dashboard/system-settings/member-details/components/team-member-overview-card";
-import type { AddTeamMemberFormValues } from "@/schema/system-settings.schema";
+import { useSettingsTeamMember } from "@/services/queries/settings.queries";
+import { getFullName, toTitleCase } from "@/util/helper";
 
 function TeamMemberStatusBanner() {
   return (
@@ -22,19 +22,33 @@ function TeamMemberStatusBanner() {
 
 export function TeamMemberDetailsDashboard() {
   const router = useRouter();
-  const params = useParams<{ id?: string }>();
-  const memberRouteId =
-    params && typeof params.id === "string" ? decodeURIComponent(params.id) : "unknown";
-  const { getMemberById, updateMember, setMemberStatus } = useTeamMembersStore();
-  const member = getMemberById(memberRouteId);
+  const params = useParams<{ id: string }>();
+  const memberRouteId = decodeURIComponent(params.id);
+  const { data: teamMemberResponse, isLoading } = useSettingsTeamMember(memberRouteId);
+  const member = teamMemberResponse?.data ?? null;
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+
+  if (isLoading && !member) {
+    return (
+      <div className="space-y-4">
+        <DetailBreadcrumbHeader
+          title="Team member Details"
+          entityId={params.id}
+          onBack={() => router.back()}
+        />
+        <div className="rounded-2xl bg-primary-white p-8 text-center text-text-grey">
+          Loading team member record...
+        </div>
+      </div>
+    );
+  }
 
   if (!member) {
     return (
       <div className="space-y-4">
         <DetailBreadcrumbHeader
           title="Team member Details"
-          entityId={memberRouteId}
+          entityId={params.id}
           onBack={() => router.back()}
         />
         <div className="rounded-2xl bg-primary-white p-8 text-center text-text-grey">
@@ -44,40 +58,39 @@ export function TeamMemberDetailsDashboard() {
     );
   }
 
-  const handleSave = (values: AddTeamMemberFormValues) => {
-    updateMember(member.id, values);
-  };
-
   return (
     <div className="space-y-4">
       <DetailBreadcrumbHeader
         title="Team member Details"
-        entityId={member.id}
+        entityId={params.id}
         onBack={() => router.back()}
       />
 
-      {member.status === "deactivated" ? <TeamMemberStatusBanner /> : null}
+      {member.accountStatus.toLowerCase() !== "active" ? <TeamMemberStatusBanner /> : null}
 
       <TeamMemberOverviewCard
         member={member}
         onEdit={() => setIsEditOpen(true)}
-        onToggleStatus={() =>
-          setMemberStatus(member.id, member.status === "active" ? "deactivated" : "active")
-        }
+        onToggleStatus={() => undefined}
       />
 
       <TeamMemberDetailsTabs
-        memberId={member.id}
-        memberName={member.memberName}
-        memberRole={member.assignedRole}
+        memberId={member.userRef}
+        memberName={getFullName(member)}
+        memberRole={toTitleCase(member.roleTitle)}
       />
 
       {isEditOpen ? (
         <EditTeamMemberModal
           open={isEditOpen}
           onOpenChange={setIsEditOpen}
-          initialValues={getTeamMemberFormDefaults(member)}
-          onSave={handleSave}
+          initialValues={{
+            firstName: member.firstName,
+            lastName: member.lastName,
+            emailAddress: member.email,
+            role: toTitleCase(member.roleTitle),
+          }}
+          onSave={() => undefined}
         />
       ) : null}
     </div>
