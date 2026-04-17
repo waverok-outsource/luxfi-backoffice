@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { FormControl, FormField } from "@/components/util/form-controller";
 import { addRoleSchema, type AddRoleFormValues } from "@/schema/system-settings.schema";
 import useSettingsFns from "@/services/functions/settings.fns";
 import { useSettingsPermissions } from "@/services/queries/settings.queries";
@@ -230,7 +231,6 @@ function RoleFormModal({ open, onOpenChange, mode = "add", role }: RoleFormModal
   const isStatusUpdating = loading.UPDATE_ROLE_STATUS;
 
   const {
-    register,
     setValue,
     handleSubmit,
     control,
@@ -311,19 +311,13 @@ function RoleFormModal({ open, onOpenChange, mode = "add", role }: RoleFormModal
                 </div>
               ) : null}
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-text-grey">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  {...register("role")}
-                  placeholder="Enter text here"
-                  disabled={isDeactivated}
-                />
-                {errors.role?.message ? (
-                  <p className="text-sm text-text-red">{errors.role.message}</p>
-                ) : null}
-              </div>
+              <FormField control={control} name="role" label="Role" required>
+                {({ field }) => (
+                  <FormControl>
+                    <Input {...field} placeholder="Enter text here" disabled={isDeactivated} />
+                  </FormControl>
+                )}
+              </FormField>
 
               <div className="space-y-4">
                 <p className="text-sm font-medium text-text-grey">

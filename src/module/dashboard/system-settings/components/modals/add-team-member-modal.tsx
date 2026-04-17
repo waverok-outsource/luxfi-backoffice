@@ -12,49 +12,98 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { FormControl, FormField, FormSelectTrigger } from "@/components/util/form-controller";
-import { teamRoleOptions } from "@/module/dashboard/system-settings/data";
 import { addTeamMemberSchema, type AddTeamMemberFormValues } from "@/schema/system-settings.schema";
+import useSettingsFns from "@/services/functions/settings.fns";
+import { useSettingsRoles } from "@/services/queries/settings.queries";
+import type {
+  CreateTeamMemberPayloadType,
+  UpdateTeamMemberPayloadType,
+} from "@/types/settings.type";
+import { toTitleCase } from "@/util/helper";
 
 type TeamMemberFormModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode?: "add" | "edit";
+  teamMemberId?: string;
   initialValues?: AddTeamMemberFormValues;
-  onSubmit: (values: AddTeamMemberFormValues) => void;
 };
 
 type AddTeamMemberStage = "FORM" | "SUCCESS";
+type TeamMemberSuccessKind = "create" | "update";
 
-const DEFAULT_VALUES: AddTeamMemberFormValues = {
-  firstName: "",
-  lastName: "",
-  emailAddress: "",
-  role: "",
+const TEAM_MEMBER_SUCCESS_COPY: Record<
+  TeamMemberSuccessKind,
+  { title: string; description: string }
+> = {
+  create: {
+    title: "New Member Added",
+    description: "Invitation link has been sent to user email with login access.",
+  },
+  update: {
+    title: "Team Member Updated",
+    description: "Team member details and assigned role have been saved.",
+  },
 };
+
+function buildCreateTeamMemberPayload(
+  values: AddTeamMemberFormValues,
+): CreateTeamMemberPayloadType {
+  return {
+    email: values.emailAddress.trim(),
+    firstName: values.firstName.trim(),
+    lastName: values.lastName.trim(),
+    role: values.role.trim(),
+  };
+}
+
+function buildUpdateTeamMemberPayload(
+  values: AddTeamMemberFormValues,
+): UpdateTeamMemberPayloadType {
+  return {
+    firstName: values.firstName.trim(),
+    lastName: values.lastName.trim(),
+    role: values.role.trim(),
+  };
+}
 
 function TeamMemberFormModal({
   open,
   onOpenChange,
   mode = "add",
+  teamMemberId,
   initialValues,
-  onSubmit,
 }: TeamMemberFormModalProps) {
   const [currentStage, setCurrentStage] = React.useState<AddTeamMemberStage>("FORM");
+  const [successKind, setSuccessKind] = React.useState<TeamMemberSuccessKind>("create");
   const formId = React.useId();
-  const resolvedValues = {
-    ...DEFAULT_VALUES,
-    ...initialValues,
+
+  const goToSuccess = (kind: TeamMemberSuccessKind) => {
+    setSuccessKind(kind);
+    setCurrentStage("SUCCESS");
   };
 
   const {
     control,
     handleSubmit,
-    formState: { isValid },
+    formState: { isSubmitting, isValid },
   } = useForm<AddTeamMemberFormValues>({
     resolver: zodResolver(addTeamMemberSchema),
-    defaultValues: resolvedValues,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      emailAddress: "",
+      role: "",
+      ...initialValues,
+    },
     mode: "all",
   });
+
+  const { data: rolesResponse, isLoading: isRolesLoading } = useSettingsRoles();
+  const roleOptions = rolesResponse?.data ?? [];
+  const { createTeamMember, updateTeamMemberDetails, loading } = useSettingsFns();
+  const isSavingForm = loading.CREATE_TEAM_MEMBER || loading.UPDATE_TEAM_MEMBER_DETAILS;
+  const isEditModeMissingId = mode === "edit" && !teamMemberId;
 
   const config =
     mode === "edit"
@@ -62,26 +111,25 @@ function TeamMemberFormModal({
           title: "Edit Team Member",
           description: "Fill details to edit team member access to back-office",
           submitLabel: "Save & Update",
-          successTitle: "",
-          successDescription: "",
         }
       : {
           title: "Add New Team Member",
           description: "Fill details to add new team member access to back-office",
           submitLabel: "Send Invite",
-          successTitle: "New Member Added",
-          successDescription: "Invitation link has been sent to user email with login access.",
         };
 
-  const handleFormSubmit = (values: AddTeamMemberFormValues) => {
-    onSubmit(values);
-
-    if (mode === "edit") {
-      onOpenChange(false);
+  const handleFormSubmit = async (values: AddTeamMemberFormValues) => {
+    if (mode === "add") {
+      const payload = buildCreateTeamMemberPayload(values);
+      await createTeamMember(payload, () => goToSuccess("create"));
       return;
     }
 
-    setCurrentStage("SUCCESS");
+    if (mode === "edit" && teamMemberId) {
+      const payload = buildUpdateTeamMemberPayload(values);
+      await updateTeamMemberDetails(teamMemberId, payload, () => goToSuccess("update"));
+      return;
+    }
   };
 
   const stageConfig: Record<
@@ -98,6 +146,7 @@ function TeamMemberFormModal({
             description={config.description}
             showBackButton
             onBack={() => onOpenChange(false)}
+            titleClassName="text-[24px] sm:text-[32px]"
           />
 
           <ModalShell.Body className="rounded-2xl px-4 py-5 sm:px-6 sm:py-6">
@@ -126,7 +175,7 @@ function TeamMemberFormModal({
                       type="email"
                       placeholder="Enter text here"
                       disabled={mode === "edit"}
-                      className="disabled:opacity-100 disabled:bg-primary-grey-stroke disabled:text-text-black"
+                      className="disabled:bg-primary-grey-stroke disabled:text-text-black disabled:opacity-100"
                     />
                   </FormControl>
                 )}
@@ -134,18 +183,36 @@ function TeamMemberFormModal({
 
               <FormField control={control} name="role" label="Role" required>
                 {({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormSelectTrigger>
-                      <SelectValue placeholder="Select Options" />
-                    </FormSelectTrigger>
-                    <SelectContent>
-                      {teamRoleOptions.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isRolesLoading || roleOptions.length === 0}
+                    >
+                      <FormSelectTrigger>
+                        <SelectValue
+                          placeholder={isRolesLoading ? "Loading roles..." : "Select Role"}
+                        >
+                          {(selectedRoleId: string | null) => {
+                            if (!selectedRoleId) return null;
+                            const selected = roleOptions.find((r) => r.roleId === selectedRoleId);
+                            return selected ? toTitleCase(selected.title) : selectedRoleId;
+                          }}
+                        </SelectValue>
+                      </FormSelectTrigger>
+                      <SelectContent>
+                        {roleOptions.map((role) => (
+                          <SelectItem key={role.roleId} value={role.roleId}>
+                            {toTitleCase(role.title)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {!isRolesLoading && roleOptions.length === 0 ? (
+                      <p className="text-sm text-text-grey">No roles available.</p>
+                    ) : null}
+                  </div>
                 )}
               </FormField>
             </form>
@@ -160,11 +227,15 @@ function TeamMemberFormModal({
             >
               Back
             </ModalShell.Action>
+
             <ModalShell.Action
               type="submit"
               form={formId}
               className="flex-1 sm:max-w-[196px]"
-              disabled={!isValid}
+              disabled={
+                !isValid || isRolesLoading || isSubmitting || isSavingForm || isEditModeMissingId
+              }
+              pending={isSavingForm}
             >
               {config.submitLabel}
             </ModalShell.Action>
@@ -177,8 +248,8 @@ function TeamMemberFormModal({
       contentClassName: SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
       content: (
         <SuccessModalContent
-          title={config.successTitle}
-          description={config.successDescription}
+          title={TEAM_MEMBER_SUCCESS_COPY[successKind].title}
+          description={TEAM_MEMBER_SUCCESS_COPY[successKind].description}
           onClose={() => onOpenChange(false)}
         />
       ),
@@ -200,38 +271,4 @@ function TeamMemberFormModal({
   );
 }
 
-type AddTeamMemberModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onInvite: (values: AddTeamMemberFormValues) => void;
-};
-
-export function AddTeamMemberModal({ open, onOpenChange, onInvite }: AddTeamMemberModalProps) {
-  return (
-    <TeamMemberFormModal open={open} onOpenChange={onOpenChange} mode="add" onSubmit={onInvite} />
-  );
-}
-
-type EditTeamMemberModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialValues: AddTeamMemberFormValues;
-  onSave: (values: AddTeamMemberFormValues) => void;
-};
-
-export function EditTeamMemberModal({
-  open,
-  onOpenChange,
-  initialValues,
-  onSave,
-}: EditTeamMemberModalProps) {
-  return (
-    <TeamMemberFormModal
-      open={open}
-      onOpenChange={onOpenChange}
-      mode="edit"
-      initialValues={initialValues}
-      onSubmit={onSave}
-    />
-  );
-}
+export default TeamMemberFormModal;

@@ -5,6 +5,8 @@ import {
   SettingsRolesResponseType,
   SettingsTeamMembersResponseType,
   SettingsTeamMemberType,
+  SettingsTeamMemberActivityLogsResponseType,
+  SettingsTeamMemberSessionLogsResponseType,
 } from "@/types/settings.type";
 import apiHandler from "../api-handler";
 import SystemRoute from "../route/settings.route";
@@ -43,6 +45,22 @@ export const fetchRoles = async (query: string) => {
 
 export const fetchPermissions = async () => {
   const { data } = await apiHandler.get<SettingsPermissionsResponseType>(SystemRoute.permissions);
+
+  return data;
+};
+
+export const fetchTeamMemberSessionLogs = async (id: string, query = "") => {
+  const { data } = await apiHandler.get<SettingsTeamMemberSessionLogsResponseType>(
+    `${SystemRoute.teamMembers}/${id}/session-logs${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
+
+export const fetchTeamMemberActivityLogs = async (id: string, query = "") => {
+  const { data } = await apiHandler.get<SettingsTeamMemberActivityLogsResponseType>(
+    `${SystemRoute.teamMembers}/${id}/activities${query ? `?${query}` : ""}`,
+  );
 
   return data;
 };

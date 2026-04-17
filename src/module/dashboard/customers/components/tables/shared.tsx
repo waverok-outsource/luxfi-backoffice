@@ -35,8 +35,9 @@ export function createTextColumn(
 export function createIdentifierColumn(
   header: string,
   accessorKey: keyof CustomerTableRow & string,
+  cellClassName?: string,
 ): ColumnDef<CustomerTableRow, unknown> {
-  return createIdentifierColumnBase<CustomerTableRow>(header, accessorKey);
+  return createIdentifierColumnBase<CustomerTableRow>(header, accessorKey, cellClassName);
 }
 
 export function createStatusColumn(header: string): ColumnDef<CustomerTableRow, unknown> {

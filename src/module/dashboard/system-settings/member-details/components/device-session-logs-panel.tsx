@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { ChevronDown, Search } from "lucide-react";
 
 import {
@@ -15,118 +14,85 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import {
-  SessionLogReportModal,
-  type TeamMemberSessionLogRecord,
-} from "@/module/dashboard/system-settings/member-details/components/session-log-report-modal";
+import { SessionLogReportModal } from "@/module/dashboard/system-settings/member-details/components/session-log-report-modal";
+import { useSettingsTeamMemberSessionLogs } from "@/services/queries/settings.queries";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { formatDate, formatSessionLogLocation, getSerialNumberOffset } from "@/util/helper";
 
-type DeviceSessionRow = Pick<
-  TeamMemberSessionLogRecord,
-  | "id"
-  | "sessionId"
-  | "deviceName"
-  | "channel"
-  | "ipAddress"
-  | "userLocation"
-  | "activity"
-  | "sessionDate"
-  | "timestamp"
->;
+type DeviceSessionRow = {
+  id: string;
+  sessionLogId: string;
+  deviceName: string;
+  channel: string;
+  ipAddress: string;
+  userLocation: string;
+  activity: string;
+  sessionDate: string;
+  timestamp: string;
+};
 
 const PAGE_SIZE = 5;
 
-function generateDeviceSessionRows(memberId: string): TeamMemberSessionLogRecord[] {
-  const devices = [
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile", activity: "User Logged in" },
-    { deviceName: "Mac Book Safari", channel: "Web", activity: "User Logged in" },
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile", activity: "User Logged out" },
-    { deviceName: "Mac Book Safari", channel: "Web", activity: "User Logged in" },
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile", activity: "User Logged in" },
-  ] as const;
-
-  return Array.from({ length: 1000 }, (_, index) => {
-    const device = devices[index % devices.length] ?? devices[0];
-    const day = (index % 20) + 1;
-
-    return {
-      id: `${memberId}-device-${index + 1}`,
-      sessionId: `0000${String(85752257 + index).padStart(8, "0")}`,
-      deviceName: device.deviceName,
-      channel: device.channel,
-      ipAddress: "142.096.02.01",
-      userLocation: "Lagos, Nigeria",
-      activity: device.activity,
-      sessionDate: format(new Date(2026, 0, day), "dd/MM/yyyy"),
-      dateLabel: format(new Date(2026, 0, day), "do MMMM, yyyy"),
-      timestamp: index % 2 === 0 ? "07:20 AM" : "10:30:00pm",
-    };
-  });
-}
-
 export function DeviceSessionLogsPanel({ memberId }: { memberId: string }) {
   const { value, setURLQuery } = useURLQuery<{ page?: string; search?: string }>();
-  const [activeSessionId, setActiveSessionId] = React.useState<string | null>(null);
-  const sessions = React.useMemo(() => generateDeviceSessionRows(memberId), [memberId]);
+  const [activeSessionLogId, setActiveSessionLogId] = useState<string | null>(null);
 
-  const searchQuery = (value.search ?? "").trim().toLowerCase();
-  const filteredSessions = React.useMemo(() => {
-    if (!searchQuery) {
-      return sessions;
-    }
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const search = (value.search ?? "").trim();
 
-    return sessions.filter(
-      (row) =>
-        row.sessionId.toLowerCase().includes(searchQuery) ||
-        row.deviceName.toLowerCase().includes(searchQuery) ||
-        row.ipAddress.toLowerCase().includes(searchQuery),
-    );
-  }, [searchQuery, sessions]);
+  const listQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(search ? { search } : {}),
+  });
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filteredSessions.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0
-      ? Math.min(Math.floor(parsedPage), totalPages)
-      : 1;
+  const { data: sessionResponse, isLoading } = useSettingsTeamMemberSessionLogs(
+    memberId,
+    listQuery,
+  );
+  const sessions = sessionResponse?.data ?? [];
+  const paginationMeta = sessionResponse?.pagination;
 
-  const rows = React.useMemo<DeviceSessionRow[]>(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredSessions.slice(start, start + PAGE_SIZE).map((session) => ({
-      id: session.id,
-      sessionId: session.sessionId,
-      deviceName: session.deviceName,
-      channel: session.channel,
-      ipAddress: session.ipAddress,
-      userLocation: session.userLocation,
-      activity: session.activity,
-      sessionDate: session.sessionDate,
-      timestamp: session.timestamp,
-    }));
-  }, [currentPage, filteredSessions]);
+  const serialNumberOffset = getSerialNumberOffset({
+    currentPage,
+    pageSize: PAGE_SIZE,
+    pagination: paginationMeta,
+  });
+
+  const rows: DeviceSessionRow[] = sessions.map((s) => ({
+    id: s.sessionLogId,
+    sessionLogId: s.sessionLogId,
+    deviceName: s.device,
+    channel: s.channel,
+    ipAddress: s.ipAddress,
+    userLocation: formatSessionLogLocation(s.location),
+    activity: s.activity,
+    sessionDate: formatDate(s.createdAt, "dd/MM/yyyy"),
+    timestamp: formatDate(s.createdAt, "h:mm a"),
+  }));
 
   const activeSession =
-    activeSessionId != null ? sessions.find((session) => session.id === activeSessionId) ?? null : null;
+    activeSessionLogId != null
+      ? (sessions.find((s) => s.sessionLogId === activeSessionLogId) ?? null)
+      : null;
 
-  const columns = React.useMemo<ColumnDef<DeviceSessionRow, unknown>[]>(
-    () => [
-      createSerialColumn<DeviceSessionRow>(),
-      createIdentifierColumn<DeviceSessionRow>("Session ID", "sessionId"),
-      createTextColumn<DeviceSessionRow>("Device Name", "deviceName"),
-      createTextColumn<DeviceSessionRow>("Channel", "channel"),
-      createTextColumn<DeviceSessionRow>("IP Address", "ipAddress"),
-      createTextColumn<DeviceSessionRow>("User Location", "userLocation"),
-      createTextColumn<DeviceSessionRow>("Activity", "activity"),
-      createTextColumn<DeviceSessionRow>("Session Date", "sessionDate"),
-      createTextColumn<DeviceSessionRow>("Time stamp", "timestamp"),
-      createActionColumnWithOptions<DeviceSessionRow>({
-        ariaLabel: "View device session log details",
-        onView: (row) => {
-          setActiveSessionId(row.id);
-        },
-      }),
-    ],
-    [],
-  );
+  const columns: ColumnDef<DeviceSessionRow, unknown>[] = [
+    createSerialColumn<DeviceSessionRow>({ offset: serialNumberOffset }),
+    createIdentifierColumn<DeviceSessionRow>("Session ID", "sessionLogId", "max-w-[7rem]"),
+    createTextColumn<DeviceSessionRow>("Device Name", "deviceName", "inline-block max-w-[6rem]"),
+    createTextColumn<DeviceSessionRow>("Channel", "channel"),
+    createTextColumn<DeviceSessionRow>("IP Address", "ipAddress"),
+    createTextColumn<DeviceSessionRow>("User Location", "userLocation"),
+    createTextColumn<DeviceSessionRow>("Activity", "activity", "inline-block max-w-[7rem]"),
+    createTextColumn<DeviceSessionRow>("Session Date", "sessionDate"),
+    createTextColumn<DeviceSessionRow>("Time stamp", "timestamp"),
+    createActionColumnWithOptions<DeviceSessionRow>({
+      ariaLabel: "View device session log details",
+      onView: (row) => {
+        setActiveSessionLogId(row.sessionLogId);
+      },
+    }),
+  ];
 
   return (
     <div className="space-y-4">
@@ -160,9 +126,10 @@ export function DeviceSessionLogsPanel({ memberId }: { memberId: string }) {
       <DataTable<DeviceSessionRow, unknown>
         columns={columns}
         data={rows}
-        enableCheckbox
+        loading={isLoading}
+        emptyStateLabel="No session logs found."
         pagination={{
-          totalEntries: filteredSessions.length,
+          totalEntries: paginationMeta?.total ?? 0,
           pageSize: PAGE_SIZE,
           maxVisiblePages: 3,
         }}
@@ -173,7 +140,7 @@ export function DeviceSessionLogsPanel({ memberId }: { memberId: string }) {
           open={Boolean(activeSession)}
           onOpenChange={(open) => {
             if (!open) {
-              setActiveSessionId(null);
+              setActiveSessionLogId(null);
             }
           }}
           session={activeSession}

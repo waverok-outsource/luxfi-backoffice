@@ -48,8 +48,9 @@ export function createAmountColumn(
 export function createIdentifierColumn(
   header: string,
   accessorKey: keyof PaymentSettlementRow & string,
+  cellClassName?: string,
 ): ColumnDef<PaymentSettlementRow, unknown> {
-  return createIdentifierColumnBase<PaymentSettlementRow>(header, accessorKey);
+  return createIdentifierColumnBase<PaymentSettlementRow>(header, accessorKey, cellClassName);
 }
 
 export function createStatusColumn(header: string): ColumnDef<PaymentSettlementRow, unknown> {

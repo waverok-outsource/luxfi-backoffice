@@ -1,23 +1,13 @@
 "use client";
 
 import { ModalDetailRow, ModalShell } from "@/components/modal";
-
-export type TeamMemberUserActivityRecord = {
-  id: string;
-  activityId: string;
-  action: string;
-  actionDate: string;
-  actionDateLabel: string;
-  actionTimestamp: string;
-  initiatorId: string;
-  initiatorName: string;
-  initiatorRole: string;
-};
+import type { SettingsTeamMemberActivityLogType } from "@/types/settings.type";
+import { formatDate } from "@/util/helper";
 
 type UserActivityDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activity: TeamMemberUserActivityRecord;
+  activity: SettingsTeamMemberActivityLogType;
 };
 
 export function UserActivityDetailsModal({
@@ -25,6 +15,9 @@ export function UserActivityDetailsModal({
   onOpenChange,
   activity,
 }: UserActivityDetailsModalProps) {
+  const actionDateLabel = formatDate(activity.createdAt, "do MMMM, yyyy");
+  const actionTimestamp = formatDate(activity.createdAt, "h:mm a");
+
   return (
     <ModalShell.Root
       open={open}
@@ -43,27 +36,24 @@ export function UserActivityDetailsModal({
 
         <ModalShell.Body className="rounded-xl px-6 py-8">
           <div className="space-y-[14px]">
-            <ModalDetailRow
-              label="Log ID:"
-              value={activity.activityId}
-              copyText={activity.activityId}
-            />
+            <ModalDetailRow label="Log ID:" value={activity.logId} copyText={activity.logId} />
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
-            <ModalDetailRow label="Action:" value={activity.action} />
-            <ModalDetailRow label="Action Date:" value={activity.actionDateLabel} />
-            <ModalDetailRow label="Timestamp:" value={activity.actionTimestamp} />
+            <ModalDetailRow label="Event:" value={activity.event} />
+            <ModalDetailRow label="Message:" value={activity.message} />
+            <ModalDetailRow label="Resource:" value={activity.resource} />
+            <ModalDetailRow label="Event tag:" value={activity.eventTag} />
+            <ModalDetailRow label="Status:" value={activity.status} />
+            <ModalDetailRow label="Action Date:" value={actionDateLabel} />
+            <ModalDetailRow label="Timestamp:" value={actionTimestamp} />
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
-            <ModalDetailRow
-              label="Initiator ID:"
-              value={activity.initiatorId}
-              copyText={activity.initiatorId}
-            />
+            <ModalDetailRow label="IP:" value={activity.ip} copyText={activity.ip} />
+            <ModalDetailRow label="Maker:" value={activity.maker} />
+            <ModalDetailRow label="User ID:" value={activity.userId} copyText={activity.userId} />
             <ModalDetailRow label="Initiator Name:" value={activity.initiatorName} />
-            <ModalDetailRow label="Initiator Role:" value={activity.initiatorRole} />
           </div>
         </ModalShell.Body>
 

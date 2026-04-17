@@ -30,8 +30,9 @@ export function createTextColumn<TData extends Record<string, unknown>>(
 export function createIdentifierColumn<TData extends Record<string, unknown>>(
   header: string,
   accessorKey: keyof TData & string,
+  cellClassName?: string,
 ): ColumnDef<TData, unknown> {
-  return createIdentifierColumnBase<TData>(header, accessorKey);
+  return createIdentifierColumnBase<TData>(header, accessorKey, cellClassName);
 }
 
 export function createCurrencyColumn<TData extends Record<string, unknown>>(

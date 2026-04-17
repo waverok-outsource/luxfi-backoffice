@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { ChevronDown, Search } from "lucide-react";
 
 import {
@@ -15,118 +14,71 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import {
-  UserActivityDetailsModal,
-  type TeamMemberUserActivityRecord,
-} from "@/module/dashboard/system-settings/member-details/components/user-activity-details-modal";
+import { UserActivityDetailsModal } from "@/module/dashboard/system-settings/member-details/components/user-activity-details-modal";
+import { useSettingsTeamMemberActivityLogs } from "@/services/queries/settings.queries";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { formatDate, getSerialNumberOffset } from "@/util/helper";
 
-type UserActivityRow = Pick<
-  TeamMemberUserActivityRecord,
-  "id" | "activityId" | "action" | "actionDate" | "actionTimestamp"
->;
+type UserActivityRow = {
+  id: string;
+  logId: string;
+  action: string;
+  actionDate: string;
+  actionTimestamp: string;
+};
 
 const PAGE_SIZE = 5;
 
-function generateUserActivityRows(
-  memberId: string,
-  memberName: string,
-  memberRole: string,
-): TeamMemberUserActivityRecord[] {
-  const activities = [
-    "Loan Approved",
-    "Loan Rejected",
-    "Loan Approved",
-    "Loan Disbursed",
-    "Loan Disbursed",
-  ] as const;
-
-  return Array.from({ length: 1000 }, (_, index) => {
-    const item = activities[index % activities.length] ?? activities[0];
-    const day = (index % 20) + 1;
-
-    return {
-      id: `${memberId}-activity-${index + 1}`,
-      activityId: `CU-${String(8890955422 + index + 1)}...`,
-      action: item,
-      actionDate: format(new Date(2026, 1, day), "dd/MM/yyyy"),
-      actionDateLabel: format(new Date(2026, 0, day), "do MMMM, yyyy"),
-      actionTimestamp: "10:23 AM",
-      initiatorId: `0000${String(85752257 + index).padStart(8, "0")}`,
-      initiatorName: memberName,
-      initiatorRole: memberRole,
-    };
-  });
-}
-
-export function UserActivityLogPanel({
-  memberId,
-  memberName,
-  memberRole,
-}: {
-  memberId: string;
-  memberName: string;
-  memberRole: string;
-}) {
+export function UserActivityLogPanel({ memberId }: { memberId: string }) {
   const { value, setURLQuery } = useURLQuery<{ page?: string; search?: string }>();
-  const [activeActivityId, setActiveActivityId] = React.useState<string | null>(null);
-  const activities = React.useMemo(
-    () => generateUserActivityRows(memberId, memberName, memberRole),
-    [memberId, memberName, memberRole],
+  const [activeLogId, setActiveLogId] = useState<string | null>(null);
+
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const search = (value.search ?? "").trim();
+
+  const listQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(search ? { search } : {}),
+  });
+
+  const { data: activityResponse, isLoading } = useSettingsTeamMemberActivityLogs(
+    memberId,
+    listQuery,
   );
+  const activities = activityResponse?.data ?? [];
+  const paginationMeta = activityResponse?.pagination;
 
-  const searchQuery = (value.search ?? "").trim().toLowerCase();
-  const filteredActivities = React.useMemo(() => {
-    if (!searchQuery) {
-      return activities;
-    }
+  const serialNumberOffset = getSerialNumberOffset({
+    currentPage,
+    pageSize: PAGE_SIZE,
+    pagination: paginationMeta,
+  });
 
-    return activities.filter(
-      (row) =>
-        row.activityId.toLowerCase().includes(searchQuery) ||
-        row.action.toLowerCase().includes(searchQuery) ||
-        row.initiatorName.toLowerCase().includes(searchQuery),
-    );
-  }, [activities, searchQuery]);
-
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filteredActivities.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0
-      ? Math.min(Math.floor(parsedPage), totalPages)
-      : 1;
-
-  const rows = React.useMemo<UserActivityRow[]>(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredActivities.slice(start, start + PAGE_SIZE).map((activity) => ({
-      id: activity.id,
-      activityId: activity.activityId,
-      action: activity.action,
-      actionDate: activity.actionDate,
-      actionTimestamp: activity.actionTimestamp,
-    }));
-  }, [currentPage, filteredActivities]);
+  const rows: UserActivityRow[] = activities.map((a) => ({
+    id: a.logId,
+    logId: a.logId,
+    action: a.event,
+    actionDate: formatDate(a.createdAt, "dd/MM/yyyy"),
+    actionTimestamp: formatDate(a.createdAt, "h:mm a"),
+  }));
 
   const activeActivity =
-    activeActivityId != null
-      ? activities.find((activity) => activity.id === activeActivityId) ?? null
-      : null;
+    activeLogId != null ? (activities.find((a) => a.logId === activeLogId) ?? null) : null;
 
-  const columns = React.useMemo<ColumnDef<UserActivityRow, unknown>[]>(
-    () => [
-      createSerialColumn<UserActivityRow>(),
-      createIdentifierColumn<UserActivityRow>("Log ID", "activityId"),
-      createTextColumn<UserActivityRow>("Action", "action"),
-      createTextColumn<UserActivityRow>("Action Date", "actionDate"),
-      createTextColumn<UserActivityRow>("Action Timestamp", "actionTimestamp"),
-      createActionColumnWithOptions<UserActivityRow>({
-        ariaLabel: "View user activity log details",
-        onView: (row) => {
-          setActiveActivityId(row.id);
-        },
-      }),
-    ],
-    [],
-  );
+  const columns: ColumnDef<UserActivityRow, unknown>[] = [
+    createSerialColumn<UserActivityRow>({ offset: serialNumberOffset }),
+    createIdentifierColumn<UserActivityRow>("Log ID", "logId"),
+    createTextColumn<UserActivityRow>("Action", "action"),
+    createTextColumn<UserActivityRow>("Action Date", "actionDate"),
+    createTextColumn<UserActivityRow>("Action Timestamp", "actionTimestamp"),
+    createActionColumnWithOptions<UserActivityRow>({
+      ariaLabel: "View user activity log details",
+      onView: (row) => {
+        setActiveLogId(row.logId);
+      },
+    }),
+  ];
 
   return (
     <div className="space-y-4">
@@ -160,9 +112,10 @@ export function UserActivityLogPanel({
       <DataTable<UserActivityRow, unknown>
         columns={columns}
         data={rows}
-        enableCheckbox
+        loading={isLoading}
+        emptyStateLabel="No activity logs found."
         pagination={{
-          totalEntries: filteredActivities.length,
+          totalEntries: paginationMeta?.total ?? 0,
           pageSize: PAGE_SIZE,
           maxVisiblePages: 3,
         }}
@@ -173,7 +126,7 @@ export function UserActivityLogPanel({
           open={Boolean(activeActivity)}
           onOpenChange={(open) => {
             if (!open) {
-              setActiveActivityId(null);
+              setActiveLogId(null);
             }
           }}
           activity={activeActivity}

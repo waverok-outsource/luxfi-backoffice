@@ -1,31 +1,19 @@
 "use client";
 
 import { ModalDetailRow, ModalShell } from "@/components/modal";
-
-export type TeamMemberSessionLogRecord = {
-  id: string;
-  sessionId: string;
-  deviceName: string;
-  channel: string;
-  ipAddress: string;
-  userLocation: string;
-  activity: string;
-  sessionDate: string;
-  dateLabel: string;
-  timestamp: string;
-};
+import type { SettingsTeamMemberSessionLogType } from "@/types/settings.type";
+import { formatDate, formatSessionLogLocation } from "@/util/helper";
 
 type SessionLogReportModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: TeamMemberSessionLogRecord;
+  session: SettingsTeamMemberSessionLogType;
 };
 
-export function SessionLogReportModal({
-  open,
-  onOpenChange,
-  session,
-}: SessionLogReportModalProps) {
+export function SessionLogReportModal({ open, onOpenChange, session }: SessionLogReportModalProps) {
+  const dateLabel = formatDate(session.createdAt, "do MMMM, yyyy");
+  const timeLabel = formatDate(session.createdAt, "h:mm a");
+
   return (
     <ModalShell.Root
       open={open}
@@ -46,14 +34,18 @@ export function SessionLogReportModal({
           <div className="space-y-[14px]">
             <ModalDetailRow
               label="Session ID:"
-              value={session.sessionId}
-              copyText={session.sessionId}
+              value={session.sessionLogId}
+              copyText={session.sessionLogId}
             />
-            <ModalDetailRow label="Device Name" value={session.deviceName} />
+            <ModalDetailRow label="Device Name" value={session.device} />
+            <ModalDetailRow label="Device Model" value={session.deviceModel} />
             <ModalDetailRow label="Channel:" value={session.channel} />
-            <ModalDetailRow label="Date:" value={session.dateLabel} />
-            <ModalDetailRow label="Timestamp:" value={session.timestamp} />
-            <ModalDetailRow label="User Location:" value={session.userLocation} />
+            <ModalDetailRow label="Date:" value={dateLabel} />
+            <ModalDetailRow label="Timestamp:" value={timeLabel} />
+            <ModalDetailRow
+              label="User Location:"
+              value={formatSessionLogLocation(session.location)}
+            />
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 

@@ -1,15 +1,12 @@
 "use client";
 
-import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { DetailBreadcrumbHeader } from "@/components/ui/detail-breadcrumb-header";
-import { EditTeamMemberModal } from "@/module/dashboard/system-settings/components/modals/add-team-member-modal";
 import { TeamMemberDetailsTabs } from "@/module/dashboard/system-settings/member-details/components/team-member-details-tabs";
 import { TeamMemberOverviewCard } from "@/module/dashboard/system-settings/member-details/components/team-member-overview-card";
 import { useSettingsTeamMember } from "@/services/queries/settings.queries";
-import { getFullName, toTitleCase } from "@/util/helper";
 
 function TeamMemberStatusBanner() {
   return (
@@ -26,7 +23,6 @@ export function TeamMemberDetailsDashboard() {
   const memberRouteId = decodeURIComponent(params.id);
   const { data: teamMemberResponse, isLoading } = useSettingsTeamMember(memberRouteId);
   const member = teamMemberResponse?.data ?? null;
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
 
   if (isLoading && !member) {
     return (
@@ -68,31 +64,9 @@ export function TeamMemberDetailsDashboard() {
 
       {member.accountStatus.toLowerCase() !== "active" ? <TeamMemberStatusBanner /> : null}
 
-      <TeamMemberOverviewCard
-        member={member}
-        onEdit={() => setIsEditOpen(true)}
-        onToggleStatus={() => undefined}
-      />
+      <TeamMemberOverviewCard member={member} />
 
-      <TeamMemberDetailsTabs
-        memberId={member.userRef}
-        memberName={getFullName(member)}
-        memberRole={toTitleCase(member.roleTitle)}
-      />
-
-      {isEditOpen ? (
-        <EditTeamMemberModal
-          open={isEditOpen}
-          onOpenChange={setIsEditOpen}
-          initialValues={{
-            firstName: member.firstName,
-            lastName: member.lastName,
-            emailAddress: member.email,
-            role: toTitleCase(member.roleTitle),
-          }}
-          onSave={() => undefined}
-        />
-      ) : null}
+      <TeamMemberDetailsTabs memberId={member.userRef} />
     </div>
   );
 }

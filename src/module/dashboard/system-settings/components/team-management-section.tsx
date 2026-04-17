@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +19,7 @@ import { useSettingsTeamMembers } from "@/services/queries/settings.queries";
 import type { SettingsTeamMemberType } from "@/types/settings.type";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatDate, getFullName, getSerialNumberOffset, toTitleCase } from "@/util/helper";
+import TeamMemberFormModal from "./modals/add-team-member-modal";
 
 const PAGE_SIZE = 10;
 
@@ -37,6 +39,7 @@ export function TeamManagementSection() {
   const router = useRouter();
   const { search, setSearch } = useURLTableSearch();
   const { value } = useURLQuery<{ page?: string; from?: string; to?: string }>();
+  const [isAddTeamMemberOpen, setIsAddTeamMemberOpen] = React.useState(false);
   const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
 
   const teamMembersQuery = convertObjectToQuery({
@@ -130,7 +133,11 @@ export function TeamManagementSection() {
               <ChevronDown className="h-4 w-4 text-text-grey" />
             </Button>
 
-            <Button type="button" className="h-12 rounded-2xl px-5" disabled>
+            <Button
+              type="button"
+              className="h-12 rounded-2xl px-5"
+              onClick={() => setIsAddTeamMemberOpen(true)}
+            >
               Add New Member
             </Button>
           </div>
@@ -145,6 +152,14 @@ export function TeamManagementSection() {
           emptyStateLabel="No team members found."
         />
       </div>
+
+      {isAddTeamMemberOpen && (
+        <TeamMemberFormModal
+          open={isAddTeamMemberOpen}
+          onOpenChange={setIsAddTeamMemberOpen}
+          mode="add"
+        />
+      )}
     </>
   );
 }

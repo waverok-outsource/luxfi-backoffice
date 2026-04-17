@@ -3,12 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SettingsTeamMemberType } from "@/types/settings.type";
 import { formatDate, getFullName, toTitleCase } from "@/util/helper";
-
-type TeamMemberOverviewCardProps = {
-  member: SettingsTeamMemberType;
-  onEdit: () => void;
-  onToggleStatus: () => void;
-};
+import { useState } from "react";
+import TeamMemberFormModal from "../../components/modals/add-team-member-modal";
+import useSettingsFns from "@/services/functions/settings.fns";
+import { toast } from "sonner";
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -19,64 +17,100 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function TeamMemberOverviewCard({
-  member,
-  onEdit,
-  onToggleStatus,
-}: TeamMemberOverviewCardProps) {
+export function TeamMemberOverviewCard({ member }: { member: SettingsTeamMemberType }) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const isDeactivated = member.accountStatus.toLowerCase() !== "active";
   const assignedRole = toTitleCase(member.roleTitle);
+  const { updateTeamMemberDetails, loading } = useSettingsFns();
+
+  const onToggleStatus = async () => {
+    await updateTeamMemberDetails(
+      member.userRef,
+      {
+        status: isDeactivated ? "active" : "deactivate",
+      },
+      () => {
+        toast.success("Team member status updated successfully");
+      },
+    );
+  };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[160px_minmax(0,1fr)_180px]">
-      <article className="relative overflow-hidden rounded-2xl bg-[#dfe8ec]">
-        <div className="flex h-full min-h-[150px] items-end justify-center">
-          <div className="relative h-[104px] w-[104px] rounded-t-full bg-primary-white/95">
-            <div className="absolute -top-[70px] left-1/2 h-[62px] w-[62px] -translate-x-1/2 rounded-full bg-primary-white" />
+    <>
+      <div className="grid gap-4 xl:grid-cols-[160px_minmax(0,1fr)_180px]">
+        <article className="relative overflow-hidden rounded-2xl bg-[#dfe8ec]">
+          <div className="flex h-full min-h-[150px] items-end justify-center">
+            <div className="relative h-[104px] w-[104px] rounded-t-full bg-primary-white/95">
+              <div className="absolute -top-[70px] left-1/2 h-[62px] w-[62px] -translate-x-1/2 rounded-full bg-primary-white" />
+            </div>
           </div>
+
+          <div className="absolute bottom-3 left-3">
+            <Badge variant={isDeactivated ? "error" : "success"} showStatusDot>
+              {isDeactivated ? "Deactivated" : "Active"}
+            </Badge>
+          </div>
+        </article>
+
+        <article className="rounded-2xl bg-primary-white px-5 py-4">
+          <h2 className="text-[28px] font-semibold leading-tight text-text-black">
+            Employee Information
+          </h2>
+
+          <div className="mt-4 space-y-3">
+            <DetailRow label="Full Name:" value={getFullName(member)} />
+            <DetailRow label="Email Address:" value={member.email} />
+            <DetailRow label="Role (Department):" value={`${assignedRole} (${assignedRole})`} />
+            <DetailRow
+              label="Member Since:"
+              value={formatDate(member.createdAt, "dd MMMM, yyyy")}
+            />
+          </div>
+        </article>
+
+        <div className="flex flex-col justify-start gap-3">
+          <Button
+            type="button"
+            variant="gold"
+            className="h-12 rounded-2xl"
+            onClick={() => setIsEditOpen(true)}
+          >
+            <PencilLine className="h-5 w-5" />
+            Edit Details
+          </Button>
+
+          <Button
+            type="button"
+            variant={isDeactivated ? "success" : "danger"}
+            className="h-12 rounded-2xl"
+            onClick={onToggleStatus}
+            pending={loading.UPDATE_TEAM_MEMBER_DETAILS}
+          >
+            {isDeactivated ? (
+              <BadgeCheck className="h-5 w-5" />
+            ) : (
+              <AlertTriangle className="h-5 w-5" />
+            )}
+
+            {isDeactivated ? "Re-activate User" : "Deactivate User"}
+          </Button>
         </div>
-
-        <div className="absolute bottom-3 left-3">
-          <Badge variant={isDeactivated ? "error" : "success"} showStatusDot>
-            {isDeactivated ? "Deactivated" : "Active"}
-          </Badge>
-        </div>
-      </article>
-
-      <article className="rounded-2xl bg-primary-white px-5 py-4">
-        <h2 className="text-[28px] font-semibold leading-tight text-text-black">
-          Employee Information
-        </h2>
-
-        <div className="mt-4 space-y-3">
-          <DetailRow label="Full Name:" value={getFullName(member)} />
-          <DetailRow label="Email Address:" value={member.email} />
-          <DetailRow label="Role (Department):" value={`${assignedRole} (${assignedRole})`} />
-          <DetailRow label="Member Since:" value={formatDate(member.createdAt, "dd MMMM, yyyy")} />
-        </div>
-      </article>
-
-      <div className="flex flex-col justify-start gap-3">
-        <Button type="button" variant="gold" className="h-12 rounded-2xl" onClick={onEdit}>
-          <PencilLine className="h-5 w-5" />
-          Edit Details
-        </Button>
-
-        <Button
-          type="button"
-          variant={isDeactivated ? "success" : "danger"}
-          className="h-12 rounded-2xl"
-          onClick={onToggleStatus}
-        >
-          {isDeactivated ? (
-            <BadgeCheck className="h-5 w-5" />
-          ) : (
-            <AlertTriangle className="h-5 w-5" />
-          )}
-
-          {isDeactivated ? "Re-activate User" : "Deactivate User"}
-        </Button>
       </div>
-    </div>
+
+      {isEditOpen && (
+        <TeamMemberFormModal
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          mode="edit"
+          teamMemberId={member.userRef}
+          initialValues={{
+            firstName: member.firstName,
+            lastName: member.lastName,
+            emailAddress: member.email,
+            role: member.roleId,
+          }}
+        />
+      )}
+    </>
   );
 }

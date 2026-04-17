@@ -22,7 +22,7 @@ export type SettingsAnalyticsType = {
 
 export type SettingsAnalyticsResponseType = ApiResponse<SettingsAnalyticsType>;
 
-export type StaticStatus = "active" | "inactive" | "blacklist" | "locked";
+export type StaticStatus = "active" | "inactive" | "blacklist" | "locked" | "deactivate";
 
 export type SettingsTeamMemberType = {
   email: string;
@@ -79,3 +79,56 @@ export type UpdateRolePayloadType = Partial<CreateRolePayloadType> & {
 };
 
 export type CreateRoleResponseType = ApiResponse<SettingsRoleType>;
+
+export type CreateTeamMemberPayloadType = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+};
+
+export type CreateTeamMemberResponseType = ApiResponse<SettingsTeamMemberType>;
+
+export type UpdateTeamMemberPayloadType = Partial<CreateTeamMemberPayloadType> & {
+  status?: StaticStatus;
+};
+
+export type UpdateTeamMemberResponseType = ApiResponse<SettingsTeamMemberType>;
+
+export type SettingsTeamMemberSessionLogLocationType = {
+  city: string;
+  country: string;
+};
+
+export type SettingsTeamMemberSessionLogType = {
+  ipAddress: string;
+  device: string;
+  deviceModel: string;
+  channel: string;
+  location: SettingsTeamMemberSessionLogLocationType;
+  activity: string;
+  createdAt: string;
+  sessionLogId: string;
+};
+
+export type SettingsTeamMemberSessionLogsResponseType = PaginatedApiResponse<
+  SettingsTeamMemberSessionLogType[]
+>;
+
+export type SettingsTeamMemberActivityLogType = {
+  message: string;
+  status: string;
+  event: string;
+  eventTag: string;
+  resource: string;
+  ip: string;
+  maker: string;
+  userId: string;
+  createdAt: string;
+  logId: string;
+  initiatorName: string;
+};
+
+export type SettingsTeamMemberActivityLogsResponseType = PaginatedApiResponse<
+  SettingsTeamMemberActivityLogType[]
+>;

@@ -37,9 +37,16 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean;
   pagination?: PaginationConfig;
   enableCheckbox?: boolean;
+  /** Pins the last column (e.g. Action) to the right while horizontal scrolling. */
+  stickyActionColumn?: boolean;
 }
 
 const skeletonWidthClasses = ["w-10", "w-24", "w-32", "w-40", "w-28", "w-20"];
+
+const stickyActionHeaderClass =
+  "sticky right-0 z-20 border-l border-primary-grey-stroke bg-[#F4F6F8] shadow-[-8px_0_12px_-8px_rgba(0,0,0,0.06)]";
+const stickyActionCellClass =
+  "sticky right-0 z-10 border-l border-primary-grey-stroke bg-primary-white shadow-[-8px_0_12px_-8px_rgba(0,0,0,0.06)] group-hover:bg-primary-grey-undertone/40 group-data-[state=selected]:bg-primary-grey-undertone/60";
 
 export function DataTable<TData, TValue>({
   columns,
@@ -50,6 +57,7 @@ export function DataTable<TData, TValue>({
   loading = false,
   pagination,
   enableCheckbox = false,
+  stickyActionColumn = false,
 }: DataTableProps<TData, TValue>) {
   "use no memo";
 
@@ -102,7 +110,7 @@ export function DataTable<TData, TValue>({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-primary-grey-stroke bg-primary-white",
+        "min-w-0 rounded-2xl border border-primary-grey-stroke bg-primary-white",
         className,
       )}
     >
@@ -112,9 +120,11 @@ export function DataTable<TData, TValue>({
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header, headerIndex) => {
                 const showHeaderCheckbox = enableCheckbox && headerIndex === 0;
+                const isStickyAction =
+                  stickyActionColumn && headerIndex === headerGroup.headers.length - 1;
 
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className={cn(isStickyAction && stickyActionHeaderClass)}>
                     {header.isPlaceholder ? null : showHeaderCheckbox ? (
                       <div className="flex items-center gap-3">
                         <Checkbox
@@ -139,9 +149,17 @@ export function DataTable<TData, TValue>({
         <TableBody>
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                {row.getVisibleCells().map((cell, cellIndex) => (
-                  <TableCell key={cell.id}>
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                className={stickyActionColumn ? "group" : undefined}
+              >
+                {row.getVisibleCells().map((cell, cellIndex) => {
+                  const isStickyAction =
+                    stickyActionColumn && cellIndex === row.getVisibleCells().length - 1;
+
+                  return (
+                  <TableCell key={cell.id} className={cn(isStickyAction && stickyActionCellClass)}>
                     {enableCheckbox && cellIndex === 0 ? (
                       <div className="flex items-center gap-3">
                         <Checkbox
@@ -158,7 +176,8 @@ export function DataTable<TData, TValue>({
                       flexRender(cell.column.columnDef.cell, cell.getContext())
                     )}
                   </TableCell>
-                ))}
+                  );
+                })}
               </TableRow>
             ))
           ) : (

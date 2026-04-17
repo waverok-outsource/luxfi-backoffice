@@ -7,8 +7,12 @@ import SystemRoute from "@/services/route/settings.route";
 import type {
   CreateRolePayloadType,
   CreateRoleResponseType,
+  CreateTeamMemberPayloadType,
+  CreateTeamMemberResponseType,
   StaticStatus,
   UpdateRolePayloadType,
+  UpdateTeamMemberPayloadType,
+  UpdateTeamMemberResponseType,
 } from "@/types/settings.type";
 import getErrorMessage from "@/util/get-error-message";
 import keyFactory from "@/util/query-key-factory";
@@ -17,8 +21,10 @@ const useSettingsFns = () => {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState({
     CREATE_ROLE: false,
+    CREATE_TEAM_MEMBER: false,
     UPDATE_ROLE_DETAILS: false,
     UPDATE_ROLE_STATUS: false,
+    UPDATE_TEAM_MEMBER_DETAILS: false,
   });
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
@@ -44,6 +50,45 @@ const useSettingsFns = () => {
         toast.error(getErrorMessage(error));
       } finally {
         loadingFn("CREATE_ROLE", false);
+      }
+    },
+
+    createTeamMember: async (payload: CreateTeamMemberPayloadType, callback?: () => void) => {
+      loadingFn("CREATE_TEAM_MEMBER", true);
+
+      try {
+        await apiHandler.post<CreateTeamMemberResponseType>(SystemRoute.teamMembers, payload);
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.systemSettings.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("CREATE_TEAM_MEMBER", false);
+      }
+    },
+
+    updateTeamMemberDetails: async (
+      teamMemberId: string,
+      payload: UpdateTeamMemberPayloadType,
+      callback?: () => void,
+    ) => {
+      loadingFn("UPDATE_TEAM_MEMBER_DETAILS", true);
+
+      try {
+        await apiHandler.patch<UpdateTeamMemberResponseType>(
+          `${SystemRoute.teamMembers}/${teamMemberId}`,
+          payload,
+        );
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.systemSettings.teamMember.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("UPDATE_TEAM_MEMBER_DETAILS", false);
       }
     },
 

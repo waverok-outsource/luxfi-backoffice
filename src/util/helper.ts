@@ -18,6 +18,15 @@ export function formatDate(value: string, pattern: string) {
   return Number.isNaN(date.getTime()) ? "-" : format(date, pattern);
 }
 
+export function formatSessionLogLocation(location: { city?: string; country?: string }) {
+  const city = location.city?.trim();
+  const country = location.country?.trim();
+  if (!city && !country) return "—";
+  return [city ? toTitleCase(city) : null, country ? toTitleCase(country) : null]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function getSerialNumberOffset({
   currentPage,
   pageSize,

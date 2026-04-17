@@ -39,8 +39,9 @@ export function createTextColumn(
 export function createIdentifierColumn(
   header: string,
   accessorKey: keyof PortfolioTableRow & string,
+  cellClassName?: string,
 ): ColumnDef<PortfolioTableRow, unknown> {
-  return createIdentifierColumnBase<PortfolioTableRow>(header, accessorKey);
+  return createIdentifierColumnBase<PortfolioTableRow>(header, accessorKey, cellClassName);
 }
 
 export function createStatusColumn(header: string): ColumnDef<PortfolioTableRow, unknown> {

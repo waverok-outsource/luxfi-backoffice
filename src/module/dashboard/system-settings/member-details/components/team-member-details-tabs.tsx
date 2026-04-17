@@ -20,27 +20,13 @@ function isTeamMemberDetailsTab(value: string | undefined): value is TeamMemberD
   return tabs.some((tab) => tab.value === value);
 }
 
-export function TeamMemberDetailsTabs({
-  memberId,
-  memberName,
-  memberRole,
-}: {
-  memberId: string;
-  memberName: string;
-  memberRole: string;
-}) {
+export function TeamMemberDetailsTabs({ memberId }: { memberId: string }) {
   const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; search?: string }>();
   const activeTab = isTeamMemberDetailsTab(value.tab) ? value.tab : DEFAULT_TAB;
 
   const panels: Record<TeamMemberDetailsTabValue, React.ReactNode> = {
     "device-session-logs": <DeviceSessionLogsPanel memberId={memberId} />,
-    "user-activity-log": (
-      <UserActivityLogPanel
-        memberId={memberId}
-        memberName={memberName}
-        memberRole={memberRole}
-      />
-    ),
+    "user-activity-log": <UserActivityLogPanel memberId={memberId} />,
   };
 
   return (

@@ -29,12 +29,12 @@ function ActionCell({
   );
 }
 
-function IdentifierCell({ value }: { value: string }) {
+function IdentifierCell({ value, className }: { value: string; className?: string }) {
   const { copy } = useCopyToClipboard();
   const isCopyable = value.trim() !== "" && value.trim() !== "-";
 
   return (
-    <div className="flex max-w-[180px] items-center gap-2">
+    <div className={cn("flex max-w-[180px] items-center gap-2", className)}>
       <span className="truncate">{value}</span>
       <Button
         type="button"
@@ -78,11 +78,14 @@ export function createTextColumn<TData extends Record<string, unknown>>(
 export function createIdentifierColumn<TData extends Record<string, unknown>>(
   header: string,
   accessorKey: keyof TData & string,
+  cellClassName?: string,
 ): ColumnDef<TData, unknown> {
   return {
     accessorKey,
     header,
-    cell: ({ getValue }) => <IdentifierCell value={String(getValue() ?? "-")} />,
+    cell: ({ getValue }) => (
+      <IdentifierCell value={String(getValue() ?? "-")} className={cellClassName} />
+    ),
   };
 }
 
