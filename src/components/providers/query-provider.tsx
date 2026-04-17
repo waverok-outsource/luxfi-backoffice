@@ -12,11 +12,11 @@ function makeQueryClient() {
         // above 0 to avoid refetching immediately on the client
         staleTime: 60 * 1000,
         retry: 2,
-        throwOnError(error, query) {
-          // toast.error(getErrorMessage(error), {
-          //   id: query.queryKey.join("-"),
+        throwOnError(_error, _query) {
+          // toast.error(getErrorMessage(_error), {
+          //   id: _query.queryKey.join("-"),
           // });
-          // return false;
+          return false;
         },
       },
     },
