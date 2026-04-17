@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { LoanDisbursementDetailsModal } from "@/module/dashboard/asset-loans/components/modals/loan-disbursement-details-modal";
 import { ASSET_LOANS_STATUS_CONFIG } from "@/module/dashboard/asset-loans/components/status-config";
 import {
@@ -25,7 +25,8 @@ import {
 const SEARCH_FIELDS: Array<keyof LoanDisbursementRow> = ["loanId", "borrowerId", "borrowerName"];
 
 export function LoanDisbursementsTable() {
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const [selectedDisbursement, setSelectedDisbursement] =
     React.useState<LoanDisbursementRow | null>(null);
   const rows = useFilteredRows(loanDisbursementRows, search, SEARCH_FIELDS);

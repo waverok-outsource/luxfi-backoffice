@@ -1,10 +1,9 @@
 "use client";
 
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { TableSearchField } from "@/components/table/table-search-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 type TableSearchToolbarProps = {
   placeholder?: string;
@@ -13,20 +12,11 @@ type TableSearchToolbarProps = {
 
 export function TableSearchToolbar({
   placeholder = "Search user name or ID",
-  queryKey = "search",
+  queryKey = "q",
 }: TableSearchToolbarProps) {
-  const { search, setSearch } = useURLTableSearch(queryKey);
-
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="w-full max-w-md">
-        <Input
-          placeholder={placeholder}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-        />
-      </div>
+      <TableSearchField placeholder={placeholder} queryKey={queryKey} className="max-w-md" />
 
       <div className="flex flex-wrap items-center gap-2">
         <Button

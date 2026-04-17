@@ -16,7 +16,7 @@ import {
 type AssetLoansQuery = {
   tab?: string;
   page?: string;
-  search?: string;
+  q?: string;
   from?: string;
   to?: string;
 };
@@ -39,7 +39,7 @@ export function AssetLoansDashboard() {
     setURLQuery({
       tab: nextTab,
       page: "1",
-      search: undefined,
+      q: undefined,
       from: undefined,
       to: undefined,
     });

@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { ASSET_LOANS_STATUS_CONFIG } from "@/module/dashboard/asset-loans/components/status-config";
 import {
   AssetLoansBaseTable,
@@ -26,7 +26,8 @@ const SEARCH_FIELDS: Array<keyof AssetLoanRequestRow> = ["loanId", "borrowerId"]
 
 export function AssetLoanRequestsTable() {
   const router = useRouter();
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const rows = useFilteredRows(assetLoanRequestRows, search, SEARCH_FIELDS);
 
   const columns = React.useMemo<ColumnDef<AssetLoanRequestRow, unknown>[]>(

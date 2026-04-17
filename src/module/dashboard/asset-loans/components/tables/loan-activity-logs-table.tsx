@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { LoanActivityDetailsModal } from "@/module/dashboard/asset-loans/components/modals/loan-activity-details-modal";
 import {
   AssetLoansBaseTable,
@@ -22,7 +22,8 @@ import {
 const SEARCH_FIELDS: Array<keyof LoanActivityLogRow> = ["logId", "initiatorName", "initiatorId"];
 
 export function LoanActivityLogsTable() {
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const [selectedActivity, setSelectedActivity] = React.useState<LoanActivityLogRow | null>(null);
   const rows = useFilteredRows(loanActivityLogRows, search, SEARCH_FIELDS);
 

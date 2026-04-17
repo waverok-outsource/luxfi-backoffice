@@ -41,7 +41,7 @@ const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
 };
 
 export function CustomerDetailsTabs() {
-  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; search?: string }>();
+  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; q?: string }>();
 
   const tabQuery = value.tab;
   const activeTab: CustomerDetailsTabValue =
@@ -54,7 +54,7 @@ export function CustomerDetailsTabs() {
       tab: nextTab,
       // Reset table pagination when switching tabs.
       page: undefined,
-      search: undefined,
+      q: undefined,
     });
   };
 
@@ -72,9 +72,7 @@ export function CustomerDetailsTabs() {
         </div>
       </Tabs>
 
-      <div className="rounded-3xl bg-primary-white p-4 md:p-6">
-        {TAB_PANELS[activeTab]}
-      </div>
+      <div className="rounded-3xl bg-primary-white p-4 md:p-6">{TAB_PANELS[activeTab]}</div>
     </div>
   );
 }

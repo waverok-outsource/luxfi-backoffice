@@ -12,7 +12,6 @@ import {
 } from "@/components/table";
 import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { SupportTicketRequestModal } from "@/module/dashboard/customers/customer-details/components/support/support-ticket-request-modal";
 import type {
@@ -87,8 +86,8 @@ function StatusCell({ status }: { status: SupportTicketStatus }) {
 }
 
 export function SupportTicketsPanel() {
-  const { value } = useURLQuery<{ page?: string }>();
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
+  const search = value.q ?? "";
   const [tickets, setTickets] = React.useState<SupportTicketRecord[]>(() => generateSupportTickets(1000));
   const [activeTicketId, setActiveTicketId] = React.useState<string | null>(null);
 

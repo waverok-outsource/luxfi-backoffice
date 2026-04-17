@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   createIdentifierColumn,
   createSerialColumn,
@@ -76,7 +76,8 @@ function createActionColumnWithReset(options: {
 }
 
 export function PasswordResetRequestsTable() {
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const [requests, setRequests] = React.useState<PasswordResetRequestRow[]>(passwordResetRequestRows);
   const [selectedRequestId, setSelectedRequestId] = React.useState<string | null>(null);
 

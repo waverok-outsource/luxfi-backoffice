@@ -9,7 +9,6 @@ import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   TransactionDetailsModal,
@@ -98,8 +97,8 @@ function LogIdCell({ value, onCopy }: { value: string; onCopy: (value: string) =
 }
 
 export function TransactionHistoryPanel() {
-  const { value } = useURLQuery<{ page?: string }>();
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
+  const search = value.q ?? "";
   const [transactions, setTransactions] = React.useState<TransactionRow[]>(() =>
     generateTransactions(1000),
   );

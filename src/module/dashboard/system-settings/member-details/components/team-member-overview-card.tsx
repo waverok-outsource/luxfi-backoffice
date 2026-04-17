@@ -27,7 +27,7 @@ export function TeamMemberOverviewCard({ member }: { member: SettingsTeamMemberT
     await updateTeamMemberDetails(
       member.userRef,
       {
-        status: isDeactivated ? "active" : "deactivate",
+        status: isDeactivated ? "active" : "blacklist",
       },
       () => {
         toast.success("Team member status updated successfully");

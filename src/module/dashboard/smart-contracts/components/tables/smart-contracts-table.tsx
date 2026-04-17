@@ -11,7 +11,6 @@ import {
   createSerialColumn,
 } from "@/components/table";
 import { Badge } from "@/components/ui/badge";
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { SmartContractModal } from "@/module/dashboard/customers/customer-details/components/contracts/smart-contract-modal";
 import type { SmartContractStatus } from "@/module/dashboard/customers/customer-details/components/contracts/smart-contract-types";
@@ -27,6 +26,7 @@ import {
 
 type SmartContractsQuery = {
   page?: string;
+  q?: string;
 };
 
 type SmartContractsTableRow = Pick<
@@ -84,7 +84,7 @@ function createPercentColumn<TData extends Record<string, unknown>>(
 
 export function SmartContractsTable() {
   const { value } = useURLQuery<SmartContractsQuery>();
-  const { search } = useURLTableSearch();
+  const search = value.q ?? "";
   const [contracts, setContracts] = React.useState<SmartContractDashboardRecord[]>(() =>
     createSmartContractRecords(),
   );

@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { LoanDisbursementDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/loan-disbursement-details-modal";
 import {
   createActionColumnWithOptions,
@@ -26,7 +26,8 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
 ];
 
 export function LoanDisbursementHistoryTable() {
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
 
   const rows = useFilteredPaymentRows(loanDisbursementHistoryRows, search, SEARCH_FIELDS);

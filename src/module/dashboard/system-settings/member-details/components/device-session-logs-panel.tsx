@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import {
   DataTable,
+  TableSearchField,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
   createTextColumn,
 } from "@/components/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { SessionLogReportModal } from "@/module/dashboard/system-settings/member-details/components/session-log-report-modal";
 import { useSettingsTeamMemberSessionLogs } from "@/services/queries/settings.queries";
@@ -34,16 +34,16 @@ type DeviceSessionRow = {
 const PAGE_SIZE = 5;
 
 export function DeviceSessionLogsPanel({ memberId }: { memberId: string }) {
-  const { value, setURLQuery } = useURLQuery<{ page?: string; search?: string }>();
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
   const [activeSessionLogId, setActiveSessionLogId] = useState<string | null>(null);
 
   const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
-  const search = (value.search ?? "").trim();
+  const query = (value.q ?? "").trim();
 
   const listQuery = convertObjectToQuery({
     page: String(currentPage),
     limit: String(PAGE_SIZE),
-    ...(search ? { search } : {}),
+    ...(query ? { q: query } : {}),
   });
 
   const { data: sessionResponse, isLoading } = useSettingsTeamMemberSessionLogs(
@@ -97,19 +97,7 @@ export function DeviceSessionLogsPanel({ memberId }: { memberId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-md">
-          <Input
-            placeholder="Search Session ID"
-            value={value.search ?? ""}
-            onChange={(event) =>
-              setURLQuery({
-                search: event.target.value || undefined,
-                page: "1",
-              })
-            }
-            startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-          />
-        </div>
+        <TableSearchField placeholder="Search Session ID" className="max-w-md" />
 
         <div className="flex flex-wrap items-center gap-2">
           <Button

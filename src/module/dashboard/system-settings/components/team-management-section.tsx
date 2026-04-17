@@ -2,18 +2,17 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   BaseTable,
+  TableSearchField,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
 } from "@/components/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { useSettingsTeamMembers } from "@/services/queries/settings.queries";
 import type { SettingsTeamMemberType } from "@/types/settings.type";
@@ -37,15 +36,15 @@ function getStatusBadge(status: string) {
 
 export function TeamManagementSection() {
   const router = useRouter();
-  const { search, setSearch } = useURLTableSearch();
-  const { value } = useURLQuery<{ page?: string; from?: string; to?: string }>();
+  const { value } = useURLQuery<{ page?: string; from?: string; to?: string; q?: string }>();
   const [isAddTeamMemberOpen, setIsAddTeamMemberOpen] = React.useState(false);
   const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
   const teamMembersQuery = convertObjectToQuery({
     page: String(currentPage),
     limit: String(PAGE_SIZE),
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(query ? { q: query } : {}),
     ...(value.from ? { from: value.from } : {}),
     ...(value.to ? { to: value.to } : {}),
   });
@@ -114,14 +113,7 @@ export function TeamManagementSection() {
     <>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="w-full max-w-md">
-            <Input
-              placeholder="Search user name or ID"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-            />
-          </div>
+          <TableSearchField placeholder="Search user name or ID" className="max-w-md" />
 
           <div className="flex flex-wrap items-center gap-2">
             <Button

@@ -3,16 +3,16 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import {
+  TableSearchField,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
 } from "@/components/table";
 import { DataTable } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { DeviceSessionLogModal } from "@/module/dashboard/customers/customer-details/components/sessions/device-session-log-modal";
 import type {
@@ -75,12 +75,12 @@ function generateDeviceSessions(total: number): DeviceSessionRecord[] {
 }
 
 export function DeviceSessionLogsPanel() {
-  const { value, setURLQuery } = useURLQuery<{ page?: string; search?: string }>();
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
   const [sessions] = React.useState<DeviceSessionRecord[]>(() => generateDeviceSessions(1000));
   const [activeSessionId, setActiveSessionId] = React.useState<string | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
 
-  const searchQuery = (value.search ?? "").trim().toLowerCase();
+  const searchQuery = (value.q ?? "").trim().toLowerCase();
   const filtered = React.useMemo(() => {
     if (!searchQuery) return sessions;
     return sessions.filter(
@@ -160,19 +160,7 @@ export function DeviceSessionLogsPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-md">
-          <Input
-            placeholder="Search Session ID"
-            value={value.search ?? ""}
-            onChange={(event) =>
-              setURLQuery({
-                search: event.target.value || undefined,
-                page: "1",
-              })
-            }
-            startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-          />
-        </div>
+        <TableSearchField placeholder="Search Session ID" className="max-w-md" />
 
         <div className="flex flex-wrap items-center gap-2">
           <Button

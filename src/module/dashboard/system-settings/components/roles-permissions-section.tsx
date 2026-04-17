@@ -2,13 +2,16 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import * as React from "react";
-import { Search, ChevronDown, PencilLine } from "lucide-react";
+import { ChevronDown, PencilLine } from "lucide-react";
 
-import { BaseTable, createIdentifierColumn, createSerialColumn } from "@/components/table";
+import {
+  BaseTable,
+  TableSearchField,
+  createIdentifierColumn,
+  createSerialColumn,
+} from "@/components/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { useSettingsPermissions, useSettingsRoles } from "@/services/queries/settings.queries";
 import type { SettingsRoleType } from "@/types/settings.type";
@@ -28,11 +31,11 @@ function getStatusBadge(status: SettingsRoleType["status"]) {
 }
 
 export function RolesPermissionsSection() {
-  const { search, setSearch } = useURLTableSearch();
-  const { value } = useURLQuery<{ page?: string; from?: string; to?: string }>();
+  const { value } = useURLQuery<{ page?: string; from?: string; to?: string; q?: string }>();
   const [isAddRoleOpen, setIsAddRoleOpen] = React.useState(false);
   const [editingRoleId, setEditingRoleId] = React.useState<string | null>(null);
   const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
   const { data: permissionsResponse, isLoading: isPermissionsLoading } = useSettingsPermissions();
   const arePermissionsReady = Boolean(permissionsResponse) && !isPermissionsLoading;
@@ -40,7 +43,7 @@ export function RolesPermissionsSection() {
   const rolesQuery = convertObjectToQuery({
     page: String(currentPage),
     limit: String(PAGE_SIZE),
-    ...(search.trim() ? { search: search.trim() } : {}),
+    ...(query ? { q: query } : {}),
     ...(value.from ? { from: value.from } : {}),
     ...(value.to ? { to: value.to } : {}),
   });
@@ -118,14 +121,7 @@ export function RolesPermissionsSection() {
     <>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="w-full max-w-md">
-            <Input
-              placeholder="Search role title or ID"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-            />
-          </div>
+          <TableSearchField placeholder="Search role title or ID" className="max-w-md" />
 
           <div className="flex flex-wrap items-center gap-2">
             <Button

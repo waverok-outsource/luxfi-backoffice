@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { useURLTableSearch } from "@/hooks/useURLTableSearch";
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { SupportTicketDetailsModal } from "@/module/dashboard/help-support/components/modals/support-ticket-details-modal";
 import {
   createActionColumnWithOptions,
@@ -24,7 +24,8 @@ const SEARCH_FIELDS: Array<keyof SupportTicketRow> = [
 ];
 
 export function SupportTicketsTable() {
-  const { search } = useURLTableSearch();
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
   const [tickets, setTickets] = React.useState<SupportTicketRow[]>(supportTicketRows);
   const [selectedTicketId, setSelectedTicketId] = React.useState<string | null>(null);
 

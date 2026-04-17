@@ -18,7 +18,7 @@ import {
 type PaymentsSettlementsQuery = {
   tab?: string;
   page?: string;
-  search?: string;
+  q?: string;
   from?: string;
   to?: string;
 };
@@ -45,7 +45,7 @@ export function PaymentsSettlementsDashboard() {
     setURLQuery({
       tab: nextTab,
       page: "1",
-      search: undefined,
+      q: undefined,
       from: undefined,
       to: undefined,
     });

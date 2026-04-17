@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import {
+  TableSearchField,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
@@ -12,7 +13,6 @@ import {
 import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   AssetLoanModal,
@@ -115,7 +115,7 @@ function generateLoans(total: number): AssetLoan[] {
 }
 
 export function AssetLoansPanel() {
-  const { value, setURLQuery } = useURLQuery<{ page?: string; search?: string }>();
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
   const [loans, setLoans] = React.useState<AssetLoan[]>(() => generateLoans(1000));
 
   const [activeLoanId, setActiveLoanId] = React.useState<string | null>(null);
@@ -133,7 +133,7 @@ export function AssetLoansPanel() {
     repaymentDueLabel: string;
   } | null>(null);
 
-  const searchQuery = (value.search ?? "").trim().toLowerCase();
+  const searchQuery = (value.q ?? "").trim().toLowerCase();
   const filtered = (() => {
     if (!searchQuery) return loans;
     return loans.filter((loan) => loan.loanId.toLowerCase().includes(searchQuery));
@@ -284,19 +284,7 @@ export function AssetLoansPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-md">
-          <Input
-            placeholder="Search Transaction ID"
-            value={value.search ?? ""}
-            onChange={(event) =>
-              setURLQuery({
-                search: event.target.value || undefined,
-                page: "1",
-              })
-            }
-            startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-          />
-        </div>
+        <TableSearchField placeholder="Search Transaction ID" className="max-w-md" />
 
         <div className="flex flex-wrap items-center gap-2">
           <Button

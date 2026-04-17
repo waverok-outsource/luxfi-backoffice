@@ -21,7 +21,7 @@ function isTeamMemberDetailsTab(value: string | undefined): value is TeamMemberD
 }
 
 export function TeamMemberDetailsTabs({ memberId }: { memberId: string }) {
-  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; search?: string }>();
+  const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; q?: string }>();
   const activeTab = isTeamMemberDetailsTab(value.tab) ? value.tab : DEFAULT_TAB;
 
   const panels: Record<TeamMemberDetailsTabValue, React.ReactNode> = {
@@ -39,7 +39,7 @@ export function TeamMemberDetailsTabs({ memberId }: { memberId: string }) {
           setURLQuery({
             tab: nextTab,
             page: undefined,
-            search: undefined,
+            q: undefined,
           });
         }}
         className="w-full"
