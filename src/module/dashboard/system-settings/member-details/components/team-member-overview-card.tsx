@@ -60,7 +60,7 @@ export function TeamMemberOverviewCard({ member }: { member: SettingsTeamMemberT
           <div className="mt-4 space-y-3">
             <DetailRow label="Full Name:" value={getFullName(member)} />
             <DetailRow label="Email Address:" value={member.email} />
-            <DetailRow label="Role (Department):" value={`${assignedRole} (${assignedRole})`} />
+            <DetailRow label="Role:" value={assignedRole} />
             <DetailRow
               label="Member Since:"
               value={formatDate(member.createdAt, "dd MMMM, yyyy")}

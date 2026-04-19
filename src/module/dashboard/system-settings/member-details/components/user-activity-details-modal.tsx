@@ -29,7 +29,7 @@ export function UserActivityDetailsModal({
       <div className="space-y-6">
         <ModalShell.Header
           title="User Activity Details"
-          description="View and manage transaction entry"
+          description="View and manage activity log entry"
           showBackButton
           onBack={() => onOpenChange(false)}
         />
