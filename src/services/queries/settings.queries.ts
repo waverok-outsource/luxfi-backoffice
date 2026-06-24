@@ -10,10 +10,10 @@ import {
 } from "@/services/client/settings.fns";
 import keyFactory from "@/util/query-key-factory";
 
-export const useSettingsAnalytics = (query: string = "") =>
+export const useSettingsAnalytics = () =>
   useQuery({
-    queryKey: keyFactory.systemSettings.analytics(query),
-    queryFn: () => fetchAnalytics(query),
+    queryKey: keyFactory.systemSettings.analytics,
+    queryFn: fetchAnalytics,
   });
 
 export const useSettingsTeamMembers = (query: string) =>

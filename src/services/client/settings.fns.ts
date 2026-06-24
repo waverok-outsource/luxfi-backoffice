@@ -11,10 +11,8 @@ import {
 import apiHandler from "../api-handler";
 import SystemRoute from "../route/settings.route";
 
-export const fetchAnalytics = async (query: string = "") => {
-  const { data } = await apiHandler.get<ApiResponse<SettingsAnalyticsType>>(
-    `${SystemRoute.analytics}${query ? `?${query}` : ""}`,
-  );
+export const fetchAnalytics = async () => {
+  const { data } = await apiHandler.get<ApiResponse<SettingsAnalyticsType>>(SystemRoute.analytics);
 
   return data.data;
 };

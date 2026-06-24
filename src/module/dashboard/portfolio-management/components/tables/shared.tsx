@@ -24,8 +24,10 @@ const PORTFOLIO_STATUS_CONFIG = {
   approved: { label: "Approved", variant: "success" as const },
 } satisfies Record<PortfolioStatus, { label: string; variant: "success" | "warning" | "error" }>;
 
-export function createSerialColumn(): ColumnDef<PortfolioTableRow, unknown> {
-  return createSerialColumnBase<PortfolioTableRow>();
+export function createSerialColumn(options?: {
+  offset?: number;
+}): ColumnDef<PortfolioTableRow, unknown> {
+  return createSerialColumnBase<PortfolioTableRow>(options);
 }
 
 export function createTextColumn(
@@ -68,6 +70,8 @@ type PortfolioBaseTableProps = {
   columns: ColumnDef<PortfolioTableRow, unknown>[];
   pageSize: number;
   totalEntries?: number;
+  loading?: boolean;
+  emptyStateLabel?: string;
 };
 
 export function PortfolioBaseTable({
@@ -75,6 +79,8 @@ export function PortfolioBaseTable({
   columns,
   pageSize,
   totalEntries,
+  loading = false,
+  emptyStateLabel,
 }: PortfolioBaseTableProps) {
   return (
     <BaseTable<PortfolioTableRow>
@@ -82,6 +88,8 @@ export function PortfolioBaseTable({
       columns={columns}
       pageSize={pageSize}
       totalEntries={totalEntries}
+      loading={loading}
+      emptyStateLabel={emptyStateLabel}
     />
   );
 }

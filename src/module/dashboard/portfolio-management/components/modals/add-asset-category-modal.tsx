@@ -15,10 +15,22 @@ import {
   addAssetCategorySchema,
   type AddAssetCategoryFormValues,
 } from "@/schema/portfolio-management.schema";
+import usePortfolioFns from "@/services/functions/portfolio.fns";
+import type {
+  CreatePortfolioAssetCategoryPayloadType,
+  UpdatePortfolioAssetCategoryPayloadType,
+} from "@/types/portfolio.type";
 
 type AddAssetCategoryModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: "add" | "edit";
+  category?: {
+    categoryId: string;
+    categoryName: string;
+    originalCategoryName: string;
+    isPublished: boolean;
+  };
 };
 
 const DEFAULT_VALUES: AddAssetCategoryFormValues = {
@@ -28,9 +40,46 @@ const DEFAULT_VALUES: AddAssetCategoryFormValues = {
 
 type AddAssetCategoryStage = "FORM" | "SUCCESS";
 
-export function AddAssetCategoryModal({ open, onOpenChange }: AddAssetCategoryModalProps) {
+function buildCreateAssetCategoryPayload(
+  values: AddAssetCategoryFormValues,
+): CreatePortfolioAssetCategoryPayloadType {
+  return {
+    name: values.categoryName.trim(),
+    status: values.saveAndPublish ? "published" : "draft",
+  };
+}
+
+function buildUpdateAssetCategoryPayload(
+  values: AddAssetCategoryFormValues,
+  originalCategoryName: string,
+): UpdatePortfolioAssetCategoryPayloadType {
+  const nextName = values.categoryName.trim();
+  const initialName = originalCategoryName.trim();
+  const hasNameChanged = nextName.toLowerCase() !== initialName.toLowerCase();
+
+  return {
+    status: values.saveAndPublish ? "published" : "draft",
+    ...(hasNameChanged ? { name: nextName } : {}),
+  };
+}
+
+export function AddAssetCategoryModal({
+  open,
+  onOpenChange,
+  mode = "add",
+  category,
+}: AddAssetCategoryModalProps) {
   const [currentStage, setCurrentStage] = React.useState<AddAssetCategoryStage>("FORM");
   const formId = React.useId();
+  const { createAssetCategory, updateAssetCategory, loading } = usePortfolioFns();
+  const isEditMode = mode === "edit";
+  const initialValues: AddAssetCategoryFormValues =
+    isEditMode && category
+      ? {
+          categoryName: category.categoryName,
+          saveAndPublish: category.isPublished,
+        }
+      : DEFAULT_VALUES;
 
   const {
     control,
@@ -38,14 +87,49 @@ export function AddAssetCategoryModal({ open, onOpenChange }: AddAssetCategoryMo
     formState: { isValid },
   } = useForm<AddAssetCategoryFormValues>({
     resolver: zodResolver(addAssetCategorySchema),
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: initialValues,
     mode: "all",
   });
 
-  const onSubmit = (values: AddAssetCategoryFormValues) => {
-    console.log("Add asset category payload", values);
-    setCurrentStage("SUCCESS");
+  const onSubmit = async (values: AddAssetCategoryFormValues) => {
+    if (isEditMode) {
+      if (!category?.categoryId) {
+        return;
+      }
+
+      const payload = buildUpdateAssetCategoryPayload(values, category.originalCategoryName);
+      await updateAssetCategory(category.categoryId, payload, () => setCurrentStage("SUCCESS"));
+      return;
+    }
+
+    const payload = buildCreateAssetCategoryPayload(values);
+    await createAssetCategory(payload, () => setCurrentStage("SUCCESS"));
   };
+
+  const modalCopy = isEditMode
+    ? {
+        title: "Edit Asset Category",
+        description: "Fill details to edit category to asset inventory",
+        submitLabel: "Save Changes",
+      }
+    : {
+        title: "Add New Asset Category",
+        description: "Fill details to add new category to asset inventory",
+        submitLabel: "Confirm",
+      };
+
+  const successCopy = isEditMode
+    ? {
+        title: "Category Updated",
+        description: "Asset category details have been updated successfully.",
+      }
+    : {
+        title: "New Category Added",
+        description: "New luxury asset category has been added to asset inventory",
+      };
+
+  const isSaving = loading.CREATE_ASSET_CATEGORY || loading.UPDATE_ASSET_CATEGORY;
+  const isSubmitDisabled = !isValid || isSaving || (isEditMode && !category?.categoryId);
 
   const stageConfig: Record<
     AddAssetCategoryStage,
@@ -57,8 +141,8 @@ export function AddAssetCategoryModal({ open, onOpenChange }: AddAssetCategoryMo
       content: (
         <div className="space-y-5">
           <ModalShell.Header
-            title="Add New Asset Category"
-            description="Fill details to add new category to asset inventory"
+            title={modalCopy.title}
+            description={modalCopy.description}
             showBackButton
             onBack={() => onOpenChange(false)}
           />
@@ -87,15 +171,22 @@ export function AddAssetCategoryModal({ open, onOpenChange }: AddAssetCategoryMo
           </ModalShell.Body>
 
           <ModalShell.Footer>
+            {!isEditMode ? (
+              <ModalShell.Action
+                type="button"
+                variant="grey-stroke"
+                onClick={() => onOpenChange(false)}
+              >
+                Back
+              </ModalShell.Action>
+            ) : null}
             <ModalShell.Action
-              type="button"
-              variant="grey-stroke"
-              onClick={() => onOpenChange(false)}
+              type="submit"
+              form={formId}
+              disabled={isSubmitDisabled}
+              pending={isSaving}
             >
-              Back
-            </ModalShell.Action>
-            <ModalShell.Action type="submit" form={formId} disabled={!isValid}>
-              Confirm
+              {modalCopy.submitLabel}
             </ModalShell.Action>
           </ModalShell.Footer>
         </div>
@@ -106,8 +197,8 @@ export function AddAssetCategoryModal({ open, onOpenChange }: AddAssetCategoryMo
       contentClassName: SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
       content: (
         <SuccessModalContent
-          title="New Category Added"
-          description="New luxury asset category has been added to asset inventory"
+          title={successCopy.title}
+          description={successCopy.description}
           onClose={() => onOpenChange(false)}
         />
       ),

@@ -1,17 +1,8 @@
 import { PresenceMeterCard } from "@/components/dashboard/presence-meter";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { useURLQuery } from "@/hooks/useUrlQuery";
 import { useSettingsAnalytics } from "@/services/queries/settings.queries";
-import type { SettingsAnalyticsGrowthPattern, SettingsAnalyticsMetricType } from "@/types/settings.type";
-import convertObjectToQuery from "@/util/convertObjectToQuery";
-
-function formatValue(value: number | undefined) {
-  return typeof value === "number" ? value.toLocaleString() : "--";
-}
-
-function getMetricTone(pattern: SettingsAnalyticsGrowthPattern | undefined) {
-  return pattern === "downward" ? "negative" : "positive";
-}
+import type { SettingsAnalyticsMetricType } from "@/types/settings.type";
+import { buildAnalyticsMetricCard } from "@/util/analytics-metrics";
 
 function getPresenceShare(value: number, total: number) {
   if (!total) {
@@ -21,26 +12,14 @@ function getPresenceShare(value: number, total: number) {
   return Math.round((value / total) * 100);
 }
 
-function buildMetricCard(metric: SettingsAnalyticsMetricType | undefined, title: string) {
-  return {
-    title,
-    value: formatValue(metric?.value),
-    trend: metric?.growth ?? "--",
-    period: metric?.growthDuration ?? "--",
-    tone: getMetricTone(metric?.growthPattern) as "positive" | "negative",
-  };
-}
-
 export function TeamManagementMetrics() {
-  const { value } = useURLQuery<{ from?: string; to?: string }>();
-  const analyticsQuery = convertObjectToQuery({
-    ...(value.from ? { from: value.from } : {}),
-    ...(value.to ? { to: value.to } : {}),
-  });
-  const { data } = useSettingsAnalytics(analyticsQuery);
-  const teamMembers = buildMetricCard(data?.teamMembers, "Total Team Members");
-  const roles = buildMetricCard(data?.roles, "Total Roles");
-  const assignedRoles = buildMetricCard(data?.assignedRoles, "Assigned Roles");
+  const { data } = useSettingsAnalytics();
+  const teamMembers = buildAnalyticsMetricCard<SettingsAnalyticsMetricType>(
+    data?.teamMembers,
+    "Total Team Members",
+  );
+  const roles = buildAnalyticsMetricCard(data?.roles, "Total Roles");
+  const assignedRoles = buildAnalyticsMetricCard(data?.assignedRoles, "Assigned Roles");
   const totalPresence = (data?.teamMembers.online ?? 0) + (data?.teamMembers.offline ?? 0);
 
   return (
