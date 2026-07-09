@@ -29,6 +29,26 @@
   --color-overlay-black: #000000;
   --color-overlay-gold: #c8a159;
   --color-overlay-white: #ffffff;
+
+  /* Semantic tokens consumed by the shared ui/ components (popover, dropdown-menu,
+     calendar, field, ...) — mapped onto the palette above. */
+  --color-background: var(--color-primary-white);
+  --color-foreground: var(--color-text-black);
+  --color-popover: var(--color-primary-white);
+  --color-popover-foreground: var(--color-text-black);
+  --color-card: var(--color-primary-white);
+  --color-card-foreground: var(--color-text-black);
+  --color-muted: var(--color-primary-grey-undertone);
+  --color-muted-foreground: var(--color-text-grey);
+  --color-accent: var(--color-primary-grey-undertone);
+  --color-accent-foreground: var(--color-text-black);
+  --color-primary: var(--color-primary-gold-brand);
+  --color-primary-foreground: var(--color-primary-white);
+  --color-destructive: var(--color-alert-error);
+  --color-border: var(--color-primary-grey-stroke);
+  --color-input: var(--color-primary-grey-stroke);
+  --color-ring: var(--color-primary-gold-brand);
+
   --font-urbanist: "Urbanist", sans-serif;
 }
 

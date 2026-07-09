@@ -35,6 +35,7 @@ type QuickAddSearchFieldProps = {
  */
 export function QuickAddSearchField({ onSelect }: QuickAddSearchFieldProps) {
   const [query, setQuery] = React.useState("");
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const debouncedQuery = useDebouncedValue(query, 300);
   const results = React.useMemo(() => filterResults(debouncedQuery), [debouncedQuery]);
   const isOpen = debouncedQuery.trim().length > 0;
@@ -51,16 +52,23 @@ export function QuickAddSearchField({ onSelect }: QuickAddSearchFieldProps) {
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-text-grey" />
             <input
+              ref={inputRef}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by Name or ref ID from API"
-              className="form-control-base form-control-focus h-12 w-full rounded-full border border-primary-grey-stroke bg-primary-white pl-11 pr-4 text-sm"
+              className="form-control-base form-control-focus h-12 w-full rounded-full border border-primary-grey-stroke bg-primary-white pl-11 pr-4 text-sm text-text-black"
             />
           </div>
         }
       />
 
-      <PopoverContent align="start" sideOffset={8} className="max-h-80 w-[420px] max-w-[90vw] overflow-y-auto p-2">
+      <PopoverContent
+        align="start"
+        sideOffset={8}
+        initialFocus={false}
+        finalFocus={inputRef}
+        className="max-h-80 w-[420px] max-w-[90vw] overflow-y-auto p-2"
+      >
         {results.length ? (
           <ul className="flex flex-col gap-1">
             {results.map((result) => (
