@@ -3,8 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ModalRoot } from "@/components/modal";
-import { Button } from "@/components/ui/button";
+import { ConfirmDialogContent, ModalRoot } from "@/components/modal";
 import { sideMenu } from "@/module/dashboard/home/data";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
@@ -13,6 +12,7 @@ import route from "@/util/route";
 const labelToPath: Record<string, string> = {
   Home: route.dashboard.home,
   Customers: route.dashboard.customers,
+  MarketPlace: route.dashboard.marketplace,
   "Asset Management": route.dashboard.assetManagement,
   "Asset Loans": route.dashboard.assetLoans,
   "Smart Contracts": route.dashboard.smartContracts,
@@ -84,34 +84,13 @@ export function DashboardSidebar() {
           showCloseButton={false}
           contentClassName="w-[calc(100%-2rem)] max-w-[560px] rounded-[24px] border-none bg-primary-white p-6 shadow-[0_24px_64px_rgba(0,0,0,0.28)] sm:p-8"
         >
-          <div className="space-y-6 text-center sm:space-y-8">
-            <div className="space-y-3">
-              <h2 className="text-[32px] leading-tight font-bold text-text-black">Logging out?</h2>
-              <p className="mx-auto max-w-[420px] text-sm leading-6 text-text-grey">
-                You are about to log out of this back-office session. You&apos;ll have to log back
-                in to continue.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                type="button"
-                variant="grey-stroke"
-                className="w-full sm:flex-1"
-                onClick={() => setIsLogoutModalOpen(false)}
-              >
-                No, Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                className="w-full sm:flex-1"
-                onClick={handleLogoutConfirm}
-              >
-                Yes, Confirm
-              </Button>
-            </div>
-          </div>
+          <ConfirmDialogContent
+            title="Logging out?"
+            description="You are about to log out of this back-office session. You'll have to log back in to continue."
+            confirmVariant="danger"
+            onCancel={() => setIsLogoutModalOpen(false)}
+            onConfirm={handleLogoutConfirm}
+          />
         </ModalRoot>
       )}
     </>

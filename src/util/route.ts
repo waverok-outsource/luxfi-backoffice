@@ -7,6 +7,7 @@ const route = {
   dashboard: {
     home: "/",
     customers: "/customers",
+    marketplace: "/marketplace",
     portfolioManagement: "/portfolio-management",
     assetManagement: "/asset-management",
     assetLoans: "/asset-loans",
