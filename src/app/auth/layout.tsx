@@ -6,9 +6,9 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
-  // if (token) {
-  //   redirect(route.dashboard.home);
-  // }
+  if (token) {
+    redirect(route.dashboard.home);
+  }
 
   return <div className="h-screen w-full overflow-hidden bg-[#fefefe]">{children}</div>;
 };
