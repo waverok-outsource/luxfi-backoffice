@@ -237,6 +237,7 @@ type FormSwitchFieldProps<
   className?: string;
   required?: boolean;
   size?: "sm" | "default";
+  tone?: "default" | "success" | "mono";
   disabled?: boolean;
   contentClassName?: string;
   labelClassName?: string;
@@ -245,9 +246,11 @@ type FormSwitchFieldProps<
 
 function FormSwitchLabel({
   className,
+  required,
   children,
 }: {
   className?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   const { id } = useFormField();
@@ -255,6 +258,7 @@ function FormSwitchLabel({
   return (
     <Label htmlFor={id} className={cn("cursor-pointer font-semibold", className)}>
       {children}
+      {required && <span className="text-red-500"> *</span>}
     </Label>
   );
 }
@@ -271,6 +275,7 @@ export function FormSwitchField<
   className,
   required,
   size = "default",
+  tone,
   disabled,
   contentClassName,
   labelClassName,
@@ -290,13 +295,16 @@ export function FormSwitchField<
           <FormControl>
             <Switch
               size={size}
+              tone={tone}
               disabled={disabled}
               className={switchClassName}
               checked={Boolean(field.value)}
               onCheckedChange={(checked) => field.onChange(Boolean(checked))}
             />
           </FormControl>
-          <FormSwitchLabel className={labelClassName}>{label}</FormSwitchLabel>
+          <FormSwitchLabel className={labelClassName} required={required}>
+            {label}
+          </FormSwitchLabel>
         </div>
       )}
     </FormField>

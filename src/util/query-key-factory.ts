@@ -1,4 +1,12 @@
 const keyFactory = {
+  assetManagement: {
+    all: ["asset-management"],
+    classes: {
+      all: ["asset-management", "classes"],
+      list: (query: string) => ["asset-management", "classes", query],
+    },
+  },
+
   portfolioManagement: {
     all: ["portfolio-management"],
     analytics: ["portfolio-management", "analytics"],

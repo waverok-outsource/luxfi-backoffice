@@ -1,11 +1,11 @@
 import { AlertTriangle, Headset, Megaphone } from "lucide-react";
 import type { ElementType, SVGProps } from "react";
 import AssetLoanIcon from "@/components/icon/sidebar/asset";
+import AssetManagementIcon from "@/components/icon/sidebar/asset-management";
 import Contracts from "@/components/icon/sidebar/contracts";
 import CustomerIcon from "@/components/icon/sidebar/customer";
 import HomeIcon from "@/components/icon/sidebar/home";
 import PaymentIcon from "@/components/icon/sidebar/payment";
-import PortfolioIcon from "@/components/icon/sidebar/portfolio";
 import SettingsIcon from "@/components/icon/sidebar/settings";
 
 export type SidebarMenuItem = {
@@ -17,7 +17,7 @@ export type SidebarMenuItem = {
 export const sideMenu: SidebarMenuItem[] = [
   { label: "Home", icon: HomeIcon, active: true },
   { label: "Customers", icon: CustomerIcon },
-  { label: "Portfolio Management", icon: PortfolioIcon },
+  { label: "Asset Management", icon: AssetManagementIcon },
   { label: "Asset Loans", icon: AssetLoanIcon },
   { label: "Smart Contracts", icon: Contracts },
   { label: "Risk Management", icon: AlertTriangle },

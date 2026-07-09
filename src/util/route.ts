@@ -8,6 +8,7 @@ const route = {
     home: "/",
     customers: "/customers",
     portfolioManagement: "/portfolio-management",
+    assetManagement: "/asset-management",
     assetLoans: "/asset-loans",
     smartContracts: "/smart-contracts",
     riskManagement: "/risk-management",

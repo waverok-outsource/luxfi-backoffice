@@ -13,7 +13,7 @@ import route from "@/util/route";
 const labelToPath: Record<string, string> = {
   Home: route.dashboard.home,
   Customers: route.dashboard.customers,
-  "Portfolio Management": route.dashboard.portfolioManagement,
+  "Asset Management": route.dashboard.assetManagement,
   "Asset Loans": route.dashboard.assetLoans,
   "Smart Contracts": route.dashboard.smartContracts,
   "Risk Management": route.dashboard.riskManagement,

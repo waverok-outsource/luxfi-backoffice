@@ -14,6 +14,8 @@ type SingleDatePickerProps = {
   onDateChange: (value: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  /** date-fns format string for the trigger label. Defaults to "MMMM dd, yyyy". */
+  displayFormat?: string;
   triggerProps?: Omit<React.ComponentProps<"button">, "type" | "children" | "className">;
 };
 
@@ -40,7 +42,9 @@ export function DatePicker(props: DatePickerProps) {
       return `${format(range.from, "MMMM dd, yyyy")} - ${format(range.to, "MMMM dd, yyyy")}`;
     }
 
-    return props.date ? format(props.date, "MMMM dd, yyyy") : (props.placeholder ?? "Pick a date");
+    return props.date
+      ? format(props.date, props.displayFormat ?? "MMMM dd, yyyy")
+      : (props.placeholder ?? "Pick a date");
   }, [isRange, props]);
 
   const defaultMonth = isRange ? props.range?.from : props.date;
