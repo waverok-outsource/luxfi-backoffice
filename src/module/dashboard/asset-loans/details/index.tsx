@@ -105,10 +105,7 @@ function buildAssetLoanDetail(id: string): AssetLoanDetail | null {
     borrowerRiskCreditScorePercent: 75,
     principalAmount: request.loanValue,
     durationLabel: "3 Weeks (21 Days)",
-    proposedInterestLabel: `$ ${interestAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })} (20%)`,
+    proposedInterestLabel: `${formatLoanCaseMoney(interestAmount)} (20%)`,
     repaymentAmount,
     loanRequestDateLabel: "9th January, 2026",
     disbursedDateLabel:

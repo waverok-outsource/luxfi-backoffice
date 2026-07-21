@@ -47,10 +47,6 @@ export function createStatusColumn(header: string): ColumnDef<CustomerTableRow, 
   );
 }
 
-export function createActionColumn(): ColumnDef<CustomerTableRow, unknown> {
-  return createActionColumnWithOptionsBase<CustomerTableRow>();
-}
-
 export function createActionColumnWithOptions(options?: {
   header?: string;
   ariaLabel?: string;

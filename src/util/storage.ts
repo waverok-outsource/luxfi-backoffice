@@ -8,7 +8,11 @@ const Storage = {
       return;
     }
 
-    Cookies.set(key, value, { expires: days, secure: false, sameSite: "strict" });
+    Cookies.set(key, value, {
+      expires: days,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
   },
 
   getCookie(key: string) {

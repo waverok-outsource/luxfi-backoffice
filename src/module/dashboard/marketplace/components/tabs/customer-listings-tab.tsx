@@ -5,11 +5,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createStatusColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
+import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
 import { CustomerListingReviewModal } from "@/module/dashboard/marketplace/components/modals/customer-listing-review-modal";
 import { useCustomerListingsContext } from "@/module/dashboard/marketplace/context";
 import { CUSTOMER_LISTING_STATUS_CONFIG, resolveAssetClassName, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
 import type { CustomerListingStatus, CustomerListingType } from "@/types/marketplace.type";
-import { formatCurrency } from "@/util/format-currency";
 
 type CustomerListingRow = Record<string, unknown> & {
   id: string;
@@ -24,25 +24,6 @@ type CustomerListingRow = Record<string, unknown> & {
 };
 
 const PAGE_SIZE = 10;
-
-function createAmountColumn<TData extends Record<string, unknown>>(
-  header: string,
-  accessorKey: keyof TData & string,
-): ColumnDef<TData, unknown> {
-  return {
-    accessorKey,
-    header,
-    cell: ({ getValue }) => <span>{formatCurrency(Number(getValue()))}</span>,
-  };
-}
-
-function formatDateLabel(isoDate: string) {
-  return new Date(isoDate).toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function matchesQuery(listing: CustomerListingType, query: string) {
   const normalized = query.trim().toLowerCase();
@@ -87,7 +68,7 @@ export function CustomerListingsTab() {
         assetClass: resolveAssetClassName(listing.assetClassId),
         marketPrice: assetItem?.estimatedValue ?? 0,
         listingPrice: listing.sellerListingPrice,
-        listingDate: formatDateLabel(listing.submittedAt),
+        listingDate: formatTableDateLabel(listing.submittedAt),
         status: listing.listingStatus,
       };
     });

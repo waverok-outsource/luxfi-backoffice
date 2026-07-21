@@ -134,9 +134,3 @@ export function createActionColumnWithOptions<TData>(
     },
   };
 }
-
-export function createActionColumn<TData>(
-  options?: ActionColumnOptions<TData>,
-): ColumnDef<TData, unknown> {
-  return createActionColumnWithOptions(options);
-}

@@ -4,6 +4,7 @@ import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/util/format-currency";
 
 export type LoanCaseStatus = "pending" | "active" | "liquidated" | "rejected" | "completed";
 
@@ -15,7 +16,7 @@ export type LoanCaseDetailItem = {
 };
 
 export function formatLoanCaseMoney(value: number) {
-  return `$ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(value);
 }
 
 export function getLoanCaseStatusBadge(status: LoanCaseStatus) {

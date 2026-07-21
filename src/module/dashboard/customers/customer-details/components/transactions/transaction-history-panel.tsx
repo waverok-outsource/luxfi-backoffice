@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useURLQuery } from "@/hooks/useUrlQuery";
+import { formatCurrency } from "@/util/format-currency";
 import {
   TransactionDetailsModal,
   type TransactionDetails,
@@ -28,10 +29,6 @@ type TransactionRow = {
 };
 
 const PAGE_SIZE = 10;
-
-function formatMoney(value: number) {
-  return `$ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function truncateMiddle(value: string, maxLength: number) {
   if (value.length <= maxLength) return value;
@@ -139,7 +136,7 @@ export function TransactionHistoryPanel() {
       paymentMethod: "USDT",
       paymentChannel: "Wallet",
       contractAddress: "0ex6753w8363444",
-      amountLabel: formatMoney(row.amount),
+      amountLabel: formatCurrency(row.amount),
       flagged: row.flagged,
     };
 
@@ -169,7 +166,7 @@ export function TransactionHistoryPanel() {
       {
         accessorKey: "amount",
         header: "Transaction Amount",
-        cell: ({ getValue }) => <span>{formatMoney(Number(getValue() ?? 0))}</span>,
+        cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
       },
       {
         accessorKey: "type",

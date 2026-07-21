@@ -5,11 +5,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createStatusColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
+import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
 import { AssetListingDetailsModal } from "@/module/dashboard/marketplace/components/modals/asset-listing-details-modal";
 import { useMarketplaceListingsContext } from "@/module/dashboard/marketplace/context";
 import { LISTING_STATUS_CONFIG, resolveAssetClassName, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
 import type { MarketplaceListingStatus, MarketplaceListingType } from "@/types/marketplace.type";
-import { formatCurrency } from "@/util/format-currency";
 
 type LuxfiListingRow = Record<string, unknown> & {
   id: string;
@@ -24,25 +24,6 @@ type LuxfiListingRow = Record<string, unknown> & {
 };
 
 const PAGE_SIZE = 10;
-
-function createAmountColumn<TData extends Record<string, unknown>>(
-  header: string,
-  accessorKey: keyof TData & string,
-): ColumnDef<TData, unknown> {
-  return {
-    accessorKey,
-    header,
-    cell: ({ getValue }) => <span>{formatCurrency(Number(getValue()))}</span>,
-  };
-}
-
-function formatDateLabel(isoDate: string) {
-  return new Date(isoDate).toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
 
 function matchesQuery(listing: MarketplaceListingType, query: string) {
   const normalized = query.trim().toLowerCase();
@@ -86,7 +67,7 @@ export function LuxfiListingTab() {
         stockQty: listing.totalAvailableQuantity,
         marketPrice: assetItem?.estimatedValue ?? 0,
         listingPrice: listing.listingPrice,
-        listingDate: formatDateLabel(listing.listedAt),
+        listingDate: formatTableDateLabel(listing.listedAt),
         status: listing.listingStatus,
       };
     });

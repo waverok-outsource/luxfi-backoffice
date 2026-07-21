@@ -27,7 +27,11 @@ export const useURLQuery = <T extends Record<string, string | null | undefined>>
     queries: Partial<T>, // Record<string, string | null>,
     clearAll: boolean = false,
   ) => {
-    const url = new URLSearchParams(clearAll ? "" : search);
+    // Read the live query string rather than the render-captured `search` so two
+    // consumers updating in the same tick (e.g. search field + pagination) don't
+    // clobber each other's params.
+    const currentSearch = typeof window === "undefined" ? search : window.location.search;
+    const url = new URLSearchParams(clearAll ? "" : currentSearch);
 
     Object.keys(queries).forEach((key) => {
       const value = queries[key];

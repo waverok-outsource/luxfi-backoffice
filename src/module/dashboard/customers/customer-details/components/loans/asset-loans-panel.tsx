@@ -14,6 +14,7 @@ import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useURLQuery } from "@/hooks/useUrlQuery";
+import { formatCurrency } from "@/util/format-currency";
 import {
   AssetLoanModal,
   type AssetLoanStep,
@@ -35,10 +36,6 @@ type LoanRow = Pick<
 >;
 
 const PAGE_SIZE = 5;
-
-function formatMoney(value: number) {
-  return `$ ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function getStatusBadge(status: LoanStatus) {
   switch (status) {
@@ -170,7 +167,7 @@ export function AssetLoansPanel() {
     {
       accessorKey: "principalAmount",
       header: "Loan Value",
-      cell: ({ getValue }) => <span>{formatMoney(Number(getValue() ?? 0))}</span>,
+      cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
     },
     {
       accessorKey: "collateralType",
@@ -180,7 +177,7 @@ export function AssetLoansPanel() {
     {
       accessorKey: "collateralValue",
       header: "Collateral Value",
-      cell: ({ getValue }) => <span>{formatMoney(Number(getValue() ?? 0))}</span>,
+      cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
     },
     {
       accessorKey: "ltvPercent",

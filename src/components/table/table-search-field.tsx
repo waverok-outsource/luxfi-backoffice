@@ -32,9 +32,13 @@ export function TableSearchField({
   const [internalValue, setInternalValue] = React.useState(queryValue);
   const debouncedValue = useDebouncedValue(internalValue, debounceMs);
 
-  React.useEffect(() => {
+  // Adopt external URL changes (e.g. a tab switch clearing ?q=) by adjusting
+  // state during render instead of in an effect, per the React docs pattern.
+  const [prevQueryValue, setPrevQueryValue] = React.useState(queryValue);
+  if (queryValue !== prevQueryValue) {
+    setPrevQueryValue(queryValue);
     setInternalValue(queryValue);
-  }, [queryValue]);
+  }
 
   React.useEffect(() => {
     if (debouncedValue === queryValue) {

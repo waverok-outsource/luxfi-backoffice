@@ -40,6 +40,9 @@ export function CustomerDetailsDashboard() {
       if (!stored) return;
       const parsed = JSON.parse(stored) as BlacklistState;
       if (typeof parsed?.isBlacklisted === "boolean") {
+        // localStorage can only be read after hydration, so this one-time sync
+        // has to live in an effect.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setBlacklistState({
           isBlacklisted: parsed.isBlacklisted,
           reason: typeof parsed.reason === "string" ? parsed.reason : undefined,

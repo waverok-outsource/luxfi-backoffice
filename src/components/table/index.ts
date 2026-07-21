@@ -8,7 +8,6 @@ export {
   createTextColumn,
   createIdentifierColumn,
   createStatusColumn,
-  createActionColumn,
   createActionColumnWithOptions,
   type ActionColumnOptions,
 } from "@/components/table/table-columns";

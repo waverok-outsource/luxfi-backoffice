@@ -1,7 +1,7 @@
 import { CardSectionHeader } from "@/components/dashboard/card-section-header";
 import { Badge } from "@/components/ui/badge";
 import { activityFeed, riskAlerts } from "@/module/dashboard/home/data";
-import { ArrowUpRight, BadgeDollarSign, CircleAlert } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import ActivityIcon from "./icons/activvity";
 import RiskLevel from "./icons/risk-level";
 

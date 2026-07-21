@@ -3,13 +3,11 @@
 import { DataTable } from "@/components/table/data-table";
 import type { BaseTableProps } from "@/components/table/types";
 
-const DEFAULT_TOTAL_ENTRIES = 1000;
-
 export function BaseTable<TData>({
   data,
   columns,
   pageSize,
-  totalEntries = DEFAULT_TOTAL_ENTRIES,
+  totalEntries = data.length,
   loading = false,
   enableCheckbox = true,
   tableClassName = "w-full",

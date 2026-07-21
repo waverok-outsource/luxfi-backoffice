@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PropsWithChildren } from "react";
-import { toast } from "sonner";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -12,7 +11,7 @@ function makeQueryClient() {
         // above 0 to avoid refetching immediately on the client
         staleTime: 60 * 1000,
         retry: 2,
-        throwOnError(_error, _query) {
+        throwOnError() {
           // toast.error(getErrorMessage(_error), {
           //   id: _query.queryKey.join("-"),
           // });

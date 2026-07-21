@@ -31,7 +31,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${urbanist.variable} font-urbanist text-primary-black`}>
         <QueryClientProviderWrapper>
-          <ReactQueryDevtools initialIsOpen={false} />
+          {process.env.NODE_ENV === "development" ? <ReactQueryDevtools initialIsOpen={false} /> : null}
           <Toaster position="top-right" richColors duration={5000} closeButton visibleToasts={1} />
           {children}
         </QueryClientProviderWrapper>
