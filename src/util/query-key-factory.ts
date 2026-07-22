@@ -1,4 +1,16 @@
 const keyFactory = {
+  audits: {
+    all: ["audits"],
+    list: (resource: string, query: string) => ["audits", resource, query],
+  },
+
+  customers: {
+    all: ["customers"],
+    list: (query: string) => ["customers", query],
+    details: (id: string) => ["customers", id],
+    sessionLogs: (id: string) => ["customers", id, "session-logs"],
+  },
+
   assetManagement: {
     all: ["asset-management"],
     classes: {

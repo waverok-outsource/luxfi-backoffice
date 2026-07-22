@@ -1,24 +1,23 @@
 "use client";
 
-import { ChevronDown, Download, RotateCcw, Search } from "lucide-react";
+import { ChevronDown, Download, RotateCcw } from "lucide-react";
 
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { TableSearchField } from "@/components/table";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLDateRange } from "@/hooks/useURLDateRange";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { CustomerChannelCard } from "@/module/dashboard/customers/components/customer-channel-card";
 import { CUSTOMERS_TAB_COMPONENTS } from "@/module/dashboard/customers/components/tab-table-components";
 import {
-  customerChannels,
-  customerStats,
   customersTabs,
   DEFAULT_CUSTOMERS_TAB,
   type CustomersTabValue,
 } from "@/module/dashboard/customers/data";
+import { useCustomers } from "@/services/queries/customer.queries";
 
 type CustomersQuery = {
   tab?: string;
@@ -37,6 +36,9 @@ export function CustomersDashboard() {
 
   const activeTab = isCustomersTab(value.tab) ? value.tab : DEFAULT_CUSTOMERS_TAB;
   const ActiveTabContent = CUSTOMERS_TAB_COMPONENTS[activeTab].slots.content;
+
+  const { data: customersResponse } = useCustomers("");
+  const stats = customersResponse?.data.stats;
 
   const handleTabChange = (nextTab: string) => {
     if (!isCustomersTab(nextTab)) {
@@ -90,17 +92,36 @@ export function CustomersDashboard() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {customerStats.map((stat) => (
-          <StatCard
-            key={stat.title}
-            title={stat.title}
-            value={stat.value}
-            trend={stat.trend}
-            period={stat.period}
-            tone={stat.tone}
-          />
-        ))}
-        <CustomerChannelCard channels={customerChannels} />
+        <StatCard
+          title="Total Registered Customers"
+          value={stats ? stats.customerCount.value.toLocaleString() : "-"}
+          trend={stats ? `${stats.customerCount.growth}%` : "-"}
+          period={stats ? `Last ${stats.customerCount.growthDuration}` : undefined}
+          tone={stats?.customerCount.growthPattern === "downward" ? "negative" : "positive"}
+        />
+        <StatCard
+          title="Average Customer Growth"
+          value={stats ? String(stats.customerGrowth.value) : "-"}
+          trend={stats ? `${stats.customerGrowth.growth}%` : "-"}
+          period={stats ? `Last ${stats.customerGrowth.growthDuration}` : undefined}
+          tone={stats?.customerGrowth.growthPattern === "downward" ? "negative" : "positive"}
+        />
+        <CustomerChannelCard
+          channels={[
+            {
+              label: "Online Customers",
+              count: stats?.connectivity.online.count ?? 0,
+              percent: stats?.connectivity.online.percent ?? 0,
+              tone: "success",
+            },
+            {
+              label: "Offline Customers",
+              count: stats?.connectivity.offline.count ?? 0,
+              percent: stats?.connectivity.offline.percent ?? 0,
+              tone: "error",
+            },
+          ]}
+        />
       </div>
 
       <div className="space-y-3">
@@ -122,10 +143,7 @@ export function CustomersDashboard() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="w-full max-w-md">
-            <Input
-              placeholder="Search Customer name or ID"
-              startAdornment={<Search className="h-5 w-5 text-text-grey" />}
-            />
+            <TableSearchField placeholder="Search Customer name or ID" />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

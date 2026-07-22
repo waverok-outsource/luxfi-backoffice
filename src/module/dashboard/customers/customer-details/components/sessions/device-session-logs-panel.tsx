@@ -2,157 +2,72 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { ChevronDown } from "lucide-react";
 
 import {
+  DataTable,
   TableSearchField,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
+  createTextColumn,
 } from "@/components/table";
-import { DataTable } from "@/components/table/data-table";
 import { Button } from "@/components/ui/button";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { DeviceSessionLogModal } from "@/module/dashboard/customers/customer-details/components/sessions/device-session-log-modal";
-import type {
-  DeviceSessionActivity,
-  DeviceSessionChannel,
-  DeviceSessionRecord,
-} from "@/module/dashboard/customers/customer-details/components/sessions/device-session-log-types";
-
-type DeviceSessionRow = Pick<
-  DeviceSessionRecord,
-  | "id"
-  | "sessionId"
-  | "deviceName"
-  | "channel"
-  | "ipAddress"
-  | "userLocation"
-  | "activity"
-  | "sessionDateLabel"
-  | "timestampLabel"
->;
+import { useCustomerSessionLogs } from "@/services/queries/customer.queries";
+import type { CustomerSessionLogType } from "@/types/customer.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { getSerialNumberOffset } from "@/util/helper";
 
 const PAGE_SIZE = 5;
 
-function generateDeviceSessions(total: number): DeviceSessionRecord[] {
-  const devices = [
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile" as DeviceSessionChannel },
-    { deviceName: "Mac Book Safari", channel: "Web" as DeviceSessionChannel },
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile" as DeviceSessionChannel },
-    { deviceName: "Mac Book Safari", channel: "Web" as DeviceSessionChannel },
-    { deviceName: "Iphone 17 Pro max", channel: "Mobile" as DeviceSessionChannel },
-  ] as const;
-  const activities: DeviceSessionActivity[] = [
-    "User Logged in",
-    "User Logged in",
-    "User Logged out",
-    "User Logged in",
-    "User Logged in",
-  ];
-
-  return Array.from({ length: total }, (_, index) => {
-    const serial = index + 1;
-    const device = devices[index % devices.length] ?? devices[0];
-    const activity = activities[index % activities.length] ?? "User Logged in";
-    const dayNumber = (index % 20) + 1;
-    const day = String(dayNumber).padStart(2, "0");
-
-    return {
-      id: `session-${serial}`,
-      sessionId: `CU-${String(8890955422 + serial)}...`,
-      deviceName: device.deviceName,
-      channel: device.channel,
-      ipAddress: "142.096.02.01",
-      userLocation: "Lagos, Nigeria",
-      activity,
-      sessionDateLabel: `${day}/01/2026`,
-      timestampLabel: index % 2 === 0 ? "10:30:00pm" : "07:20:00am",
-      dateLabel: format(new Date(2026, 0, dayNumber), "do MMMM, yyyy"),
-    };
-  });
-}
-
-export function DeviceSessionLogsPanel() {
+export function DeviceSessionLogsPanel({ customerId }: { customerId: string }) {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [sessions] = React.useState<DeviceSessionRecord[]>(() => generateDeviceSessions(1000));
-  const [activeSessionId, setActiveSessionId] = React.useState<string | null>(null);
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [activeSessionLogId, setActiveSessionLogId] = React.useState<string | null>(null);
 
-  const searchQuery = (value.q ?? "").trim().toLowerCase();
-  const filtered = React.useMemo(() => {
-    if (!searchQuery) return sessions;
-    return sessions.filter(
-      (session) =>
-        session.sessionId.toLowerCase().includes(searchQuery) ||
-        session.deviceName.toLowerCase().includes(searchQuery) ||
-        session.ipAddress.toLowerCase().includes(searchQuery),
-    );
-  }, [searchQuery, sessions]);
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0
-      ? Math.min(Math.floor(parsedPage), totalPages)
-      : 1;
+  const listQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows = React.useMemo<DeviceSessionRow[]>(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((session) => ({
-      id: session.id,
-      sessionId: session.sessionId,
-      deviceName: session.deviceName,
-      channel: session.channel,
-      ipAddress: session.ipAddress,
-      userLocation: session.userLocation,
-      activity: session.activity,
-      sessionDateLabel: session.sessionDateLabel,
-      timestampLabel: session.timestampLabel,
-    }));
-  }, [currentPage, filtered]);
+  const { data: sessionResponse, isLoading } = useCustomerSessionLogs(customerId, listQuery);
+  const sessions = sessionResponse?.data ?? [];
+  const paginationMeta = sessionResponse?.pagination;
 
-  const activeSession = activeSessionId
-    ? (sessions.find((session) => session.id === activeSessionId) ?? null)
-    : null;
+  const serialNumberOffset = getSerialNumberOffset({
+    currentPage,
+    pageSize: PAGE_SIZE,
+    pagination: paginationMeta,
+  });
 
-  const columns: ColumnDef<DeviceSessionRow, unknown>[] = [
-    createSerialColumn<DeviceSessionRow>(),
-    createIdentifierColumn<DeviceSessionRow>("Session ID", "sessionId"),
-    {
-      accessorKey: "deviceName",
-      header: "Device Name",
-    },
-    {
-      accessorKey: "channel",
-      header: "Channel",
-    },
-    {
-      accessorKey: "ipAddress",
-      header: "IP Address",
-    },
-    {
-      accessorKey: "userLocation",
-      header: "User Location",
-    },
-    {
-      accessorKey: "activity",
-      header: "Activity",
-    },
-    {
-      accessorKey: "sessionDateLabel",
-      header: "Session Date",
-    },
-    {
-      accessorKey: "timestampLabel",
-      header: "Time stamp",
-    },
-    createActionColumnWithOptions<DeviceSessionRow>({
+  const activeSession =
+    activeSessionLogId != null
+      ? (sessions.find((session) => session.sessionLogId === activeSessionLogId) ?? null)
+      : null;
+
+  const columns: ColumnDef<CustomerSessionLogType, unknown>[] = [
+    createSerialColumn<CustomerSessionLogType>({ offset: serialNumberOffset }),
+    createIdentifierColumn<CustomerSessionLogType>("Session ID", "sessionLogId", "max-w-[7rem]"),
+    createTextColumn<CustomerSessionLogType>(
+      "Device Name",
+      "deviceName",
+      "inline-block max-w-[6rem]",
+    ),
+    createTextColumn<CustomerSessionLogType>("Channel", "channel"),
+    createTextColumn<CustomerSessionLogType>("IP Address", "ipAddress"),
+    createTextColumn<CustomerSessionLogType>("User Location", "userLocation"),
+    createTextColumn<CustomerSessionLogType>("Activity", "activity", "inline-block max-w-[7rem]"),
+    createTextColumn<CustomerSessionLogType>("Session Date", "sessionDate"),
+    createTextColumn<CustomerSessionLogType>("Time stamp", "timestamp"),
+    createActionColumnWithOptions<CustomerSessionLogType>({
       ariaLabel: "View device session log report",
       onView: (row) => {
-        setActiveSessionId(row.id);
-        setModalOpen(true);
+        setActiveSessionLogId(row.sessionLogId);
       },
     }),
   ];
@@ -174,12 +89,13 @@ export function DeviceSessionLogsPanel() {
         </div>
       </div>
 
-      <DataTable<DeviceSessionRow, unknown>
+      <DataTable<CustomerSessionLogType, unknown>
         columns={columns}
-        data={rows}
-        enableCheckbox
+        data={sessions}
+        loading={isLoading}
+        emptyStateLabel="No session logs found."
         pagination={{
-          totalEntries: filtered.length,
+          totalEntries: paginationMeta?.total ?? 0,
           pageSize: PAGE_SIZE,
           maxVisiblePages: 3,
         }}
@@ -187,10 +103,9 @@ export function DeviceSessionLogsPanel() {
 
       {activeSession ? (
         <DeviceSessionLogModal
-          open={modalOpen}
+          open={Boolean(activeSession)}
           onOpenChange={(open) => {
-            setModalOpen(open);
-            if (!open) setActiveSessionId(null);
+            if (!open) setActiveSessionLogId(null);
           }}
           session={activeSession}
         />

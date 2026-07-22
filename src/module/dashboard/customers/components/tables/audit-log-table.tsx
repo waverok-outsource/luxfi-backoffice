@@ -3,140 +3,121 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { CustomerTableRow } from "@/module/dashboard/customers/data";
 import {
-  CustomersBaseTable,
+  DataTable,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
   createTextColumn,
-} from "@/module/dashboard/customers/components/tables/shared";
-import {
-  ActivityDetailsModal,
-  type ActivityDetails,
-} from "@/module/dashboard/customers/components/modals/activity-details-modal";
+} from "@/components/table";
+import { ActivityLogDetailsModal } from "@/components/modal";
+import { useURLQuery } from "@/hooks/useUrlQuery";
+import { useAuditLogs } from "@/services/queries/audit.queries";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { formatDate, getSerialNumberOffset } from "@/util/helper";
 
-type AuditLogRow = CustomerTableRow & {
+type AuditLogRow = {
+  id: string;
   logId: string;
   action: string;
-  initiatorId: string;
   initiatorName: string;
   initiatorRole: string;
   actionDate: string;
-  actionDateLong: string;
   actionTimestamp: string;
 };
 
-const rows: AuditLogRow[] = [
-  {
-    id: "CU-8890955422...",
-    logId: "000085752257",
-    action: "Loan Approved",
-    initiatorId: "000085752257",
-    initiatorName: "Dare Abdullahi",
-    initiatorRole: "Compliance Officer",
-    actionDate: "10/01/2026",
-    actionDateLong: "10th January, 2026",
-    actionTimestamp: "07:20 AM",
-    status: "active",
-  },
-  {
-    id: "CU-8890955422...",
-    logId: "000085752258",
-    action: "Customer Blacklisted",
-    initiatorId: "000085752258",
-    initiatorName: "Oreoluwa Akinnagbe",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionDateLong: "07th February, 2026",
-    actionTimestamp: "10:23 AM",
-    status: "active",
-  },
-  {
-    id: "CU-8890955422...",
-    logId: "000085752259",
-    action: "Customer Updated",
-    initiatorId: "000085752259",
-    initiatorName: "John Ndubuisi",
-    initiatorRole: "Compliance Officer II",
-    actionDate: "07/02/2026",
-    actionDateLong: "07th February, 2026",
-    actionTimestamp: "10:23 AM",
-    status: "active",
-  },
-  {
-    id: "CU-8890955422...",
-    logId: "000085752260",
-    action: "Loan Disbursed",
-    initiatorId: "000085752260",
-    initiatorName: "Hannah Amarachi",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionDateLong: "07th February, 2026",
-    actionTimestamp: "10:23 AM",
-    status: "active",
-  },
-  {
-    id: "CU-8890955422...",
-    logId: "000085752261",
-    action: "Loan Disbursed",
-    initiatorId: "000085752261",
-    initiatorName: "Fred Bassey",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionDateLong: "07th February, 2026",
-    actionTimestamp: "10:23 AM",
-    status: "active",
-  },
-];
+const PAGE_SIZE = 5;
 
 export function AuditLogTable() {
-  const [selectedActivity, setSelectedActivity] = React.useState<AuditLogRow | null>(null);
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
+  const [activeLogId, setActiveLogId] = React.useState<string | null>(null);
 
-  const columns: ColumnDef<CustomerTableRow, unknown>[] = [
-    createSerialColumn(),
-    createIdentifierColumn("Log ID", "id"),
-    createTextColumn("Action", "action", "max-w-[160px]"),
-    createTextColumn("Initiator Name", "initiatorName"),
-    createTextColumn("Initiator Role", "initiatorRole", "max-w-[180px]"),
-    createTextColumn("Action Date", "actionDate"),
-    createTextColumn("Action Timestamp", "actionTimestamp"),
-    createActionColumnWithOptions({
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
+
+  const listQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
+
+  const { data: auditResponse, isLoading } = useAuditLogs("customer", listQuery);
+  const logs = auditResponse?.data ?? [];
+  const paginationMeta = auditResponse?.pagination;
+
+  const serialNumberOffset = getSerialNumberOffset({
+    currentPage,
+    pageSize: PAGE_SIZE,
+    pagination: paginationMeta,
+  });
+
+  const rows: AuditLogRow[] = logs.map((log) => ({
+    id: log.logId,
+    logId: log.logId,
+    action: log.event,
+    initiatorName: log.initiatorName,
+    initiatorRole: log.maker,
+    actionDate: formatDate(log.createdAt, "dd/MM/yyyy"),
+    actionTimestamp: formatDate(log.createdAt, "h:mm a"),
+  }));
+
+  const activeLog =
+    activeLogId != null ? (logs.find((log) => log.logId === activeLogId) ?? null) : null;
+
+  const columns: ColumnDef<AuditLogRow, unknown>[] = [
+    createSerialColumn<AuditLogRow>({ offset: serialNumberOffset }),
+    createIdentifierColumn<AuditLogRow>("Log ID", "logId"),
+    createTextColumn<AuditLogRow>("Action", "action", "max-w-[160px]"),
+    createTextColumn<AuditLogRow>("Initiator Name", "initiatorName"),
+    createTextColumn<AuditLogRow>("Initiator Role", "initiatorRole", "max-w-[180px]"),
+    createTextColumn<AuditLogRow>("Action Date", "actionDate"),
+    createTextColumn<AuditLogRow>("Action Timestamp", "actionTimestamp"),
+    createActionColumnWithOptions<AuditLogRow>({
       header: "",
       ariaLabel: "View activity log details",
       onView: (row) => {
-        setSelectedActivity(row as AuditLogRow);
+        setActiveLogId(row.logId);
       },
     }),
   ];
 
-  const handleModalChange = (open: boolean) => {
-    if (!open) {
-      setSelectedActivity(null);
-    }
-  };
-
-  const activityDetails: ActivityDetails | null = selectedActivity
-    ? {
-        logId: selectedActivity.logId,
-        action: selectedActivity.action,
-        actionDate: selectedActivity.actionDateLong ?? selectedActivity.actionDate,
-        timestamp: selectedActivity.actionTimestamp,
-        initiatorId: selectedActivity.initiatorId,
-        initiatorName: selectedActivity.initiatorName,
-        initiatorRole: selectedActivity.initiatorRole,
-      }
-    : null;
-
   return (
     <>
-      <CustomersBaseTable rows={rows} columns={columns} pageSize={5} />
+      <DataTable<AuditLogRow, unknown>
+        columns={columns}
+        data={rows}
+        loading={isLoading}
+        emptyStateLabel="No audit logs found."
+        pagination={{
+          totalEntries: paginationMeta?.total ?? 0,
+          pageSize: PAGE_SIZE,
+          maxVisiblePages: 3,
+        }}
+      />
 
-      {selectedActivity && activityDetails ? (
-        <ActivityDetailsModal
-          open={Boolean(selectedActivity)}
-          onOpenChange={handleModalChange}
-          activity={activityDetails}
+      {activeLog ? (
+        <ActivityLogDetailsModal
+          open={Boolean(activeLog)}
+          onOpenChange={(open) => {
+            if (!open) setActiveLogId(null);
+          }}
+          title="Activity Details"
+          description="View and manage Activity Log entry"
+          rowGroups={[
+            [{ label: "Log ID:", value: activeLog.logId, copyText: activeLog.logId }],
+            [
+              { label: "Action:", value: activeLog.event },
+              { label: "Message:", value: activeLog.message },
+              { label: "Status:", value: activeLog.status },
+              { label: "Action Date:", value: formatDate(activeLog.createdAt, "do MMMM, yyyy") },
+              { label: "Timestamp:", value: formatDate(activeLog.createdAt, "h:mm a") },
+            ],
+            [
+              { label: "Initiator Name:", value: activeLog.initiatorName },
+              { label: "Initiator Role:", value: activeLog.maker },
+              { label: "Initiator ID:", value: activeLog.userId, copyText: activeLog.userId },
+            ],
+          ]}
         />
       ) : null}
     </>

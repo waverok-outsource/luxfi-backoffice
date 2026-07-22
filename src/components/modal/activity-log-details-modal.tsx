@@ -52,9 +52,16 @@ export function ActivityLogDetailsModal({
           <div className="space-y-[14px]">
             {rowGroups.map((rows, groupIndex) => (
               <React.Fragment key={groupIndex}>
-                {groupIndex > 0 ? <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" /> : null}
+                {groupIndex > 0 ? (
+                  <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
+                ) : null}
                 {rows.map((row) => (
-                  <ModalDetailRow key={row.label} label={row.label} value={row.value} copyText={row.copyText} />
+                  <ModalDetailRow
+                    key={row.label}
+                    label={row.label}
+                    value={row.value}
+                    copyText={row.copyText}
+                  />
                 ))}
               </React.Fragment>
             ))}

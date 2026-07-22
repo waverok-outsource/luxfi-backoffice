@@ -7,7 +7,9 @@ import { ScoreGauge } from "@/components/dashboard/score-gauge";
 import { Badge } from "@/components/ui/badge";
 import { DataRow } from "@/components/ui/data-row";
 import { cn } from "@/lib/utils";
-import type { CustomerDetails } from "@/module/dashboard/customers/customer-details/data";
+import type { CustomerDetailType, CustomerMoneyMetricType } from "@/types/customer.type";
+import { formatCurrency } from "@/util/format-currency";
+import { formatDate, getFullName, getKycTierLabel } from "@/util/helper";
 
 function CreditScoreValue({ percent }: { percent: number }) {
   return <ScoreGauge percent={percent} />;
@@ -56,7 +58,21 @@ function DetailStatCard({
   );
 }
 
-export function CustomerOverviewGrid({ details }: { details: CustomerDetails }) {
+function metricTrend(metric: CustomerMoneyMetricType | CustomerDetailType["creditRating"]) {
+  return {
+    trend: `${metric.growth}${metric.growthUnit === "percent" ? "%" : ` ${metric.growthUnit}`}`,
+    period: `Last ${metric.growthDuration}`,
+    tone: (metric.growthPattern === "downward" ? "negative" : "positive") as
+      | "positive"
+      | "negative",
+  };
+}
+
+export function CustomerOverviewGrid({ customer }: { customer: CustomerDetailType }) {
+  const walletTrend = metricTrend(customer.walletBalance);
+  const portfolioTrend = metricTrend(customer.portfolio);
+  const creditTrend = metricTrend(customer.creditRating);
+
   return (
     <div className="grid gap-3 lg:grid-cols-[220px_minmax(280px,1fr)_180px_180px_180px]">
       <article className="relative overflow-hidden rounded-2xl bg-primary-white">
@@ -66,7 +82,7 @@ export function CustomerOverviewGrid({ details }: { details: CustomerDetails }) 
         <div className="absolute bottom-3 left-3 right-3 flex justify-start">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary-black px-3 py-1 text-xs font-semibold text-primary-white">
             <span className="h-2 w-2 rounded-full bg-alert-success" />
-            {details.kycTierLabel}
+            {getKycTierLabel(customer)}
           </div>
         </div>
       </article>
@@ -74,35 +90,52 @@ export function CustomerOverviewGrid({ details }: { details: CustomerDetails }) 
       <article className="rounded-2xl bg-primary-white p-4">
         <h3 className="text-sm font-semibold text-text-black">Personal Information</h3>
         <div className="mt-4 space-y-3">
-          <DataRow label="Full Name:" value={details.fullName} valueClassName="truncate" />
-          <DataRow label="Email Address:" value={details.emailAddress} valueClassName="truncate" />
-          <DataRow label="Phone Number:" value={details.phoneNumber} valueClassName="truncate" />
-          <DataRow label="Customer Since:" value={details.customerSince} valueClassName="truncate" />
+          <DataRow label="Full Name:" value={getFullName(customer)} valueClassName="truncate" />
+          <DataRow label="Email Address:" value={customer.email} valueClassName="truncate" />
+          <DataRow
+            label="Phone Number:"
+            value={customer.phoneNumber || "-"}
+            valueClassName="truncate"
+          />
+          <DataRow
+            label="Customer Since:"
+            value={formatDate(customer.createdAt, "dd MMMM, yyyy")}
+            valueClassName="truncate"
+          />
         </div>
       </article>
 
       <DetailStatCard
         icon={<Wallet className="h-4 w-4" />}
         title="Wallet Balance"
-        value={<span className="text-2xl font-bold text-text-black">{details.walletBalance}</span>}
-        trend="99.9%"
-        period="Last 7 days"
+        value={
+          <span className="text-2xl font-bold text-text-black">
+            {formatCurrency(customer.walletBalance.value, customer.walletBalance.currencyCode)}
+          </span>
+        }
+        trend={walletTrend.trend}
+        period={walletTrend.period}
+        tone={walletTrend.tone}
       />
       <DetailStatCard
         icon={<BriefcaseBusiness className="h-4 w-4" />}
         title="Portfolio Value"
         value={
-          <span className="text-2xl font-bold text-text-black">{details.portfolioValue}</span>
+          <span className="text-2xl font-bold text-text-black">
+            {formatCurrency(customer.portfolio.value, customer.portfolio.currencyCode)}
+          </span>
         }
-        trend="99.9%"
-        period="Last 7 days"
+        trend={portfolioTrend.trend}
+        period={portfolioTrend.period}
+        tone={portfolioTrend.tone}
       />
       <DetailStatCard
         icon={<Coins className="h-3.5 w-3.5" />}
         title="Credit Score"
-        value={<CreditScoreValue percent={details.creditScorePercent} />}
-        trend="99.9%"
-        period="Last 7 days"
+        value={<CreditScoreValue percent={customer.creditRating.value} />}
+        trend={creditTrend.trend}
+        period={creditTrend.period}
+        tone={creditTrend.tone}
       />
     </div>
   );

@@ -30,18 +30,18 @@ function isCustomerDetailsTab(value: string): value is CustomerDetailsTabValue {
   return tabs.some((tab) => tab.value === value);
 }
 
-const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
-  kyc: <KycCompliancePanel />,
-  transactions: <TransactionHistoryPanel />,
-  loans: <AssetLoansPanel />,
-  contracts: <SmartContractsPanel />,
-  portfolio: <AssetPortfolioPanel />,
-  device: <DeviceSessionLogsPanel />,
-  support: <SupportTicketsPanel />,
-};
-
-export function CustomerDetailsTabs() {
+export function CustomerDetailsTabs({ customerId }: { customerId: string }) {
   const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; q?: string }>();
+
+  const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
+    kyc: <KycCompliancePanel />,
+    transactions: <TransactionHistoryPanel />,
+    loans: <AssetLoansPanel />,
+    contracts: <SmartContractsPanel />,
+    portfolio: <AssetPortfolioPanel />,
+    device: <DeviceSessionLogsPanel customerId={customerId} />,
+    support: <SupportTicketsPanel />,
+  };
 
   const tabQuery = value.tab;
   const activeTab: CustomerDetailsTabValue =
