@@ -16,6 +16,12 @@ const keyFactory = {
     classes: {
       all: ["asset-management", "classes"],
       list: (query: string) => ["asset-management", "classes", query],
+      details: (classId: string) => ["asset-management", "classes", classId],
+      types: ["asset-management", "classes", "types"],
+    },
+    categories: {
+      all: ["asset-management", "categories"],
+      list: (query: string) => ["asset-management", "categories", query],
     },
   },
 

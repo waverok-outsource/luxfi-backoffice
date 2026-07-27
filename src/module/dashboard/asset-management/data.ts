@@ -1,6 +1,17 @@
-import type { AssetClassConfigFormValues } from "@/schema/asset-management.schema";
+import {
+  CURRENCY_VALUES,
+  LIQUIDITY_LEVEL_VALUES,
+  OFFER_PATTERN_VALUES,
+  REDEMPTION_TIMING_VALUES,
+  RISK_CATEGORY_VALUES,
+  STRESS_TEST_MODEL_VALUES,
+  VALUATION_METHOD_VALUES,
+  VALUATION_PROVIDER_VALUES,
+  VISIBILITY_PATTERN_VALUES,
+  COMMISSION_TYPE_VALUES,
+  INVESTOR_PROFILE_VALUES,
+} from "@/schema/asset-management.schema";
 import type {
-  AssetCategoryType,
   AssetClassType,
   AssetItemType,
   AssetVerificationLogAction,
@@ -39,127 +50,184 @@ export const DEFAULT_ASSET_MANAGEMENT_TAB: AssetManagementTabValue = "system-ass
 export const ASSET_TYPE_FILTER_OPTIONS = [
   { value: "all", label: "All" },
   { value: "tangible", label: "Tangible Assets" },
-  { value: "intangible", label: "Digital Assets" },
+  { value: "digital", label: "Digital Assets" },
 ] as const;
 
-// A reasonable, valid-against-schema baseline for the 8-step config so every
-// mock asset class has real values to prefill/edit/inherit from.
-const DEFAULT_ASSET_CLASS_CONFIG: AssetClassConfigFormValues = {
-  valuationMethod: "market-price",
-  approvedValuationProvider: "watchcharts",
-  overridePriceFeedManually: false,
-  requireSecondOpinionValuation: true,
-  alertOnValuationDrift: true,
+// A reasonable, valid-against-schema baseline for the 8 config sections so every
+// mock asset class has real values to prefill/edit/inherit from. Field names here
+// match AssetClassType's GET-response shape exactly (not the POST payload naming,
+// and not AssetClassConfigFormValues, which mirrors the POST shape instead).
+const DEFAULT_ASSET_CLASS_SECTIONS: Pick<
+  AssetClassType,
+  | "valuationLogic"
+  | "liquidityProfile"
+  | "loanEligibility"
+  | "purchaseOfferLogic"
+  | "marketPlace"
+  | "riskSettings"
+  | "underwritingControls"
+  | "investorEligibility"
+> = {
+  valuationLogic: {
+    method: VALUATION_METHOD_VALUES[0],
+    valuationProvider: VALUATION_PROVIDER_VALUES[0],
+    requiresSecondOpinion: true,
+    valuationDriftAlertsEnabled: true,
+    valuationDriftPercentage: 5,
+    allowManualPriceOverride: false,
+  },
 
-  liquidityLevel: "medium",
-  redemptionWindow: "3-business-days",
-  expectedSettlementDays: "5",
-  liquidityMaturityPeriodDays: "6",
-  maxIlliquidityCapPercent: 30,
-  secondaryMarketTradeable: true,
-  gateRedemptionsUnderStress: false,
+  liquidityProfile: {
+    liquidityLevel: LIQUIDITY_LEVEL_VALUES[1],
+    redemptionTiming: REDEMPTION_TIMING_VALUES[2],
+    expectedSettlement: { value: 5, unit: "days" },
+    liquidityMaturity: { value: 6, unit: "months" },
+    restrictRedemptionDuringStress: false,
+    canTradeOnSecondaryMarket: true,
+    maxPortfolioAllocationPercent: 30,
+  },
 
-  eligibleAsLoanCollateral: true,
-  minimumLoanAmount: "5000",
-  maximumLoanAmount: "500000",
-  maximumLtvRatioPercent: 60,
-  supportedLoanTenures: ["3-months", "6-months", "12-months"],
-  acceptedCollateralCurrencies: ["usdt", "usdc"],
+  loanEligibility: {
+    minLoanAmount: 5000,
+    loanCurrency: CURRENCY_VALUES[2],
+    maxLoanAmount: 500000,
+    maxLtv: 60,
+    loanTenure: [
+      { value: 3, unit: "months" },
+      { value: 6, unit: "months" },
+      { value: 12, unit: "months" },
+    ],
+    acceptedCollateralCurrencies: ["USDT", "USDC"],
+  },
 
-  minimumOfferThreshold: "1000",
-  offerValidityWindowDays: "7",
-  maxCounteroffersAllowed: "3",
-  offerEscrowHoldHours: "48",
-  enableCounterofferFlow: true,
-  bindingOfferTriggersEscrow: true,
-  adminApprovalRequiredForAcceptance: true,
-  autoAcceptThresholdPercent: 95,
-  defaultOfferMechanism: "best-offer",
+  purchaseOfferLogic: {
+    minOfferAmount: 1000,
+    offerValidity: { value: 7, unit: "days" },
+    maxCounterOffers: 3,
+    escrowHoldHours: 48,
+    allowsCounterOffer: true,
+    canOfferTriggerEscrow: true,
+    requiresApproval: true,
+    offerPattern: OFFER_PATTERN_VALUES[3],
+    autoAcceptancePercentage: 95,
+  },
 
-  listOnMarketplace: true,
-  featuredPlacementEligible: false,
-  commissionRatePercent: "5",
-  listingExpiryDays: "30",
-  priceVisibility: "public",
+  marketPlace: {
+    priceVisibilityPattern: VISIBILITY_PATTERN_VALUES[0],
+    commission: { value: 5, type: COMMISSION_TYPE_VALUES[0] },
+    listingExpiry: { value: 30, unit: "days" },
+    canFeature: false,
+    canList: true,
+    offerPattern: VISIBILITY_PATTERN_VALUES[0],
+  },
 
-  riskCategory: "medium",
-  stressTestModel: "monte-carlo",
-  maxPortfolioConcentrationPercent: 70,
-  correlatedRiskAdjustmentFactorPercent: 70,
-  varThresholdPercent: 5,
-  requireRiskCommitteeSignOff: true,
-  autoMarginCallOnLtvBreach: true,
-  restrictNewOriginationsUnderStress: false,
-  correlatedAssetClasses: ["jewelry", "collectibles"],
+  riskSettings: {
+    riskCategory: RISK_CATEGORY_VALUES[1],
+    stressTestModel: STRESS_TEST_MODEL_VALUES[1],
+    maxAllowedPortfolioPerClient: 70,
+    riskAdjustmentFactor: 70,
+    valueAtRiskThreshold: 5,
+    requiresWriteOff: true,
+    allowsAutoMarginCall: true,
+    restrictTradingDuringStress: false,
+    correlatedClasses: ["jewelry", "collectibles"],
+  },
 
-  manualUnderwritingRequired: false,
-  enableAutomatedCreditScoring: true,
-  relationshipManagerApprovalRequired: false,
-  underwritingSlaHours: "24",
-  kycLevelRequired: "level-2-enhanced-dd",
-  autoApprovalThreshold: "85",
-  minimumCreditScore: "650",
+  underwritingControls: {
+    canManuallyUnderwrite: false,
+    requiresApproval: false,
+    usesAutomatedCreditScoring: true,
+    kycTierRequired: "level-2-enhanced-dd",
+    minCreditScore: 650,
+    autoApprovalAmount: 85,
+    autoApprovalCurrency: CURRENCY_VALUES[0],
+    underwritingSla: { value: 1, unit: "days" },
+  },
 
-  minimumInvestment: "100000",
-  maximumSingleInvestorExposure: "10000000",
-  eligibleInvestorProfiles: ["retail", "high-net-worth", "institutional"],
-  accreditationVerificationRequired: true,
-  suitabilityAssessmentRequired: true,
-  advisorSignOffRequired: false,
-  lockInvestorOnceCommitted: true,
+  investorEligibility: {
+    investmentAmount: { min: 100000, max: 10000000, currency: CURRENCY_VALUES[0] },
+    lockOnCommit: true,
+    checkSuitability: true,
+    requiresAdvisorApproval: false,
+    requiresAccreditation: true,
+    investorProfilesAllowed: [
+      INVESTOR_PROFILE_VALUES[0],
+      INVESTOR_PROFILE_VALUES[1],
+      INVESTOR_PROFILE_VALUES[2],
+    ],
+  },
 };
 
-// Placeholder data standing in for GET /v1/asset-classes until the endpoint is available.
+// GET /v1/asset-classes is wired up in the system-assets-portfolio tab; this mock
+// array is now only used by the marketplace module until that's wired up too.
 export const mockAssetClasses: AssetClassType[] = [
   {
-    assetClassId: "AC-LUXWATCH",
+    classId: "AC-LUXWATCH",
+    id: "AC-LUXWATCH",
     name: "Luxury Watches",
+    description: "Pre-owned luxury and vintage watches held as tangible collateral assets.",
     assetType: "tangible",
-    status: "published",
+    status: "active",
     assetsCount: 128,
     createdAt: "2026-01-10T00:00:00.000Z",
-    overwriteParentClassConfigurations: true,
-    config: DEFAULT_ASSET_CLASS_CONFIG,
+    updatedAt: "2026-01-10T00:00:00.000Z",
+    ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    assetClassId: "AC-CRYPTO",
+    classId: "AC-CRYPTO",
+    id: "AC-CRYPTO",
     name: "Cryptocurrencies",
-    assetType: "intangible",
-    status: "published",
+    description: "Digital currency holdings valued via internal appraisal.",
+    assetType: "digital",
+    status: "active",
     assetsCount: 54,
     createdAt: "2026-01-12T00:00:00.000Z",
-    overwriteParentClassConfigurations: true,
-    config: { ...DEFAULT_ASSET_CLASS_CONFIG, approvedValuationProvider: "internal-appraisal-team" },
+    updatedAt: "2026-01-12T00:00:00.000Z",
+    ...DEFAULT_ASSET_CLASS_SECTIONS,
+    valuationLogic: {
+      ...DEFAULT_ASSET_CLASS_SECTIONS.valuationLogic,
+      valuationProvider: VALUATION_PROVIDER_VALUES[2],
+    },
   },
   {
-    assetClassId: "AC-BAGS",
+    classId: "AC-BAGS",
+    id: "AC-BAGS",
     name: "Designer Bags",
+    description: "Authenticated designer handbags awaiting onboarding.",
     assetType: "tangible",
     status: "draft",
     assetsCount: 0,
     createdAt: "2026-01-14T00:00:00.000Z",
-    overwriteParentClassConfigurations: true,
-    config: DEFAULT_ASSET_CLASS_CONFIG,
+    updatedAt: "2026-01-14T00:00:00.000Z",
+    ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    assetClassId: "AC-JEWELRY",
+    classId: "AC-JEWELRY",
+    id: "AC-JEWELRY",
     name: "Jewelry",
+    description: "Fine jewelry and gemstone pieces awaiting onboarding.",
     assetType: "tangible",
     status: "draft",
     assetsCount: 0,
     createdAt: "2026-01-15T00:00:00.000Z",
-    overwriteParentClassConfigurations: true,
-    config: DEFAULT_ASSET_CLASS_CONFIG,
+    updatedAt: "2026-01-15T00:00:00.000Z",
+    ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    assetClassId: "AC-NFT",
+    classId: "AC-NFT",
+    id: "AC-NFT",
     name: "NFTs",
-    assetType: "intangible",
+    description: "Non-fungible token collections awaiting onboarding.",
+    assetType: "digital",
     status: "draft",
     assetsCount: 0,
     createdAt: "2026-01-16T00:00:00.000Z",
-    overwriteParentClassConfigurations: true,
-    config: { ...DEFAULT_ASSET_CLASS_CONFIG, approvedValuationProvider: "internal-appraisal-team" },
+    updatedAt: "2026-01-16T00:00:00.000Z",
+    ...DEFAULT_ASSET_CLASS_SECTIONS,
+    valuationLogic: {
+      ...DEFAULT_ASSET_CLASS_SECTIONS.valuationLogic,
+      valuationProvider: VALUATION_PROVIDER_VALUES[2],
+    },
   },
 ];
 
@@ -249,52 +317,6 @@ export const mockAssetItemsByClassId: Record<string, AssetItemType[]> = {
   ],
 };
 
-// Placeholder data standing in for GET /v1/asset-classes/:id/categories until the endpoint is available.
-export const mockAssetCategoriesByClassId: Record<string, AssetCategoryType[]> = {
-  "AC-LUXWATCH": [
-    {
-      assetCategoryId: "2000234",
-      assetClassId: "AC-LUXWATCH",
-      name: "Rolex",
-      listingStatus: "listed",
-      overwriteParentClassConfigurations: false,
-      createdAt: "2026-02-01T00:00:00.000Z",
-    },
-    {
-      assetCategoryId: "2203945",
-      assetClassId: "AC-LUXWATCH",
-      name: "Cartier",
-      listingStatus: "listed",
-      overwriteParentClassConfigurations: false,
-      createdAt: "2026-02-02T00:00:00.000Z",
-    },
-    {
-      assetCategoryId: "2037635",
-      assetClassId: "AC-LUXWATCH",
-      name: "Audemars Piguet",
-      listingStatus: "listed",
-      overwriteParentClassConfigurations: false,
-      createdAt: "2026-02-03T00:00:00.000Z",
-    },
-    {
-      assetCategoryId: "2037636",
-      assetClassId: "AC-LUXWATCH",
-      name: "Hublot",
-      listingStatus: "listed",
-      overwriteParentClassConfigurations: false,
-      createdAt: "2026-02-04T00:00:00.000Z",
-    },
-    {
-      assetCategoryId: "2037637",
-      assetClassId: "AC-LUXWATCH",
-      name: "Vacheron Constantin",
-      listingStatus: "unlisted",
-      overwriteParentClassConfigurations: false,
-      createdAt: "2026-02-05T00:00:00.000Z",
-    },
-  ],
-};
-
 // Placeholder data standing in for GET /v1/user-asset-portfolios until the endpoint is available.
 export const mockUserAssetPortfolios: UserAssetPortfolioType[] = [
   {
@@ -310,7 +332,7 @@ export const mockUserAssetPortfolios: UserAssetPortfolioType[] = [
   {
     portfolioId: "1203945",
     customerName: "Joan Harrison",
-    assetType: "intangible",
+    assetType: "digital",
     portfolioValue: 7000,
     portfolioVolume: 4,
     verifiedPercent: 55,
@@ -330,7 +352,7 @@ export const mockUserAssetPortfolios: UserAssetPortfolioType[] = [
   {
     portfolioId: "1037636",
     customerName: "Ozumba Ifeanyi",
-    assetType: "intangible",
+    assetType: "digital",
     portfolioValue: 24000,
     portfolioVolume: 11,
     verifiedPercent: 40,

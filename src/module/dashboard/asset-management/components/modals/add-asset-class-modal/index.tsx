@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -12,7 +12,7 @@ import {
 import { FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { FormControl, FormField } from "@/components/util/form-controller";
+import { FormControl, FormField, FormTextarea } from "@/components/util/form-controller";
 import { AssetClassConfigWizard } from "@/module/dashboard/asset-management/components/asset-class-config-wizard";
 import { ASSET_CLASS_STEP_ORDER } from "@/module/dashboard/asset-management/components/asset-class-step-meta";
 import {
@@ -21,92 +21,119 @@ import {
   type AddAssetClassFormValues,
   type AssetClassStepKey,
 } from "@/schema/asset-management.schema";
+import { useAssetClassTypes } from "@/services/queries/asset-management.queries";
+import useAssetManagementFns from "@/services/functions/asset-management.fns";
 import type {
   AssetClassAssetType,
   AssetClassStatus,
   AssetClassType,
+  CreateAssetClassPayloadType,
 } from "@/types/asset-management.type";
+import { mapAssetClassToConfigFormValues } from "@/util/resolve-asset-config";
+import { toTitleCase } from "@/util/helper";
+
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  tangible: "Tangible Assets",
+  digital: "Digital Assets",
+};
 
 type AddAssetClassModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** When provided, the modal edits this asset class instead of creating a new one. */
   assetClass?: AssetClassType;
-  onAssetClassCreated?: (assetClass: AssetClassType) => void;
-  onAssetClassUpdated?: (assetClassId: string, patch: Partial<AssetClassType>) => void;
 };
 
 type ModalStage = "FORM" | "SUCCESS";
 
-const HEADER_FIELDS: (keyof AddAssetClassFormValues)[] = ["assetClassName", "assetType"];
+const HEADER_FIELDS: (keyof AddAssetClassFormValues)[] = ["name", "assetType", "description"];
 
 const BASE_DEFAULT_VALUES: AddAssetClassFormValues = {
-  assetClassName: "",
+  name: "",
   assetType: "",
-  overwriteParentClassConfigurations: true,
+  description: "",
+  status: "active",
 
-  valuationMethod: "",
-  approvedValuationProvider: "",
-  overridePriceFeedManually: false,
-  requireSecondOpinionValuation: false,
-  alertOnValuationDrift: false,
+  valuationLogic: {
+    method: "",
+    valuationProvider: "",
+    requiresSecondOpinion: false,
+    valuationDriftAlertsEnabled: false,
+    driftRate: 15,
+    canOverridePriceManually: false,
+  },
 
-  liquidityLevel: "",
-  redemptionWindow: "",
-  expectedSettlementDays: "",
-  liquidityMaturityPeriodDays: "",
-  maxIlliquidityCapPercent: 30,
-  secondaryMarketTradeable: false,
-  gateRedemptionsUnderStress: false,
+  liquidityProfile: {
+    liquidityLevel: "",
+    redemptionTiming: "",
+    expectedSettlement: { value: 7, unit: "days" },
+    liquidityMaturity: { value: 7, unit: "days" },
+    restrictRedemptionDuringStress: false,
+    canTradeOnSecondaryMarket: false,
+    maxPortfolioAllocationPercent: 30,
+  },
 
-  eligibleAsLoanCollateral: false,
-  minimumLoanAmount: "",
-  maximumLoanAmount: "",
-  maximumLtvRatioPercent: 30,
-  supportedLoanTenures: [],
-  acceptedCollateralCurrencies: [],
+  loanEligibility: {
+    minLoanAmount: 0,
+    loanCurrency: "",
+    maxLoanAmount: 0,
+    maxLtv: 30,
+    loanTenure: [],
+    acceptedCollateralCurrencies: [],
+  },
 
-  minimumOfferThreshold: "",
-  offerValidityWindowDays: "",
-  maxCounteroffersAllowed: "",
-  offerEscrowHoldHours: "",
-  enableCounterofferFlow: false,
-  bindingOfferTriggersEscrow: false,
-  adminApprovalRequiredForAcceptance: false,
-  autoAcceptThresholdPercent: 95,
-  defaultOfferMechanism: "",
+  purchaseOfferLogic: {
+    minOfferAmount: 0,
+    offerValidity: { value: 7, unit: "days" },
+    maxCounterOffers: 3,
+    escrowHoldHours: 24,
+    allowsCounterOffer: false,
+    canOfferTriggerEscrow: false,
+    requiresApproval: false,
+    offerPattern: "",
+    autoAcceptancePercentage: 95,
+  },
 
-  listOnMarketplace: false,
-  featuredPlacementEligible: false,
-  commissionRatePercent: "",
-  listingExpiryDays: "",
-  priceVisibility: "",
+  marketPlace: {
+    priceVisibilityPattern: "",
+    commission: { value: 5, type: "percentage" },
+    listingExpiry: { value: 30, unit: "days" },
+    canFeature: false,
+    canList: false,
+    offerPattern: "",
+  },
 
-  riskCategory: "",
-  stressTestModel: "",
-  maxPortfolioConcentrationPercent: 70,
-  correlatedRiskAdjustmentFactorPercent: 70,
-  varThresholdPercent: 5,
-  requireRiskCommitteeSignOff: false,
-  autoMarginCallOnLtvBreach: false,
-  restrictNewOriginationsUnderStress: false,
-  correlatedAssetClasses: [],
+  riskSettings: {
+    riskCategory: "",
+    stressTestModel: "",
+    maxAllowedPortfolioPerClient: 70,
+    riskAdjustmentFactor: 70,
+    valueAtRiskThreshold: 5,
+    requiresWriteOff: false,
+    allowsAutoMarginCall: false,
+    restrictTradingDuringStress: false,
+    correlatedClasses: [],
+  },
 
-  manualUnderwritingRequired: false,
-  enableAutomatedCreditScoring: false,
-  relationshipManagerApprovalRequired: false,
-  underwritingSlaHours: "",
-  kycLevelRequired: "",
-  autoApprovalThreshold: "",
-  minimumCreditScore: "",
+  underwritingControls: {
+    canManuallyUnderwrite: false,
+    requiresApproval: false,
+    usesAutomatedCreditScoring: false,
+    kycTierRequired: "",
+    minCreditScore: 0,
+    autoApprovalAmount: 0,
+    autoApprovalCurrency: "",
+    underwritingSla: { value: 3, unit: "days" },
+  },
 
-  minimumInvestment: "",
-  maximumSingleInvestorExposure: "",
-  eligibleInvestorProfiles: [],
-  accreditationVerificationRequired: false,
-  suitabilityAssessmentRequired: false,
-  advisorSignOffRequired: false,
-  lockInvestorOnceCommitted: false,
+  investorEligibility: {
+    investmentAmount: { min: 0, max: 0, currency: "" },
+    lockOnCommit: false,
+    checkSuitability: false,
+    requiresAdvisorApproval: false,
+    requiresAccreditation: false,
+    investorProfilesAllowed: [],
+  },
 };
 
 function buildDefaultValues(assetClass?: AssetClassType): AddAssetClassFormValues {
@@ -115,66 +142,43 @@ function buildDefaultValues(assetClass?: AssetClassType): AddAssetClassFormValue
   }
 
   return {
-    ...BASE_DEFAULT_VALUES,
-    ...assetClass.config,
-    assetClassName: assetClass.name,
+    name: assetClass.name,
     assetType: assetClass.assetType,
-    overwriteParentClassConfigurations: assetClass.overwriteParentClassConfigurations,
+    description: assetClass.description,
+    status: assetClass.status,
+    ...mapAssetClassToConfigFormValues(assetClass),
   };
 }
 
-function splitFormValues(values: AddAssetClassFormValues) {
-  const { assetClassName, assetType, overwriteParentClassConfigurations, ...config } = values;
-  return { assetClassName, assetType, overwriteParentClassConfigurations, config };
-}
-
-function buildMockAssetClass(
+function buildCreateAssetClassPayload(
   values: AddAssetClassFormValues,
   status: AssetClassStatus,
-): AssetClassType {
-  const { assetClassName, assetType, overwriteParentClassConfigurations, config } =
-    splitFormValues(values);
-
+): CreateAssetClassPayloadType {
   return {
-    assetClassId: `AC-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-    name: assetClassName.trim() || "Untitled Asset Class",
-    assetType: (assetType || "tangible") as AssetClassAssetType,
+    ...values,
+    name: values.name.trim() || "Untitled Asset Class",
+    assetType: values.assetType as AssetClassAssetType,
     status,
-    assetsCount: 0,
-    createdAt: new Date().toISOString(),
-    overwriteParentClassConfigurations,
-    config,
   };
 }
 
-function buildAssetClassPatch(values: AddAssetClassFormValues): Partial<AssetClassType> {
-  const { assetClassName, assetType, overwriteParentClassConfigurations, config } =
-    splitFormValues(values);
-
-  return {
-    name: assetClassName.trim() || "Untitled Asset Class",
-    assetType: (assetType || "tangible") as AssetClassAssetType,
-    overwriteParentClassConfigurations,
-    config,
-  };
-}
-
-export function AddAssetClassModal({
-  open,
-  onOpenChange,
-  assetClass,
-  onAssetClassCreated,
-  onAssetClassUpdated,
-}: AddAssetClassModalProps) {
+export function AddAssetClassModal({ open, onOpenChange, assetClass }: AddAssetClassModalProps) {
   const isEditMode = Boolean(assetClass);
   const [stage, setStage] = React.useState<ModalStage>("FORM");
   const [activeStep, setActiveStep] = React.useState<AssetClassStepKey>(ASSET_CLASS_STEP_ORDER[0]);
   const [completedSteps, setCompletedSteps] = React.useState<Set<AssetClassStepKey>>(new Set());
-  const [isSavingDraft, setIsSavingDraft] = React.useState(false);
   const formId = React.useId();
 
+  const { createAssetClass, updateAssetClass, loading } = useAssetManagementFns();
+  const { data: assetClassTypesResponse } = useAssetClassTypes();
+  const assetTypeOptions = assetClassTypesResponse?.data ?? ["tangible", "digital"];
+
   const { control, trigger, getValues, handleSubmit } = useForm<AddAssetClassFormValues>({
-    resolver: zodResolver(addAssetClassSchema),
+    // zodResolver's inferred type reflects the schema's pre-coercion input (numeric
+    // fields as `unknown`, since it uses z.coerce.number()), which structurally
+    // conflicts with the post-coercion AddAssetClassFormValues type. Runtime coercion
+    // is unaffected; this only satisfies the static check.
+    resolver: zodResolver(addAssetClassSchema) as unknown as Resolver<AddAssetClassFormValues>,
     defaultValues: buildDefaultValues(assetClass),
     mode: "all",
   });
@@ -217,20 +221,22 @@ export function AddAssetClassModal({
       return;
     }
 
-    setIsSavingDraft(true);
-    onAssetClassCreated?.(buildMockAssetClass(getValues(), "draft"));
-    setIsSavingDraft(false);
-    onOpenChange(false);
+    await createAssetClass(buildCreateAssetClassPayload(getValues(), "draft"), () =>
+      onOpenChange(false),
+    );
   };
 
   const onSubmit = (values: AddAssetClassFormValues) => {
     if (isEditMode && assetClass) {
-      onAssetClassUpdated?.(assetClass.assetClassId, buildAssetClassPatch(values));
-    } else {
-      onAssetClassCreated?.(buildMockAssetClass(values, "published"));
+      updateAssetClass(
+        assetClass.classId,
+        buildCreateAssetClassPayload(values, assetClass.status),
+        () => setStage("SUCCESS"),
+      );
+      return;
     }
 
-    setStage("SUCCESS");
+    createAssetClass(buildCreateAssetClassPayload(values, "active"), () => setStage("SUCCESS"));
   };
 
   const modalTitle =
@@ -260,7 +266,7 @@ export function AddAssetClassModal({
             <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={control}
-                name="assetClassName"
+                name="name"
                 label="Asset Class Name"
                 required
                 className="max-w-md"
@@ -270,6 +276,10 @@ export function AddAssetClassModal({
                     <Input {...field} placeholder="Enter here" />
                   </FormControl>
                 )}
+              </FormField>
+
+              <FormField control={control} name="description" label="Description" required>
+                {({ field }) => <FormTextarea {...field} placeholder="Enter description" />}
               </FormField>
 
               <FormField control={control} name="assetType">
@@ -286,10 +296,11 @@ export function AddAssetClassModal({
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <ToggleGroupItem value="intangible">
-                          Intangible (Digital) Assets
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="tangible">Tangible Assets</ToggleGroupItem>
+                        {assetTypeOptions.map((assetType) => (
+                          <ToggleGroupItem key={assetType} value={assetType}>
+                            {ASSET_TYPE_LABELS[assetType] ?? toTitleCase(assetType)}
+                          </ToggleGroupItem>
+                        ))}
                       </ToggleGroup>
                     </div>
 
@@ -323,7 +334,7 @@ export function AddAssetClassModal({
                 <ModalShell.Action
                   type="button"
                   variant="grey-stroke"
-                  pending={isSavingDraft}
+                  pending={loading.CREATE_ASSET_CLASS}
                   onClick={handleSaveDraft}
                 >
                   Save Draft
@@ -331,7 +342,11 @@ export function AddAssetClassModal({
               )}
 
               {isLastStep ? (
-                <ModalShell.Action type="submit" form={formId}>
+                <ModalShell.Action
+                  type="submit"
+                  form={formId}
+                  pending={isEditMode ? loading.UPDATE_ASSET_CLASS : loading.CREATE_ASSET_CLASS}
+                >
                   {isEditMode ? "Update" : "Upload"}
                 </ModalShell.Action>
               ) : (

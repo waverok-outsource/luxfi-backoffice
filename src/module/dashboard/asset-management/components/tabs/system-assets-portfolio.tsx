@@ -3,16 +3,42 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import { AssetClassCard } from "@/module/dashboard/asset-management/components/asset-class-card";
 import { AddAssetClassModal } from "@/module/dashboard/asset-management/components/modals/add-asset-class-modal";
-import { useAssetClassesContext } from "@/module/dashboard/asset-management/context";
+import { useAssetClasses } from "@/services/queries/asset-management.queries";
 import type { AssetClassType } from "@/types/asset-management.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import route from "@/util/route";
+
+type SystemAssetsPortfolioQuery = {
+  q?: string;
+  type?: string;
+};
 
 export function SystemAssetsPortfolio() {
   const router = useRouter();
-  const { assetClasses, updateAssetClass } = useAssetClassesContext();
+  const { value } = useURLQuery<SystemAssetsPortfolioQuery>();
   const [editingAssetClass, setEditingAssetClass] = React.useState<AssetClassType | null>(null);
+
+  const searchQuery = (value.q ?? "").trim();
+  const assetTypeFilter = value.type && value.type !== "all" ? value.type : "";
+
+  const listQuery = convertObjectToQuery({
+    ...(searchQuery ? { q: searchQuery } : {}),
+    ...(assetTypeFilter ? { assetType: assetTypeFilter } : {}),
+  });
+
+  const { data: assetClassesResponse, isLoading } = useAssetClasses(listQuery);
+  const assetClasses = assetClassesResponse?.data ?? [];
+
+  if (isLoading && !assetClasses.length) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-primary-white py-24 text-center">
+        <p className="text-text-grey">Loading asset classes...</p>
+      </div>
+    );
+  }
 
   if (!assetClasses.length) {
     return (
@@ -29,11 +55,11 @@ export function SystemAssetsPortfolio() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {assetClasses.map((assetClass) => (
             <AssetClassCard
-              key={assetClass.assetClassId}
+              key={assetClass.classId}
               assetClass={assetClass}
               onEdit={() => setEditingAssetClass(assetClass)}
               onViewAssets={() =>
-                router.push(`${route.dashboard.assetManagement}/${assetClass.assetClassId}`)
+                router.push(`${route.dashboard.assetManagement}/${assetClass.classId}`)
               }
             />
           ))}
@@ -49,7 +75,6 @@ export function SystemAssetsPortfolio() {
             }
           }}
           assetClass={editingAssetClass}
-          onAssetClassUpdated={updateAssetClass}
         />
       )}
     </>

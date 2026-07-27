@@ -11,7 +11,6 @@ import { AssetClassDetailsHeader } from "@/module/dashboard/asset-management/ass
 import { AssetClassMetrics } from "@/module/dashboard/asset-management/asset-class-details/components/asset-class-metrics";
 import { ASSET_CLASS_DETAILS_TAB_COMPONENTS } from "@/module/dashboard/asset-management/asset-class-details/components/tab-table-components";
 import {
-  AssetCategoriesProvider,
   AssetItemsProvider,
   useAssetItemsContext,
 } from "@/module/dashboard/asset-management/asset-class-details/context";
@@ -20,7 +19,7 @@ import {
   assetClassDetailsTabs,
   type AssetClassDetailsTabValue,
 } from "@/module/dashboard/asset-management/asset-class-details/data";
-import { useAssetClassesContext } from "@/module/dashboard/asset-management/context";
+import { useAssetClassDetails } from "@/services/queries/asset-management.queries";
 import type { AssetClassType } from "@/types/asset-management.type";
 import route from "@/util/route";
 
@@ -38,7 +37,6 @@ function isAssetClassDetailsTab(value: string | null | undefined): value is Asse
 
 function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }) {
   const router = useRouter();
-  const { updateAssetClass } = useAssetClassesContext();
   const { items } = useAssetItemsContext();
   const { value, setURLQuery } = useURLQuery<AssetClassDetailsQuery>();
 
@@ -69,7 +67,6 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
       <AssetClassDetailsHeader
         assetClass={assetClass}
         onBack={() => router.push(route.dashboard.assetManagement)}
-        onAssetClassUpdated={updateAssetClass}
       />
 
       <AssetClassMetrics />
@@ -165,8 +162,16 @@ export function AssetClassDetailsDashboard() {
       ? decodeURIComponent(params.assetClassId)
       : "";
 
-  const { assetClasses } = useAssetClassesContext();
-  const assetClass = assetClasses.find((candidate) => candidate.assetClassId === assetClassId);
+  const { data: assetClassResponse, isLoading } = useAssetClassDetails(assetClassId);
+  const assetClass = assetClassResponse?.data ?? null;
+
+  if (isLoading && !assetClass) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-primary-white py-24 text-center">
+        <p className="text-text-grey">Loading asset class...</p>
+      </div>
+    );
+  }
 
   if (!assetClass) {
     return (
@@ -184,10 +189,8 @@ export function AssetClassDetailsDashboard() {
   }
 
   return (
-    <AssetItemsProvider assetClassId={assetClass.assetClassId}>
-      <AssetCategoriesProvider assetClassId={assetClass.assetClassId}>
-        <AssetClassDetailsContent assetClass={assetClass} />
-      </AssetCategoriesProvider>
+    <AssetItemsProvider assetClassId={assetClass.classId}>
+      <AssetClassDetailsContent assetClass={assetClass} />
     </AssetItemsProvider>
   );
 }

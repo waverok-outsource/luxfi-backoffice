@@ -62,7 +62,7 @@ export function resolveAssetItemById(assetItemId: string): AssetItemType | undef
 }
 
 export function resolveAssetClassName(assetClassId: string): string {
-  return mockAssetClasses.find((assetClass) => assetClass.assetClassId === assetClassId)?.name ?? "-";
+  return mockAssetClasses.find((assetClass) => assetClass.classId === assetClassId)?.name ?? "-";
 }
 
 export type MarketplaceMetricPair = {

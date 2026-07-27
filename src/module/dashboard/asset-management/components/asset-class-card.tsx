@@ -14,7 +14,7 @@ type AssetClassCardProps = {
 };
 
 export function AssetClassCard({ assetClass, onEdit, onViewAssets }: AssetClassCardProps) {
-  const isConfigured = assetClass.assetsCount > 0;
+  const isConfigured = assetClass.status !== "draft";
   const typeLabel =
     assetClass.assetType === "tangible" ? "Tangible Luxury Assets" : "Digital Asset";
 

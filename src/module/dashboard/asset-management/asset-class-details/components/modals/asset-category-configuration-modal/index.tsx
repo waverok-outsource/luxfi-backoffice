@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -11,7 +11,8 @@ import {
 } from "@/components/modal";
 import { FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { FormControl, FormField, FormSwitchField } from "@/components/util/form-controller";
+import { Switch } from "@/components/ui/switch";
+import { FormControl, FormField } from "@/components/util/form-controller";
 import { AssetClassConfigWizard } from "@/module/dashboard/asset-management/components/asset-class-config-wizard";
 import { ASSET_CLASS_STEP_ORDER } from "@/module/dashboard/asset-management/components/asset-class-step-meta";
 import {
@@ -19,8 +20,14 @@ import {
   type AddAssetCategoryFormValues,
   type AssetClassStepKey,
 } from "@/schema/asset-management.schema";
-import type { AssetCategoryType, AssetClassType } from "@/types/asset-management.type";
-import { resolveAssetConfig } from "@/util/resolve-asset-config";
+import useAssetManagementFns from "@/services/functions/asset-management.fns";
+import type {
+  AssetCategoryStatus,
+  AssetCategoryType,
+  AssetClassType,
+  CreateAssetClassPayloadType,
+} from "@/types/asset-management.type";
+import { mapAssetClassToConfigFormValues, resolveAssetConfig } from "@/util/resolve-asset-config";
 
 type AssetCategoryConfigurationModalProps =
   | {
@@ -29,9 +36,6 @@ type AssetCategoryConfigurationModalProps =
       onOpenChange: (open: boolean) => void;
       assetClass: AssetClassType;
       assetCategory?: undefined;
-      onAssetCategoryCreated?: (category: AssetCategoryType) => void;
-      onAssetCategoryUpdated?: never;
-      onAssetCategoryDeleted?: never;
     }
   | {
       mode: "edit";
@@ -39,59 +43,48 @@ type AssetCategoryConfigurationModalProps =
       onOpenChange: (open: boolean) => void;
       assetClass: AssetClassType;
       assetCategory: AssetCategoryType;
-      onAssetCategoryCreated?: never;
-      onAssetCategoryUpdated?: (assetCategoryId: string, patch: Partial<AssetCategoryType>) => void;
-      onAssetCategoryDeleted?: (assetCategoryId: string) => void;
     };
 
-type ModalStage = "FORM" | "CONFIRM_UPDATE" | "CONFIRM_DELETE" | "SUCCESS";
+type ModalStage = "FORM" | "SUCCESS";
 
 function buildDefaultValues(
   assetClass: AssetClassType,
   assetCategory?: AssetCategoryType,
 ): AddAssetCategoryFormValues {
   const resolvedConfig = resolveAssetConfig(
-    assetClass.config,
+    mapAssetClassToConfigFormValues(assetClass),
     undefined,
-    assetCategory?.categoryConfig,
+    assetCategory?.configuration ? mapAssetClassToConfigFormValues(assetCategory.configuration) : undefined,
   );
 
   return {
     categoryName: assetCategory?.name ?? "",
-    overwriteParentClassConfigurations: assetCategory?.overwriteParentClassConfigurations ?? false,
+    status: assetCategory?.status ?? "published",
+    overrideParentClassConfigurations: assetCategory?.overrideParentClassConfigurations ?? false,
     ...resolvedConfig,
   };
 }
 
-function splitCategoryFormValues(values: AddAssetCategoryFormValues) {
-  const { categoryName, overwriteParentClassConfigurations, ...config } = values;
-
-  return { categoryName, overwriteParentClassConfigurations, config };
-}
-
-function buildAssetCategoryPatch(
+// The nested `configuration` payload is shaped exactly like the asset class's own
+// POST body (assetType/name/status + the 8 config sections) — see the
+// POST /v1/asset-categories curl sample with overrideParentClassConfigurations: true.
+function buildCategoryConfigurationPayload(
+  assetClass: AssetClassType,
+  categoryName: string,
   values: AddAssetCategoryFormValues,
-): Omit<AssetCategoryType, "assetCategoryId" | "assetClassId" | "listingStatus" | "createdAt"> {
-  const { categoryName, overwriteParentClassConfigurations, config } =
-    splitCategoryFormValues(values);
-
+): Omit<CreateAssetClassPayloadType, "description"> {
   return {
+    assetType: assetClass.assetType,
     name: categoryName.trim(),
-    overwriteParentClassConfigurations,
-    categoryConfig: overwriteParentClassConfigurations ? config : undefined,
-  };
-}
-
-function buildAssetCategory(
-  assetClassId: string,
-  values: AddAssetCategoryFormValues,
-): AssetCategoryType {
-  return {
-    assetCategoryId: `AC-CAT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-    assetClassId,
-    listingStatus: "unlisted",
-    createdAt: new Date().toISOString(),
-    ...buildAssetCategoryPatch(values),
+    status: assetClass.status,
+    valuationLogic: values.valuationLogic,
+    liquidityProfile: values.liquidityProfile,
+    loanEligibility: values.loanEligibility,
+    purchaseOfferLogic: values.purchaseOfferLogic,
+    marketPlace: values.marketPlace,
+    riskSettings: values.riskSettings,
+    underwritingControls: values.underwritingControls,
+    investorEligibility: values.investorEligibility,
   };
 }
 
@@ -101,8 +94,8 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
 
   const [stage, setStage] = React.useState<ModalStage>("FORM");
   const [activeStep, setActiveStep] = React.useState<AssetClassStepKey>(ASSET_CLASS_STEP_ORDER[0]);
-  const [pendingValues, setPendingValues] = React.useState<AddAssetCategoryFormValues | null>(null);
   const formId = React.useId();
+  const { createAssetCategory, updateAssetCategory, loading } = useAssetManagementFns();
 
   // Every step is pre-populated from the resolved parent config, so unlike the
   // class wizard there's no progressive Next/Back gating here — every step is
@@ -110,43 +103,51 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
   const allStepsCompleted = React.useMemo(() => new Set(ASSET_CLASS_STEP_ORDER), []);
 
   const { control, handleSubmit } = useForm<AddAssetCategoryFormValues>({
-    resolver: zodResolver(addAssetCategorySchema),
+    // See matching comment in the asset class modal: zodResolver's inferred type
+    // traces the schema's pre-coercion input shape, which structurally conflicts
+    // with the post-coercion AddAssetCategoryFormValues type used everywhere else
+    // in this form (and required by AssetClassConfigWizard's Control<T>).
+    resolver: zodResolver(addAssetCategorySchema) as unknown as Resolver<AddAssetCategoryFormValues>,
     defaultValues: buildDefaultValues(assetClass, assetCategory),
     mode: "all",
   });
 
-  const isOverrideEnabled = useWatch({ control, name: "overwriteParentClassConfigurations" });
-
-  const performUpdate = (values: AddAssetCategoryFormValues) => {
-    if (!isEditMode) {
-      return;
-    }
-
-    props.onAssetCategoryUpdated?.(assetCategory.assetCategoryId, buildAssetCategoryPatch(values));
-    setStage("SUCCESS");
-  };
-
-  const performDelete = () => {
-    if (!isEditMode) {
-      return;
-    }
-
-    props.onAssetCategoryDeleted?.(assetCategory.assetCategoryId);
-    onOpenChange(false);
-  };
+  const isOverrideEnabled = useWatch({ control, name: "overrideParentClassConfigurations" });
 
   const onSubmit = (values: AddAssetCategoryFormValues) => {
+    const status = values.status as AssetCategoryStatus;
+
     if (isEditMode) {
-      setPendingValues(values);
-      setStage("CONFIRM_UPDATE");
+      updateAssetCategory(
+        assetCategory.categoryId,
+        { name: values.categoryName.trim(), status },
+        () => setStage("SUCCESS"),
+      );
       return;
     }
 
-    props.onAssetCategoryCreated?.(buildAssetCategory(assetClass.assetClassId, values));
-    setStage("SUCCESS");
+    createAssetCategory(
+      {
+        name: values.categoryName.trim(),
+        status,
+        assetClassId: assetClass.classId,
+        overrideParentClassConfigurations: values.overrideParentClassConfigurations,
+        ...(values.overrideParentClassConfigurations
+          ? {
+              configuration: buildCategoryConfigurationPayload(
+                assetClass,
+                values.categoryName,
+                values,
+              ),
+            }
+          : {}),
+      },
+      () => setStage("SUCCESS"),
+    );
   };
 
-  const modalTitle = "Asset Category Configuration";
+  const isSaving = isEditMode ? loading.UPDATE_ASSET_CATEGORY : loading.CREATE_ASSET_CATEGORY;
+  const showWizard = !isEditMode && isOverrideEnabled;
 
   const stageConfig: Record<
     ModalStage,
@@ -154,11 +155,11 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
   > = {
     FORM: {
       closeOnBackdropClick: true,
-      contentClassName: isOverrideEnabled ? "max-w-[1024px] p-4 sm:p-6" : "max-w-[650px] p-4 sm:p-6",
+      contentClassName: showWizard ? "max-w-[1024px] p-4 sm:p-6" : "max-w-[650px] p-4 sm:p-6",
       content: (
         <div className="space-y-5">
           <ModalShell.Header
-            title={modalTitle}
+            title="Asset Category Configuration"
             description="Manage and configure Asset Category"
             showBackButton
             onBack={() => onOpenChange(false)}
@@ -167,12 +168,7 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
           <ModalShell.Body>
             <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
-                <FormField
-                  control={control}
-                  name="categoryName"
-                  label="Asset Category Name"
-                  required
-                >
+                <FormField control={control} name="categoryName" label="Asset Category Name" required>
                   {({ field }) => (
                     <FormControl>
                       <Input {...field} placeholder="Enter text here" />
@@ -188,16 +184,49 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
                 </div>
               </div>
 
-              <FormSwitchField
+              <FormField
                 control={control}
-                name="overwriteParentClassConfigurations"
-                label="Overwrite Parent Class Configurations"
-                description="This will allow you manually customize configurations for this asset item"
-                size="sm"
+                name="status"
+                label="Published"
+                description="Make this category visible/discoverable"
+                orientation="horizontal"
                 className="border-t border-primary-grey-stroke pt-4"
-              />
+              >
+                {({ field }) => (
+                  <FormControl>
+                    <Switch
+                      size="sm"
+                      checked={field.value === "published"}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked ? "published" : "unpublished")
+                      }
+                    />
+                  </FormControl>
+                )}
+              </FormField>
 
-              {isOverrideEnabled ? (
+              {!isEditMode ? (
+                <FormField
+                  control={control}
+                  name="overrideParentClassConfigurations"
+                  label="Overwrite Parent Class Configurations"
+                  description="This will allow you manually customize configurations for this category"
+                  orientation="horizontal"
+                  className="border-t border-primary-grey-stroke pt-4"
+                >
+                  {({ field }) => (
+                    <FormControl>
+                      <Switch
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(checked)}
+                      />
+                    </FormControl>
+                  )}
+                </FormField>
+              ) : null}
+
+              {showWizard ? (
                 <AssetClassConfigWizard
                   control={control}
                   activeStep={activeStep}
@@ -210,72 +239,12 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
           </ModalShell.Body>
 
           <ModalShell.Footer>
-            {isEditMode ? (
-              <ModalShell.Action
-                type="button"
-                className="bg-alertSoft-error text-alert-error hover:bg-alertSoft-error/80"
-                onClick={() => setStage("CONFIRM_DELETE")}
-              >
-                Delete
-              </ModalShell.Action>
-            ) : (
-              <ModalShell.Action
-                type="button"
-                variant="grey-stroke"
-                onClick={() => onOpenChange(false)}
-              >
-                Close
-              </ModalShell.Action>
-            )}
+            <ModalShell.Action type="button" variant="grey-stroke" onClick={() => onOpenChange(false)}>
+              Close
+            </ModalShell.Action>
 
-            <ModalShell.Action type="submit" form={formId}>
+            <ModalShell.Action type="submit" form={formId} pending={isSaving}>
               {isEditMode ? "Update" : "Save"}
-            </ModalShell.Action>
-          </ModalShell.Footer>
-        </div>
-      ),
-    },
-    CONFIRM_UPDATE: {
-      closeOnBackdropClick: true,
-      contentClassName: "max-w-[650px]",
-      content: (
-        <div className="space-y-6">
-          <ModalShell.Header
-            title="Update Asset Category?"
-            description="You are about to save changes to this asset category details"
-          />
-
-          <ModalShell.Footer className="pt-2">
-            <ModalShell.Action type="button" variant="grey-stroke" onClick={() => setStage("FORM")}>
-              No, Cancel
-            </ModalShell.Action>
-            <ModalShell.Action
-              type="button"
-              variant="success"
-              onClick={() => pendingValues && performUpdate(pendingValues)}
-            >
-              Yes, Confirm
-            </ModalShell.Action>
-          </ModalShell.Footer>
-        </div>
-      ),
-    },
-    CONFIRM_DELETE: {
-      closeOnBackdropClick: true,
-      contentClassName: "max-w-[650px]",
-      content: (
-        <div className="space-y-6">
-          <ModalShell.Header
-            title="Delete Asset Category?"
-            description="You are about to permanently remove this asset category from the inventory."
-          />
-
-          <ModalShell.Footer className="pt-2">
-            <ModalShell.Action type="button" variant="grey-stroke" onClick={() => setStage("FORM")}>
-              No, Cancel
-            </ModalShell.Action>
-            <ModalShell.Action type="button" variant="danger" onClick={performDelete}>
-              Yes, Confirm
             </ModalShell.Action>
           </ModalShell.Footer>
         </div>

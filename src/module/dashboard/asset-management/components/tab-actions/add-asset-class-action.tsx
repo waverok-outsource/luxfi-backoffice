@@ -4,11 +4,9 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { AddAssetClassModal } from "@/module/dashboard/asset-management/components/modals/add-asset-class-modal";
-import { useAssetClassesContext } from "@/module/dashboard/asset-management/context";
 
 export function AddAssetClassAction() {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { addAssetClass } = useAssetClassesContext();
 
   return (
     <>
@@ -16,13 +14,7 @@ export function AddAssetClassAction() {
         Add Asset Class
       </Button>
 
-      {isOpen && (
-        <AddAssetClassModal
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          onAssetClassCreated={addAssetClass}
-        />
-      )}
+      {isOpen && <AddAssetClassModal open={isOpen} onOpenChange={setIsOpen} />}
     </>
   );
 }

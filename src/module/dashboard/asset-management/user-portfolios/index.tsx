@@ -23,7 +23,7 @@ import route from "@/util/route";
 
 const ASSET_TYPE_LABELS: Record<UserAssetPortfolioType["assetType"], string> = {
   tangible: "Tangible Assets",
-  intangible: "Digital Assets",
+  digital: "Digital Assets",
 };
 
 function isUserPortfolioDetailsTab(value: string | null | undefined): value is UserPortfolioDetailsTabValue {

@@ -27,7 +27,7 @@ type UserAssetPortfolioRow = Record<string, unknown> & {
 
 const ASSET_TYPE_LABELS: Record<AssetClassAssetType, string> = {
   tangible: "Tangible Assets",
-  intangible: "Digital Assets",
+  digital: "Digital Assets",
 };
 
 function formatDate(value: string) {

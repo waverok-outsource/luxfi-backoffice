@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
@@ -25,7 +25,7 @@ import {
   type AssetClassStepKey,
 } from "@/schema/asset-management.schema";
 import type { AssetClassType, AssetItemType, WatchChartsSearchResultType } from "@/types/asset-management.type";
-import { resolveAssetConfig } from "@/util/resolve-asset-config";
+import { mapAssetClassToConfigFormValues, resolveAssetConfig } from "@/util/resolve-asset-config";
 
 type AssetItemConfigurationModalProps =
   | {
@@ -58,7 +58,10 @@ function buildDefaultValues(
   assetClass: AssetClassType,
   assetItem?: AssetItemType,
 ): AddAssetItemFormValues {
-  const resolvedConfig = resolveAssetConfig(assetClass.config, assetItem?.itemConfig);
+  const resolvedConfig = resolveAssetConfig(
+    mapAssetClassToConfigFormValues(assetClass),
+    assetItem?.itemConfig,
+  );
 
   return {
     nameOfItem: assetItem?.name ?? "",
@@ -166,7 +169,12 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
   const allStepsCompleted = React.useMemo(() => new Set(ASSET_CLASS_STEP_ORDER), []);
 
   const { control, setValue, handleSubmit } = useForm<AddAssetItemFormValues>({
-    resolver: zodResolver(addAssetItemSchema),
+    // zodResolver's inferred type traces the schema's pre-coercion input shape
+    // (e.g. numeric fields as `unknown`), which structurally conflicts with the
+    // post-coercion `AddAssetItemFormValues` used everywhere else in this form
+    // (and required by AssetClassConfigWizard's Control<T>). The cast just tells
+    // TS to trust the resolver's actual runtime contract instead of that mismatch.
+    resolver: zodResolver(addAssetItemSchema) as unknown as Resolver<AddAssetItemFormValues>,
     defaultValues: buildDefaultValues(assetClass, assetItem),
     mode: "all",
   });
@@ -217,7 +225,7 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
     }
 
     props.onAssetItemCreated?.(
-      buildAssetItem(assetClass.assetClassId, values, imageUrls, estimatedValue),
+      buildAssetItem(assetClass.classId, values, imageUrls, estimatedValue),
     );
     setStage("SUCCESS");
   };

@@ -1,4 +1,4 @@
-import type { AssetItemListingStatus } from "@/types/asset-management.type";
+import type { AssetCategoryStatus, AssetItemListingStatus } from "@/types/asset-management.type";
 
 export type AssetClassDetailsTabValue = "manage-assets" | "manage-categories";
 
@@ -14,11 +14,20 @@ export const assetClassDetailsTabs: TabConfig[] = [
 
 export const DEFAULT_ASSET_CLASS_DETAILS_TAB: AssetClassDetailsTabValue = "manage-assets";
 
-// Shared by the Manage Assets and Manage Categories tables — both use the same listed/unlisted concept.
+// Used by the Manage Assets table (asset items are still mock/local for now).
 export const LISTING_STATUS_CONFIG: Record<
   AssetItemListingStatus,
   { label: string; variant: "success" | "neutral" }
 > = {
   listed: { label: "Listed", variant: "success" },
   unlisted: { label: "Unlisted", variant: "neutral" },
+};
+
+// Used by the Manage Categories table — real /v1/asset-categories status values.
+export const ASSET_CATEGORY_STATUS_CONFIG: Record<
+  AssetCategoryStatus,
+  { label: string; variant: "success" | "neutral" }
+> = {
+  published: { label: "Published", variant: "success" },
+  unpublished: { label: "Unpublished", variant: "neutral" },
 };

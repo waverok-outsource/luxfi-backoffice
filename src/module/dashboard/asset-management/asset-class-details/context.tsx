@@ -2,8 +2,8 @@
 
 import * as React from "react";
 
-import { mockAssetCategoriesByClassId, mockAssetItemsByClassId } from "@/module/dashboard/asset-management/data";
-import type { AssetCategoryType, AssetItemType } from "@/types/asset-management.type";
+import { mockAssetItemsByClassId } from "@/module/dashboard/asset-management/data";
+import type { AssetItemType } from "@/types/asset-management.type";
 
 type AssetItemsContextValue = {
   items: AssetItemType[];
@@ -52,63 +52,6 @@ export function useAssetItemsContext() {
 
   if (!context) {
     throw new Error("useAssetItemsContext must be used within AssetItemsProvider");
-  }
-
-  return context;
-}
-
-type AssetCategoriesContextValue = {
-  categories: AssetCategoryType[];
-  addCategory: (category: AssetCategoryType) => void;
-  updateCategory: (assetCategoryId: string, patch: Partial<AssetCategoryType>) => void;
-  removeCategory: (assetCategoryId: string) => void;
-};
-
-const AssetCategoriesContext = React.createContext<AssetCategoriesContextValue | null>(null);
-
-export function AssetCategoriesProvider({
-  assetClassId,
-  children,
-}: {
-  assetClassId: string;
-  children: React.ReactNode;
-}) {
-  const [categories, setCategories] = React.useState<AssetCategoryType[]>(
-    () => mockAssetCategoriesByClassId[assetClassId] ?? [],
-  );
-
-  const addCategory = React.useCallback((category: AssetCategoryType) => {
-    setCategories((previous) => [category, ...previous]);
-  }, []);
-
-  const updateCategory = React.useCallback(
-    (assetCategoryId: string, patch: Partial<AssetCategoryType>) => {
-      setCategories((previous) =>
-        previous.map((category) =>
-          category.assetCategoryId === assetCategoryId ? { ...category, ...patch } : category,
-        ),
-      );
-    },
-    [],
-  );
-
-  const removeCategory = React.useCallback((assetCategoryId: string) => {
-    setCategories((previous) => previous.filter((category) => category.assetCategoryId !== assetCategoryId));
-  }, []);
-
-  const value = React.useMemo(
-    () => ({ categories, addCategory, updateCategory, removeCategory }),
-    [categories, addCategory, updateCategory, removeCategory],
-  );
-
-  return <AssetCategoriesContext.Provider value={value}>{children}</AssetCategoriesContext.Provider>;
-}
-
-export function useAssetCategoriesContext() {
-  const context = React.useContext(AssetCategoriesContext);
-
-  if (!context) {
-    throw new Error("useAssetCategoriesContext must be used within AssetCategoriesProvider");
   }
 
   return context;

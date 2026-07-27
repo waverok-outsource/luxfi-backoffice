@@ -15,17 +15,17 @@ const RISK_CATEGORY_OPTIONS = [
 ];
 
 const STRESS_TEST_MODEL_OPTIONS = [
-  { value: "historical-simulation", label: "Historical Simulation" },
-  { value: "monte-carlo", label: "Monte Carlo" },
-  { value: "parametric-var", label: "Parametric VaR" },
+  { value: "historical_simulation", label: "Historical Simulation" },
+  { value: "monte_carlo", label: "Monte Carlo" },
+  { value: "parametric_var", label: "Parametric VaR" },
 ];
 
-const CORRELATED_ASSET_CLASS_OPTIONS = [
-  { value: "designer-bags", label: "Designer Bags" },
+const CORRELATED_CLASS_OPTIONS = [
+  { value: "watches", label: "Watches" },
+  { value: "bags", label: "Bags" },
   { value: "jewelry", label: "Jewelry" },
-  { value: "cryptocurrencies", label: "Cryptocurrencies" },
-  { value: "vehicles", label: "Vehicles" },
   { value: "collectibles", label: "Collectibles" },
+  { value: "vehicles", label: "Vehicles" },
 ];
 
 const SWITCH_ROW_CLASSNAME = "border-b border-primary-grey-stroke pb-4 last:border-b-0 last:pb-0";
@@ -39,7 +39,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField control={control} name="riskCategory" label="Risk category" required>
+        <FormField control={control} name="riskSettings.riskCategory" label="Risk category" required>
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>
@@ -64,7 +64,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
           )}
         </FormField>
 
-        <FormField control={control} name="stressTestModel" label="Stress test model" required>
+        <FormField control={control} name="riskSettings.stressTestModel" label="Stress test model" required>
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>
@@ -92,7 +92,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
 
       <FormField
         control={control}
-        name="maxPortfolioConcentrationPercent"
+        name="riskSettings.maxAllowedPortfolioPerClient"
         label="Max portfolio concentration per client"
       >
         {({ field }) => <Slider value={field.value} onValueChange={field.onChange} />}
@@ -100,22 +100,22 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
 
       <FormField
         control={control}
-        name="correlatedRiskAdjustmentFactorPercent"
+        name="riskSettings.riskAdjustmentFactor"
         label="Correlated risk adjustment factor"
         description="Multiplier when this asset co-moves with another in the portfolio"
       >
         {({ field }) => <Slider value={field.value} onValueChange={field.onChange} />}
       </FormField>
 
-      <FormField control={control} name="varThresholdPercent" label="VaR threshold">
+      <FormField control={control} name="riskSettings.valueAtRiskThreshold" label="VaR threshold">
         {({ field }) => <Slider value={field.value} onValueChange={field.onChange} />}
       </FormField>
 
       <FormSwitchField
         control={control}
-        name="requireRiskCommitteeSignOff"
-        label="Require risk committee sign-off"
-        description="Exposure above threshold routes to risk committee"
+        name="riskSettings.requiresWriteOff"
+        label="Require write-off"
+        description="Write off exposure automatically when risk threshold is breached"
         size="sm"
         className={SWITCH_ROW_CLASSNAME}
         contentClassName={SWITCH_ROW_CONTENT_CLASSNAME}
@@ -123,7 +123,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
 
       <FormSwitchField
         control={control}
-        name="autoMarginCallOnLtvBreach"
+        name="riskSettings.allowsAutoMarginCall"
         label="Auto margin call on LTV breach"
         description="Trigger margin call workflow when LTV exceeds maximum"
         size="sm"
@@ -133,7 +133,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
 
       <FormSwitchField
         control={control}
-        name="restrictNewOriginationsUnderStress"
+        name="riskSettings.restrictTradingDuringStress"
         label="Restrict new originations under stress"
         description="Pause new lending if portfolio VaR exceeds threshold"
         size="sm"
@@ -141,7 +141,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
         contentClassName={SWITCH_ROW_CONTENT_CLASSNAME}
       />
 
-      <FormField control={control} name="correlatedAssetClasses" label="Correlated asset class(es)">
+      <FormField control={control} name="riskSettings.correlatedClasses" label="Correlated asset class(es)">
         {({ field }) => (
           <ToggleGroup
             selection="multiple"
@@ -149,7 +149,7 @@ export function RiskParametersStep({ control }: RiskParametersStepProps) {
             value={field.value}
             onValueChange={field.onChange}
           >
-            {CORRELATED_ASSET_CLASS_OPTIONS.map((option) => (
+            {CORRELATED_CLASS_OPTIONS.map((option) => (
               <ToggleGroupItem key={option.value} value={option.value}>
                 {option.label}
               </ToggleGroupItem>

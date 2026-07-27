@@ -11,14 +11,9 @@ import type { AssetClassType } from "@/types/asset-management.type";
 type AssetClassDetailsHeaderProps = {
   assetClass: AssetClassType;
   onBack: () => void;
-  onAssetClassUpdated: (assetClassId: string, patch: Partial<AssetClassType>) => void;
 };
 
-export function AssetClassDetailsHeader({
-  assetClass,
-  onBack,
-  onAssetClassUpdated,
-}: AssetClassDetailsHeaderProps) {
+export function AssetClassDetailsHeader({ assetClass, onBack }: AssetClassDetailsHeaderProps) {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
 
   return (
@@ -48,12 +43,7 @@ export function AssetClassDetailsHeader({
       />
 
       {isEditOpen && (
-        <AddAssetClassModal
-          open={isEditOpen}
-          onOpenChange={setIsEditOpen}
-          assetClass={assetClass}
-          onAssetClassUpdated={onAssetClassUpdated}
-        />
+        <AddAssetClassModal open={isEditOpen} onOpenChange={setIsEditOpen} assetClass={assetClass} />
       )}
     </>
   );

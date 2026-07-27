@@ -6,15 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FormControl, FormField, FormSwitchField } from "@/components/util/form-controller";
-import type { AssetClassConfigFormValues } from "@/schema/asset-management.schema";
+import { DurationField } from "@/module/dashboard/asset-management/components/duration-field";
+import { OFFER_PATTERN_VALUES, type AssetClassConfigFormValues } from "@/schema/asset-management.schema";
 
-const DEFAULT_OFFER_MECHANISM_OPTIONS = [
-  { value: "fixed-price", label: "Fixed price" },
-  { value: "sealed-auction", label: "Sealed auction" },
+const OFFER_PATTERN_OPTIONS = [
+  { value: "fixed_price", label: "Fixed Price" },
+  { value: "sealed_auction", label: "Sealed Auction" },
   { value: "negotiated", label: "Negotiated" },
-  { value: "best-offer", label: "Best offer" },
+  { value: "best_offer", label: "Best Offer" },
   { value: "hybrid", label: "Hybrid" },
-];
+] satisfies { value: (typeof OFFER_PATTERN_VALUES)[number]; label: string }[];
 
 const SWITCH_ROW_CLASSNAME = "border-b border-primary-grey-stroke pb-4 last:border-b-0 last:pb-0";
 const SWITCH_ROW_CONTENT_CLASSNAME = "w-full flex-row-reverse justify-between";
@@ -29,8 +30,8 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name="minimumOfferThreshold"
-          label="Minimum offer threshold (USD)"
+          name="purchaseOfferLogic.minOfferAmount"
+          label="Minimum offer amount (USD)"
           required
         >
           {({ field }) => (
@@ -42,22 +43,18 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
         <FormField
           control={control}
-          name="offerValidityWindowDays"
-          label="Offer validity window (days)"
+          name="purchaseOfferLogic.offerValidity"
+          label="Offer validity window"
           required
         >
-          {({ field }) => (
-            <FormControl>
-              <Input {...field} placeholder="Enter here" />
-            </FormControl>
-          )}
+          {({ field }) => <DurationField value={field.value} onChange={field.onChange} />}
         </FormField>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name="maxCounteroffersAllowed"
+          name="purchaseOfferLogic.maxCounterOffers"
           label="Max counteroffers allowed"
           required
         >
@@ -70,7 +67,7 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
         <FormField
           control={control}
-          name="offerEscrowHoldHours"
+          name="purchaseOfferLogic.escrowHoldHours"
           label="Offer escrow hold (hours)"
           required
         >
@@ -84,7 +81,7 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
       <FormSwitchField
         control={control}
-        name="enableCounterofferFlow"
+        name="purchaseOfferLogic.allowsCounterOffer"
         label="Enable counteroffer flow"
         description="Sellers may respond with a revised price proposal"
         size="sm"
@@ -94,7 +91,7 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
       <FormSwitchField
         control={control}
-        name="bindingOfferTriggersEscrow"
+        name="purchaseOfferLogic.canOfferTriggerEscrow"
         label="Binding offer triggers escrow"
         description="Accepted offers immediately initiate escrow hold"
         size="sm"
@@ -104,7 +101,7 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
       <FormSwitchField
         control={control}
-        name="adminApprovalRequiredForAcceptance"
+        name="purchaseOfferLogic.requiresApproval"
         label="Admin approval required for acceptance"
         description="No offer is finalised without back-office sign-off"
         size="sm"
@@ -114,17 +111,17 @@ export function PurchaseOfferStep({ control }: PurchaseOfferStepProps) {
 
       <FormField
         control={control}
-        name="autoAcceptThresholdPercent"
+        name="purchaseOfferLogic.autoAcceptancePercentage"
         label="Auto-accept threshold (% of asking price)"
         description="Offers at or above this level auto-accept without admin review"
       >
         {({ field }) => <Slider value={field.value} onValueChange={field.onChange} />}
       </FormField>
 
-      <FormField control={control} name="defaultOfferMechanism" label="Default offer mechanism">
+      <FormField control={control} name="purchaseOfferLogic.offerPattern" label="Default offer mechanism">
         {({ field }) => (
           <ToggleGroup selection="single" look="segmented" value={field.value} onValueChange={field.onChange}>
-            {DEFAULT_OFFER_MECHANISM_OPTIONS.map((option) => (
+            {OFFER_PATTERN_OPTIONS.map((option) => (
               <ToggleGroupItem key={option.value} value={option.value}>
                 {option.label}
               </ToggleGroupItem>

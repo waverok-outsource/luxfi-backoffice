@@ -2,15 +2,10 @@
 
 import type { Control } from "react-hook-form";
 
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import {
-  FormControl,
-  FormField,
-  FormSelectTrigger,
-  FormSwitchField,
-} from "@/components/util/form-controller";
+import { FormField, FormSelectTrigger, FormSwitchField } from "@/components/util/form-controller";
+import { DurationField } from "@/module/dashboard/asset-management/components/duration-field";
 import type { AssetClassConfigFormValues } from "@/schema/asset-management.schema";
 
 const LIQUIDITY_LEVEL_OPTIONS = [
@@ -19,14 +14,12 @@ const LIQUIDITY_LEVEL_OPTIONS = [
   { value: "low", label: "Low" },
 ];
 
-const REDEMPTION_WINDOW_OPTIONS = [
-  { value: "immediately", label: "Immediately" },
-  { value: "24-hours", label: "24 Hours" },
-  { value: "3-business-days", label: "3 Business Days" },
-  { value: "7-business-days", label: "7 Business Days" },
+const REDEMPTION_TIMING_OPTIONS = [
+  { value: "immediate", label: "Immediate" },
+  { value: "24_hours", label: "24 Hours" },
+  { value: "3_business_days", label: "3 Business Days" },
+  { value: "7_business_days", label: "7 Business Days" },
 ];
-
-const LIQUIDITY_MATURITY_PERIOD_OPTIONS = ["1", "3", "6", "12", "24"];
 
 const SWITCH_ROW_CLASSNAME = "border-b border-primary-grey-stroke pb-4 last:border-b-0 last:pb-0";
 const SWITCH_ROW_CONTENT_CLASSNAME = "w-full flex-row-reverse justify-between";
@@ -39,7 +32,7 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField control={control} name="liquidityLevel" label="Liquidity Level" required>
+        <FormField control={control} name="liquidityProfile.liquidityLevel" label="Liquidity Level" required>
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>
@@ -64,7 +57,12 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
           )}
         </FormField>
 
-        <FormField control={control} name="redemptionWindow" label="Redemption window" required>
+        <FormField
+          control={control}
+          name="liquidityProfile.redemptionTiming"
+          label="Redemption window"
+          required
+        >
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>
@@ -72,14 +70,14 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
                   {(selected: string | null) => {
                     if (!selected) return "Select Options";
                     return (
-                      REDEMPTION_WINDOW_OPTIONS.find((option) => option.value === selected)?.label ??
+                      REDEMPTION_TIMING_OPTIONS.find((option) => option.value === selected)?.label ??
                       selected
                     );
                   }}
                 </SelectValue>
               </FormSelectTrigger>
               <SelectContent>
-                {REDEMPTION_WINDOW_OPTIONS.map((option) => (
+                {REDEMPTION_TIMING_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -93,43 +91,26 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name="expectedSettlementDays"
-          label="Expected settlement (days)"
+          name="liquidityProfile.expectedSettlement"
+          label="Expected settlement"
           required
         >
-          {({ field }) => (
-            <FormControl>
-              <Input {...field} placeholder="Enter here" />
-            </FormControl>
-          )}
+          {({ field }) => <DurationField value={field.value} onChange={field.onChange} />}
         </FormField>
 
         <FormField
           control={control}
-          name="liquidityMaturityPeriodDays"
-          label="Liquidity Maturity Period (days)"
+          name="liquidityProfile.liquidityMaturity"
+          label="Liquidity Maturity Period"
           required
         >
-          {({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <FormSelectTrigger>
-                <SelectValue placeholder="Select" />
-              </FormSelectTrigger>
-              <SelectContent>
-                {LIQUIDITY_MATURITY_PERIOD_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          {({ field }) => <DurationField value={field.value} onChange={field.onChange} />}
         </FormField>
       </div>
 
       <FormField
         control={control}
-        name="maxIlliquidityCapPercent"
+        name="liquidityProfile.maxPortfolioAllocationPercent"
         label="Max illiquidity cap per portfolio"
         description="Maximum % of client portfolio this asset class may represent"
       >
@@ -138,7 +119,7 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
 
       <FormSwitchField
         control={control}
-        name="secondaryMarketTradeable"
+        name="liquidityProfile.canTradeOnSecondaryMarket"
         label="Secondary market tradeable"
         description="Allow peer-to-peer position transfers between clients"
         size="sm"
@@ -148,7 +129,7 @@ export function LiquidityProfileStep({ control }: LiquidityProfileStepProps) {
 
       <FormSwitchField
         control={control}
-        name="gateRedemptionsUnderStress"
+        name="liquidityProfile.restrictRedemptionDuringStress"
         label="Gate redemptions under stress"
         description="Suspend redemptions if market conditions breach thresholds"
         size="sm"

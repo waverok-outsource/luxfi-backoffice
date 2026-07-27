@@ -10,13 +10,10 @@ import {
   FormSelectTrigger,
   FormSwitchField,
 } from "@/components/util/form-controller";
-import type { AssetClassConfigFormValues } from "@/schema/asset-management.schema";
+import { DurationField } from "@/module/dashboard/asset-management/components/duration-field";
+import { CURRENCY_VALUES, type AssetClassConfigFormValues } from "@/schema/asset-management.schema";
 
-const KYC_LEVEL_OPTIONS = [
-  { value: "level-1-standard", label: "Level 1 — Standard" },
-  { value: "level-2-enhanced-dd", label: "Level 2 — Enhanced DD" },
-  { value: "level-3-full-diligence", label: "Level 3 — Full Diligence" },
-];
+const CURRENCY_OPTIONS = CURRENCY_VALUES.map((value) => ({ value, label: value }));
 
 const SWITCH_ROW_CLASSNAME = "border-b border-primary-grey-stroke pb-4 last:border-b-0 last:pb-0";
 const SWITCH_ROW_CONTENT_CLASSNAME = "w-full flex-row-reverse justify-between";
@@ -30,7 +27,7 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
     <div className="space-y-5">
       <FormSwitchField
         control={control}
-        name="manualUnderwritingRequired"
+        name="underwritingControls.canManuallyUnderwrite"
         label="Manual underwriting required"
         description="All applications require a human underwriter"
         size="sm"
@@ -40,7 +37,7 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
 
       <FormSwitchField
         control={control}
-        name="enableAutomatedCreditScoring"
+        name="underwritingControls.usesAutomatedCreditScoring"
         label="Enable automated credit scoring"
         description="Pull bureau score and flag borderline applicants"
         size="sm"
@@ -50,9 +47,9 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
 
       <FormSwitchField
         control={control}
-        name="relationshipManagerApprovalRequired"
-        label="Relationship manager approval required"
-        description="RM must countersign before loan is issued"
+        name="underwritingControls.requiresApproval"
+        label="Requires approval"
+        description="An approver must countersign before the loan is issued"
         size="sm"
         className={SWITCH_ROW_CLASSNAME}
         contentClassName={SWITCH_ROW_CONTENT_CLASSNAME}
@@ -61,18 +58,47 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name="underwritingSlaHours"
-          label="Underwriting SLA (business hours)"
+          name="underwritingControls.underwritingSla"
+          label="Underwriting SLA"
+          required
+        >
+          {({ field }) => <DurationField value={field.value} onChange={field.onChange} />}
+        </FormField>
+
+        <FormField
+          control={control}
+          name="underwritingControls.kycTierRequired"
+          label="KYC tier required (ID)"
           required
         >
           {({ field }) => (
             <FormControl>
-              <Input {...field} placeholder="Enter here" />
+              <Input {...field} placeholder="Enter KYC tier ID" />
+            </FormControl>
+          )}
+        </FormField>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          control={control}
+          name="underwritingControls.autoApprovalAmount"
+          label="Auto-approval threshold (USD)"
+          required
+        >
+          {({ field }) => (
+            <FormControl>
+              <Input {...field} placeholder="0.00" startAdornment="$" />
             </FormControl>
           )}
         </FormField>
 
-        <FormField control={control} name="kycLevelRequired" label="KYC level required" required>
+        <FormField
+          control={control}
+          name="underwritingControls.autoApprovalCurrency"
+          label="Auto-approval currency"
+          required
+        >
           {({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <FormSelectTrigger>
@@ -80,13 +106,13 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
                   {(selected: string | null) => {
                     if (!selected) return "Select Options";
                     return (
-                      KYC_LEVEL_OPTIONS.find((option) => option.value === selected)?.label ?? selected
+                      CURRENCY_OPTIONS.find((option) => option.value === selected)?.label ?? selected
                     );
                   }}
                 </SelectValue>
               </FormSelectTrigger>
               <SelectContent>
-                {KYC_LEVEL_OPTIONS.map((option) => (
+                {CURRENCY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -97,28 +123,18 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
         </FormField>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FormField
-          control={control}
-          name="autoApprovalThreshold"
-          label="Auto-approval threshold (USD)"
-          description="Leave blank for always manual"
-        >
-          {({ field }) => (
-            <FormControl>
-              <Input {...field} placeholder="Leave blank for always manual" startAdornment="$" />
-            </FormControl>
-          )}
-        </FormField>
-
-        <FormField control={control} name="minimumCreditScore" label="Minimum credit score" required>
-          {({ field }) => (
-            <FormControl>
-              <Input {...field} placeholder="Enter here" />
-            </FormControl>
-          )}
-        </FormField>
-      </div>
+      <FormField
+        control={control}
+        name="underwritingControls.minCreditScore"
+        label="Minimum credit score"
+        required
+      >
+        {({ field }) => (
+          <FormControl>
+            <Input {...field} placeholder="Enter here" />
+          </FormControl>
+        )}
+      </FormField>
     </div>
   );
 }
