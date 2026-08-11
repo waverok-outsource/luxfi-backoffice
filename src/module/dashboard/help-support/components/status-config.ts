@@ -1,8 +1,8 @@
 import type { StatusConfig } from "@/components/table";
 import type {
-  PasswordResetStatus,
+  PasswordResetRequestStatus,
   SupportTicketStatus,
-} from "@/module/dashboard/help-support/data";
+} from "@/types/support.type";
 
 export const HELP_SUPPORT_STATUS_CONFIG = {
   resolved: { label: "Resolved", variant: "success" as const },
@@ -12,12 +12,12 @@ export const HELP_SUPPORT_STATUS_CONFIG = {
 export const PASSWORD_RESET_STATUS_CONFIG = {
   reset: { label: "Reset", variant: "success" as const },
   pending: { label: "Pending", variant: "warning" as const },
-} satisfies StatusConfig<PasswordResetStatus>;
+} satisfies StatusConfig<PasswordResetRequestStatus>;
 
 export function getHelpSupportStatusConfig(status: SupportTicketStatus) {
   return HELP_SUPPORT_STATUS_CONFIG[status];
 }
 
-export function getPasswordResetStatusConfig(status: PasswordResetStatus) {
+export function getPasswordResetStatusConfig(status: PasswordResetRequestStatus) {
   return PASSWORD_RESET_STATUS_CONFIG[status];
 }

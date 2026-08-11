@@ -7,9 +7,10 @@ import { DataTable, createActionColumnWithOptions, createIdentifierColumn, creat
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { LiquidationOfferDetailsModal } from "@/module/dashboard/marketplace/components/modals/liquidation-offer-details-modal";
 import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
-import { useLiquidationOffersContext } from "@/module/dashboard/marketplace/context";
-import { OFFER_TABLE_STATUS_CONFIG, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { LiquidationOfferType, OfferStatus } from "@/types/marketplace.type";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import { useAssetMarketListings } from "@/services/queries/marketplace.queries";
+import type { AssetMarketListingStatus, AssetMarketListingType } from "@/types/marketplace.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type LiquidationOfferRow = Record<string, unknown> & {
   id: string;
@@ -17,73 +18,62 @@ type LiquidationOfferRow = Record<string, unknown> & {
   assetName: string;
   marketPrice: number;
   sellerName: string;
-  sellingPrice: number;
+  sellerId: string;
+  initialLiquidationOffer: number;
+  sellerOffer: number;
+  orderId: string;
   offerDate: string;
-  status: OfferStatus;
+  status: AssetMarketListingStatus;
 };
 
 const PAGE_SIZE = 10;
 
-function matchesQuery(offer: LiquidationOfferType, query: string) {
-  const normalized = query.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  const assetItem = resolveAssetItemById(offer.assetItemId);
-  return (
-    offer.assetItemId.toLowerCase().includes(normalized) ||
-    offer.sellerName.toLowerCase().includes(normalized) ||
-    Boolean(assetItem?.name.toLowerCase().includes(normalized))
-  );
-}
-
 export function LiquidationOffersTab() {
-  const { offers, updateOffer } = useLiquidationOffersContext();
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeOffer, setActiveOffer] = React.useState<LiquidationOfferType | null>(null);
+  const [activeOffer, setActiveOffer] = React.useState<AssetMarketListingType | null>(null);
 
-  const filtered = React.useMemo(
-    () => offers.filter((offer) => matchesQuery(offer, value.q ?? "")),
-    [offers, value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const listingsQuery = convertObjectToQuery({
+    listingType: "liquidation",
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows: LiquidationOfferRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((offer) => {
-      const assetItem = resolveAssetItemById(offer.assetItemId);
+  const { data: response, isLoading } = useAssetMarketListings(listingsQuery);
 
-      return {
-        id: offer.offerId,
-        assetId: offer.assetItemId,
-        assetName: assetItem?.name ?? "-",
-        marketPrice: assetItem?.estimatedValue ?? 0,
-        sellerName: offer.sellerName,
-        sellingPrice: offer.sellerOffer,
-        offerDate: formatTableDateLabel(offer.submittedAt),
-        status: offer.status,
-      };
-    });
-  }, [currentPage, filtered]);
+  const listings = response?.data ?? [];
+
+  const rows: LiquidationOfferRow[] = listings.map((listing) => ({
+    id: listing.listingId,
+    assetId: listing.assetDetails.assetId,
+    assetName: listing.assetDetails.assetName,
+    marketPrice: listing.marketPrice.value,
+    sellerName: listing.seller.name,
+    sellerId: listing.seller.email,
+    initialLiquidationOffer: listing.liquidationPrice.value,
+    sellerOffer: listing.listingPrice.value,
+    orderId: "-",
+    offerDate: formatTableDateLabel(listing.listingDate),
+    status: listing.listingStatus,
+  }));
 
   const columns: ColumnDef<LiquidationOfferRow, unknown>[] = [
     createIdentifierColumn<LiquidationOfferRow>("Asset ID", "assetId"),
     createTextColumn<LiquidationOfferRow>("Asset Name", "assetName", "max-w-[180px]"),
     createAmountColumn<LiquidationOfferRow>("Market Price", "marketPrice"),
     createTextColumn<LiquidationOfferRow>("Seller Name", "sellerName", "max-w-[160px]"),
-    createAmountColumn<LiquidationOfferRow>("Selling Price", "sellingPrice"),
+    createAmountColumn<LiquidationOfferRow>("Initial Liquidation Offer", "initialLiquidationOffer"),
+    createAmountColumn<LiquidationOfferRow>("Seller Offer", "sellerOffer"),
+    createTextColumn<LiquidationOfferRow>("Order ID", "orderId"),
     createTextColumn<LiquidationOfferRow>("Offer Date", "offerDate"),
-    createStatusColumn<LiquidationOfferRow, OfferStatus>("Bid Status", OFFER_TABLE_STATUS_CONFIG),
+    createStatusColumn<LiquidationOfferRow, AssetMarketListingStatus>("Bid Status", ASSET_MARKET_LISTING_STATUS_CONFIG),
     createActionColumnWithOptions<LiquidationOfferRow>({
       ariaLabel: "Review liquidation offer",
       onView: (row) => {
-        const offer = offers.find((candidate) => candidate.offerId === row.id);
+        const offer = listings.find((candidate) => candidate.listingId === row.id);
         if (offer) setActiveOffer(offer);
       },
     }),
@@ -94,8 +84,9 @@ export function LiquidationOffersTab() {
       <DataTable
         columns={columns}
         data={rows}
+        loading={isLoading}
         emptyStateLabel="No liquidation offers found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        pagination={{ totalEntries: response?.pagination.total ?? 0, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
       />
 
       {activeOffer ? (
@@ -104,11 +95,7 @@ export function LiquidationOffersTab() {
           onOpenChange={(open) => {
             if (!open) setActiveOffer(null);
           }}
-          offer={activeOffer}
-          onOfferUpdated={(offerId, patch) => {
-            updateOffer(offerId, patch);
-            setActiveOffer((previous) => (previous ? { ...previous, ...patch } : previous));
-          }}
+          listing={activeOffer}
         />
       ) : null}
     </>

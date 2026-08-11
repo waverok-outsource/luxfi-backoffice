@@ -36,11 +36,11 @@ export function CustomerDetailsTabs({ customerId }: { customerId: string }) {
   const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
     kyc: <KycCompliancePanel />,
     transactions: <TransactionHistoryPanel />,
-    loans: <AssetLoansPanel />,
+    loans: <AssetLoansPanel customerId={customerId} />,
     contracts: <SmartContractsPanel />,
-    portfolio: <AssetPortfolioPanel />,
+    portfolio: <AssetPortfolioPanel customerId={customerId} />,
     device: <DeviceSessionLogsPanel customerId={customerId} />,
-    support: <SupportTicketsPanel />,
+    support: <SupportTicketsPanel customerId={customerId} />,
   };
 
   const tabQuery = value.tab;

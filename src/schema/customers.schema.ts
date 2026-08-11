@@ -54,10 +54,7 @@ export const loanCaseApprovalSchema = z.object({
     .date()
     .optional()
     .refine((value) => value !== undefined, "Date of disbursement is required"),
-  repaymentDue: z
-    .date()
-    .optional()
-    .refine((value) => value !== undefined, "Repayment due date is required"),
+  repaymentDue: z.date().optional(),
 });
 
 export type LoanCaseApprovalFormValues = z.infer<typeof loanCaseApprovalSchema>;

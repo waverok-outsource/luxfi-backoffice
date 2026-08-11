@@ -2,26 +2,25 @@
 
 import { AssetDetailsPanel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
 import { OfferReviewModal } from "@/module/dashboard/marketplace/components/modals/offer-review-modal";
-import { OfferStatusBadge, OfferSummaryCard } from "@/module/dashboard/marketplace/components/modals/offer-panels";
-import { resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { LiquidationOfferType } from "@/types/marketplace.type";
+import { ModalStatusBadge, OfferSummaryCard } from "@/module/dashboard/marketplace/components/modals/offer-panels";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG, ASSET_MARKET_MODAL_STATUS_LABELS } from "@/module/dashboard/marketplace/data";
+import useMarketplaceFns from "@/services/functions/marketplace.fns";
+import type { AssetMarketListingType } from "@/types/marketplace.type";
 
 type LiquidationOfferDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  offer: LiquidationOfferType;
-  onOfferUpdated: (offerId: string, patch: Partial<LiquidationOfferType>) => void;
+  listing: AssetMarketListingType;
 };
 
 export function LiquidationOfferDetailsModal({
   open,
   onOpenChange,
-  offer,
-  onOfferUpdated,
+  listing,
 }: LiquidationOfferDetailsModalProps) {
-  const assetItem = resolveAssetItemById(offer.assetItemId) ?? null;
-  const isPending = offer.status === "pending";
-  const assetLabel = assetItem ? `${assetItem.name} ${assetItem.assetItemId}` : offer.assetItemId;
+  const { reviewListing } = useMarketplaceFns();
+  const isPending = listing.listingStatus === "pending";
+  const assetLabel = `${listing.assetDetails.assetName} ${listing.assetDetails.assetId}`;
 
   return (
     <OfferReviewModal
@@ -37,15 +36,15 @@ export function LiquidationOfferDetailsModal({
           <>
             You are about to approve this liquidation offer for{" "}
             <span className="font-semibold text-text-black">{assetLabel}</span> from{" "}
-            <span className="font-semibold text-text-black">{offer.sellerName}</span>.
+            <span className="font-semibold text-text-black">{listing.seller.name}</span>.
           </>
         ),
       }}
       rejectDialog={{
         offerTypeLabel: "liquidation offer",
-        assetName: assetItem?.name ?? "",
-        assetId: assetItem?.assetItemId ?? offer.assetItemId,
-        partyName: offer.sellerName,
+        assetName: listing.assetDetails.assetName,
+        assetId: listing.assetDetails.assetId,
+        partyName: listing.seller.name,
       }}
       approveSuccess={{
         title: "Offer Approved",
@@ -55,38 +54,37 @@ export function LiquidationOfferDetailsModal({
         title: "Offer Rejected",
         description: "This liquidation offer has been rejected.",
       }}
-      onApprove={() => onOfferUpdated(offer.offerId, { status: "approved", resolvedAt: new Date().toISOString() })}
-      onReject={(values) =>
-        onOfferUpdated(offer.offerId, {
-          status: "rejected",
-          resolvedAt: new Date().toISOString(),
-          rejectionReason: values.rejectionReason,
-        })
-      }
+      onApprove={() => reviewListing(listing.listingId, { status: "approved" })}
+      onReject={() => reviewListing(listing.listingId, { status: "rejected" })}
     >
       <div className="space-y-3">
         <p className="text-sm font-semibold text-text-black">Buy Offer Details</p>
 
         <OfferSummaryCard
-          statusBadge={<OfferStatusBadge status={offer.status} />}
-          orderId={offer.orderId}
+          statusBadge={
+            <ModalStatusBadge
+              variant={ASSET_MARKET_LISTING_STATUS_CONFIG[listing.listingStatus].variant}
+              label={ASSET_MARKET_MODAL_STATUS_LABELS[listing.listingStatus]}
+            />
+          }
+          orderId="-"
           parties={[
-            { label: "Seller Name:", value: offer.sellerName },
-            { label: "Seller ID:", value: offer.sellerId },
+            { label: "Seller Name:", value: listing.seller.name },
+            { label: "Seller ID:", value: listing.seller.email },
           ]}
           primaryPriceLabel="Initial Liquidation Offer"
-          primaryPriceValue={offer.initialLiquidationOffer}
+          primaryPriceValue={listing.liquidationPrice.value}
           secondaryPriceLabel="Seller Offer"
-          secondaryPriceValue={offer.sellerOffer}
+          secondaryPriceValue={listing.listingPrice.value}
           dates={{
-            submittedAt: offer.submittedAt,
+            submittedAt: listing.listingDate,
             isPending,
-            resolvedAt: offer.resolvedAt,
-            resolvedDateLabel: offer.status === "rejected" ? "Date Rejected" : "Date Approved",
+            resolvedAt: listing.listingStatus !== "pending" ? listing.lastUpdated : undefined,
+            resolvedDateLabel: listing.listingStatus === "rejected" ? "Date Rejected" : "Date Approved",
           }}
         />
 
-        <AssetDetailsPanel assetItem={assetItem} />
+        <AssetDetailsPanel assetDetails={listing.assetDetails} images={listing.assetImages} />
       </div>
     </OfferReviewModal>
   );

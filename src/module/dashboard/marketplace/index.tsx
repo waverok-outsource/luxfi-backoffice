@@ -11,13 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { MarketplaceMetrics } from "@/module/dashboard/marketplace/components/marketplace-metrics";
 import { MARKETPLACE_TAB_COMPONENTS } from "@/module/dashboard/marketplace/components/tab-table-components";
-import {
-  BuyOffersProvider,
-  CustomerListingsProvider,
-  LiquidationOffersProvider,
-  MarketplaceListingsProvider,
-  P2PTradeRequestsProvider,
-} from "@/module/dashboard/marketplace/context";
+import { BuyOffersProvider } from "@/module/dashboard/marketplace/context";
 import { DEFAULT_MARKETPLACE_TAB, marketplaceTabs, type MarketplaceTabValue } from "@/module/dashboard/marketplace/data";
 
 type MarketplaceQuery = {
@@ -98,16 +92,8 @@ function MarketplaceContent() {
 
 export function MarketplaceDashboard() {
   return (
-    <MarketplaceListingsProvider>
-      <CustomerListingsProvider>
-        <LiquidationOffersProvider>
-          <BuyOffersProvider>
-            <P2PTradeRequestsProvider>
-              <MarketplaceContent />
-            </P2PTradeRequestsProvider>
-          </BuyOffersProvider>
-        </LiquidationOffersProvider>
-      </CustomerListingsProvider>
-    </MarketplaceListingsProvider>
+    <BuyOffersProvider>
+      <MarketplaceContent />
+    </BuyOffersProvider>
   );
 }

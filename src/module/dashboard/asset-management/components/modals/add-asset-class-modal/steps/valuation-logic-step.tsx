@@ -4,21 +4,21 @@ import type { Control } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { FormControl, FormField, FormSelectTrigger, FormSwitchField } from "@/components/util/form-controller";
+import {
+  FormControl,
+  FormField,
+  FormSelectTrigger,
+  FormSwitchField,
+} from "@/components/util/form-controller";
+import { useValuationProviders } from "@/services/queries/asset-management.queries";
 import type { AssetClassConfigFormValues } from "@/schema/asset-management.schema";
+import { toTitleCase } from "@/util/helper";
 
 const VALUATION_METHOD_OPTIONS = [
   { value: "market_price", label: "Market Price" },
   { value: "appraisal_based", label: "Appraisal Based" },
   { value: "cost_based", label: "Cost Based" },
   { value: "comparable_sales", label: "Comparable Sales" },
-];
-
-const VALUATION_PROVIDER_OPTIONS = [
-  { value: "watchcharts", label: "WatchCharts" },
-  { value: "chrono24", label: "Chrono24" },
-  { value: "internal_appraisal_team", label: "Internal Appraisal Team" },
-  { value: "third_party_appraiser", label: "Third-Party Appraiser" },
 ];
 
 const SWITCH_ROW_CLASSNAME = "border-b border-primary-grey-stroke pb-4 last:border-b-0 last:pb-0";
@@ -29,6 +29,10 @@ type ValuationLogicStepProps = {
 };
 
 export function ValuationLogicStep({ control }: ValuationLogicStepProps) {
+  const { data: valuationProvidersResponse, isLoading: isLoadingValuationProviders } =
+    useValuationProviders();
+  const valuationProviderOptions = valuationProvidersResponse?.data ?? [];
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -64,22 +68,28 @@ export function ValuationLogicStep({ control }: ValuationLogicStepProps) {
           required
         >
           {({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={isLoadingValuationProviders}
+            >
               <FormSelectTrigger>
-                <SelectValue placeholder="Select Options">
+                <SelectValue
+                  placeholder={isLoadingValuationProviders ? "Loading providers..." : "Select Options"}
+                >
                   {(selected: string | null) => {
                     if (!selected) return "Select Options";
-                    return (
-                      VALUATION_PROVIDER_OPTIONS.find((option) => option.value === selected)?.label ??
-                      selected
+                    const match = valuationProviderOptions.find(
+                      (option) => option.providerId === selected,
                     );
+                    return match ? toTitleCase(match.name) : selected;
                   }}
                 </SelectValue>
               </FormSelectTrigger>
               <SelectContent>
-                {VALUATION_PROVIDER_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {valuationProviderOptions.map((option) => (
+                  <SelectItem key={option.providerId} value={option.providerId}>
+                    {toTitleCase(option.name)}
                   </SelectItem>
                 ))}
               </SelectContent>

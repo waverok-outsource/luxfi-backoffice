@@ -54,7 +54,8 @@ type OfferSummaryCardProps = {
   primaryPriceLabel: string;
   primaryPriceValue: number;
   secondaryPriceLabel: string;
-  secondaryPriceValue: number;
+  /** Pass null when the backend has no equivalent value (e.g. P2P's "Seller Accepted Offer") — renders "-" rather than a fabricated $0.00. */
+  secondaryPriceValue: number | null;
   /** Omit to hide the Offer Date / resolution date block (e.g. P2P trades). */
   dates?: {
     submittedAt: string;
@@ -88,7 +89,10 @@ export function OfferSummaryCard({
 
       <div className="space-y-3 border-t border-primary-grey-stroke pt-3">
         <ModalDetailRow label={primaryPriceLabel} value={formatCurrency(primaryPriceValue)} />
-        <ModalDetailRow label={secondaryPriceLabel} value={formatCurrency(secondaryPriceValue)} />
+        <ModalDetailRow
+          label={secondaryPriceLabel}
+          value={secondaryPriceValue == null ? "-" : formatCurrency(secondaryPriceValue)}
+        />
       </div>
 
       {dates ? (

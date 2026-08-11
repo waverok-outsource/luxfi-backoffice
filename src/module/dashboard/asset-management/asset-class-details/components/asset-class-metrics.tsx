@@ -1,15 +1,24 @@
 "use client";
 
 import { StatCard } from "@/components/dashboard/stat-card";
-import { useAssetItemsContext } from "@/module/dashboard/asset-management/asset-class-details/context";
+import { useAssets } from "@/services/queries/asset-management.queries";
+import type { AssetClassType } from "@/types/asset-management.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatCurrency } from "@/util/format-currency";
 
-export function AssetClassMetrics() {
-  const { items } = useAssetItemsContext();
+type AssetClassMetricsProps = {
+  assetClass: AssetClassType;
+};
 
-  const totalValue = items.reduce((sum, item) => sum + item.estimatedValue, 0);
+export function AssetClassMetrics({ assetClass }: AssetClassMetricsProps) {
+  const { data: assetsResponse } = useAssets(
+    convertObjectToQuery({ assetClassId: assetClass.classId }),
+  );
+  const items = assetsResponse?.data ?? [];
+
+  const totalValue = items.reduce((sum, item) => sum + item.price.value, 0);
   const categoryCount = new Set(items.map((item) => item.assetCategoryName)).size;
-  const publishedCount = items.filter((item) => item.listingStatus === "listed").length;
+  const publishedCount = items.filter((item) => item.onSale).length;
   const unpublishedCount = items.length - publishedCount;
 
   const metrics = [

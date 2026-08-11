@@ -9,8 +9,9 @@ import {
   SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
   SuccessModalContent,
 } from "@/components/modal";
-import { FieldLabel } from "@/components/ui/field";
+import { FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { FormControl, FormField } from "@/components/util/form-controller";
 import { AssetClassConfigWizard } from "@/module/dashboard/asset-management/components/asset-class-config-wizard";
@@ -119,8 +120,21 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
 
     if (isEditMode) {
       updateAssetCategory(
-        assetCategory.categoryId,
-        { name: values.categoryName.trim(), status },
+        assetCategory.reference,
+        {
+          name: values.categoryName.trim(),
+          status,
+          overrideParentClassConfigurations: values.overrideParentClassConfigurations,
+          ...(values.overrideParentClassConfigurations
+            ? {
+                configuration: buildCategoryConfigurationPayload(
+                  assetClass,
+                  values.categoryName,
+                  values,
+                ),
+              }
+            : {}),
+        },
         () => setStage("SUCCESS"),
       );
       return;
@@ -147,7 +161,7 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
   };
 
   const isSaving = isEditMode ? loading.UPDATE_ASSET_CATEGORY : loading.CREATE_ASSET_CATEGORY;
-  const showWizard = !isEditMode && isOverrideEnabled;
+  const showWizard = isOverrideEnabled;
 
   const stageConfig: Record<
     ModalStage,
@@ -187,34 +201,40 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
               <FormField
                 control={control}
                 name="status"
-                label="Published"
-                description="Make this category visible/discoverable"
-                orientation="horizontal"
                 className="border-t border-primary-grey-stroke pt-4"
               >
                 {({ field }) => (
-                  <FormControl>
-                    <Switch
-                      size="sm"
-                      checked={field.value === "published"}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked ? "published" : "unpublished")
-                      }
-                    />
-                  </FormControl>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label className="font-semibold">Published</Label>
+                      <FieldDescription>Make this category visible/discoverable</FieldDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        size="sm"
+                        checked={field.value === "published"}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked ? "published" : "unpublished")
+                        }
+                      />
+                    </FormControl>
+                  </div>
                 )}
               </FormField>
 
-              {!isEditMode ? (
-                <FormField
-                  control={control}
-                  name="overrideParentClassConfigurations"
-                  label="Overwrite Parent Class Configurations"
-                  description="This will allow you manually customize configurations for this category"
-                  orientation="horizontal"
-                  className="border-t border-primary-grey-stroke pt-4"
-                >
-                  {({ field }) => (
+              <FormField
+                control={control}
+                name="overrideParentClassConfigurations"
+                className="border-t border-primary-grey-stroke pt-4"
+              >
+                {({ field }) => (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label className="font-semibold">Overwrite Parent Class Configurations</Label>
+                      <FieldDescription>
+                        This will allow you manually customize configurations for this category
+                      </FieldDescription>
+                    </div>
                     <FormControl>
                       <Switch
                         size="sm"
@@ -222,9 +242,9 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
                         onCheckedChange={(checked) => field.onChange(checked)}
                       />
                     </FormControl>
-                  )}
-                </FormField>
-              ) : null}
+                  </div>
+                )}
+              </FormField>
 
               {showWizard ? (
                 <AssetClassConfigWizard

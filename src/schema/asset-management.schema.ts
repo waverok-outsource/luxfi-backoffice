@@ -77,7 +77,10 @@ export const assetClassConfigSchema = z.object({
   // 1/8 - Valuation Logic
   valuationLogic: z.object({
     method: oneOf(VALUATION_METHOD_VALUES),
-    valuationProvider: oneOf(VALUATION_PROVIDER_VALUES),
+    // Not `oneOf(VALUATION_PROVIDER_VALUES)`: valid providers are now the live,
+    // paginated list from GET /v1/asset-valuation-providers (providerId values),
+    // not a static enum — presence is all this layer can validate.
+    valuationProvider: requiredText,
     requiresSecondOpinion: z.boolean(),
     valuationDriftAlertsEnabled: z.boolean(),
     driftRate: percentNumber,
@@ -128,7 +131,6 @@ export const assetClassConfigSchema = z.object({
     listingExpiry: durationSchema,
     canFeature: z.boolean(),
     canList: z.boolean(),
-    offerPattern: oneOf(VISIBILITY_PATTERN_VALUES),
   }),
 
   // 6/8 - Risk Parameters
@@ -177,15 +179,32 @@ export const addAssetClassSchema = assetClassHeaderSchema.merge(assetClassConfig
 
 export type AddAssetClassFormValues = z.infer<typeof addAssetClassSchema>;
 
+// Defaults (mm/g) are a UI choice, not confirmed enum values — the sample
+// payload's "kg" for a watch weight looks like placeholder data. See ADR 0003.
+export const CASE_UNIT_VALUES = ["mm", "cm"] as const;
+export const WEIGHT_UNIT_VALUES = ["g", "kg"] as const;
+
 const assetItemBaseSchema = z.object({
-  nameOfItem: requiredText,
-  assetCategoryName: requiredText,
-  year: requiredText,
-  caseColour: requiredText,
-  caseSize: requiredText,
-  weight: requiredText,
+  name: requiredText,
+  assetCategoryId: requiredText,
+  price: z.object({
+    value: nonNegativeNumber,
+    currencyCode: oneOf(CURRENCY_VALUES),
+  }),
+  productionYear: requiredText,
+  hasPapers: z.boolean(),
+  isBoxed: z.boolean(),
+  case: z.object({
+    colour: requiredText,
+    size: nonNegativeNumber,
+    unit: oneOf(CASE_UNIT_VALUES),
+  }),
+  weight: z.object({
+    value: nonNegativeNumber,
+    unit: oneOf(WEIGHT_UNIT_VALUES),
+  }),
   dialColour: requiredText,
-  overwriteParentClassConfigurations: z.boolean(),
+  overrideParentClassConfigurations: z.boolean(),
 });
 
 export const addAssetItemSchema = assetItemBaseSchema.merge(assetClassConfigSchema);

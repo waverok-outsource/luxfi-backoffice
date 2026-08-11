@@ -19,7 +19,7 @@ function filterAssetItems(query: string): AssetItemType[] {
   }
 
   return getAllAssetItems().filter((item) =>
-    [item.name, item.assetItemId].some((field) => field.toLowerCase().includes(normalized)),
+    [item.name, item.assetId].some((field) => field.toLowerCase().includes(normalized)),
   );
 }
 
@@ -71,7 +71,7 @@ export function AssetSearchField({ onSelect }: AssetSearchFieldProps) {
           <ul className="flex flex-col gap-1">
             {results.map((item) => (
               <li
-                key={item.assetItemId}
+                key={item.assetId}
                 className="flex items-center justify-between gap-3 rounded-xl p-2 hover:bg-primary-grey-undertone"
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -81,7 +81,7 @@ export function AssetSearchField({ onSelect }: AssetSearchFieldProps) {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-text-black">{item.name}</p>
                     <div className="flex items-center gap-2 text-xs text-text-grey">
-                      <span>{formatCurrency(item.estimatedValue)}</span>
+                      <span>{formatCurrency(item.price.value, item.price.currencyCode)}</span>
                       <Badge variant="neutral" className="h-5 px-1.5 text-[10px]">
                         {resolveAssetClassName(item.assetClassId)}
                       </Badge>

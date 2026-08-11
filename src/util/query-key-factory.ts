@@ -23,6 +23,22 @@ const keyFactory = {
       all: ["asset-management", "categories"],
       list: (query: string) => ["asset-management", "categories", query],
     },
+    assets: {
+      all: ["asset-management", "assets"],
+      list: (query: string) => ["asset-management", "assets", query],
+      quickSearch: (query: string, valuatorName: string, page: number) => [
+        "asset-management",
+        "assets",
+        "quick-search",
+        query,
+        valuatorName,
+        page,
+      ],
+    },
+    valuationProviders: {
+      all: ["asset-management", "valuation-providers"],
+      list: (query: string) => ["asset-management", "valuation-providers", query],
+    },
   },
 
   portfolioManagement: {
@@ -39,6 +55,41 @@ const keyFactory = {
     categories: {
       all: ["portfolio-management", "categories"],
       list: (query: string) => ["portfolio-management", "categories", query],
+    },
+  },
+
+  marketplace: {
+    all: ["marketplace"],
+    listings: {
+      all: ["marketplace", "listings"],
+      list: (query: string) => ["marketplace", "listings", query],
+    },
+  },
+
+  customerAssets: {
+    all: ["customer-assets"],
+    list: (customerId: string, query: string) => ["customer-assets", customerId, query],
+  },
+
+  loans: {
+    all: ["loans"],
+    customerList: (customerId: string, query: string) => ["loans", "customer", customerId, query],
+    rejectionReasons: ["loans", "rejection-reasons"],
+  },
+
+  support: {
+    all: ["support"],
+    tickets: {
+      all: ["support", "tickets"],
+      list: (query: string) => ["support", "tickets", query],
+    },
+    customerTickets: {
+      all: ["support", "customer-tickets"],
+      list: (customerId: string, query: string) => ["support", "customer-tickets", customerId, query],
+    },
+    passwordResetRequests: {
+      all: ["support", "password-reset-requests"],
+      list: (query: string) => ["support", "password-reset-requests", query],
     },
   },
 

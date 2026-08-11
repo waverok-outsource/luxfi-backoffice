@@ -2,40 +2,36 @@
 
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
 
 import {
-  TableSearchField,
+  TableSearchToolbar,
   createActionColumnWithOptions,
   createIdentifierColumn,
   createSerialColumn,
 } from "@/components/table";
 import { DataTable } from "@/components/table/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useURLQuery } from "@/hooks/useUrlQuery";
+import { AssetLoanModal } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal";
+import type { AssetLoanStep } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-types";
+import { useCustomerLoans, useLoanRejectionReasons } from "@/services/queries/loan.queries";
+import useLoanFns from "@/services/functions/loan.fns";
+import type { LoanStatus, LoanType } from "@/types/loan.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatCurrency } from "@/util/format-currency";
-import {
-  AssetLoanModal,
-  type AssetLoanStep,
-} from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal";
-import { type AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
-
-type LoanStatus = AssetLoan["status"];
-
-type LoanRow = Pick<
-  AssetLoan,
-  | "id"
-  | "loanId"
-  | "principalAmount"
-  | "collateralType"
-  | "collateralValue"
-  | "ltvPercent"
-  | "liquidationThresholdPercent"
-  | "status"
->;
 
 const PAGE_SIZE = 5;
+
+type TableRow = {
+  id: string;
+  loanId: string;
+  loanValue: string;
+  collateral: string;
+  collateralValue: string;
+  ltv: string;
+  liquidationThreshold: string;
+  status: LoanStatus;
+};
 
 function getStatusBadge(status: LoanStatus) {
   switch (status) {
@@ -54,68 +50,37 @@ function getStatusBadge(status: LoanStatus) {
   }
 }
 
-function generateLoans(total: number): AssetLoan[] {
-  const statuses: LoanStatus[] = ["pending", "active", "liquidated", "rejected", "completed"];
-
-  return Array.from({ length: total }, (_, index) => {
-    const serial = index + 1;
-    const status = statuses[index % statuses.length];
-    const principal = [6000, 100000, 24000, 2000, 10000][index % 5] ?? 6000;
-    const collateralValue = [10000, 150000, 32000, 7000, 50000][index % 5] ?? 10000;
-    const ltv = [57.7, 60.9, 78.2, 82.9, 55.0][index % 5] ?? 60;
-
-    const repaymentAmount = principal + principal * 0.2;
-    const liquidationThresholdAmount = repaymentAmount;
-
-    const currentCollateralValue =
-      status === "liquidated"
-        ? liquidationThresholdAmount
-        : status === "active" && serial % 2 === 0
-          ? liquidationThresholdAmount - 1000
-          : collateralValue;
-
-    const loan: AssetLoan = {
-      id: `loan-${serial}`,
-      loanId: `CU-${String(8890955422 + serial)}...`,
-      borrowerName: "Darryl Simmons",
-      borrowerRiskCreditScorePercent: 75,
-      principalAmount: principal,
-      durationLabel: "3 Weeks ( 21 Days)",
-      proposedInterestLabel: `$ 19,908.00 (10%)`,
-      repaymentAmount,
-      disbursedDateLabel:
-        status === "active" || status === "liquidated" ? "10th January, 2026" : "-",
-      repaymentDueLabel:
-        status === "active" || status === "liquidated" ? "5th February, 2026" : "-",
-      collateralType: "Luxury Watch",
-      collateralValue,
-      collateralTrendLabel: "67% | Last 7 days",
-      collateralVerified: true,
-      collateralAssetName: "Rolex Sky-dweller  336935",
-      collateralBrandCategory: "Rolex (Luxury Watches)",
-      collateralYear: "2024",
-      collateralDialColour: "Blue",
-      collateralWeight: "7kg",
-      collateralBox: "Yes",
-      collateralCaseColour: "Rose Gold",
-      collateralCaseSize: "42mm",
-      ltvPercent: ltv,
-      liquidationThresholdPercent: ltv,
-      liquidationThresholdAmount,
-      currentCollateralValue,
-      status,
-      rejectionReason: status === "rejected" ? "Asset Collateral Low" : undefined,
-    };
-
-    return loan;
-  });
+function formatLiquidationThreshold(lt: LoanType["liquidationThreshold"]): string {
+  if (typeof lt === "object" && lt !== null) {
+    return formatCurrency(lt.value, lt.currencyCode);
+  }
+  if (typeof lt === "number" && lt > 0) {
+    return formatCurrency(lt);
+  }
+  return "-";
 }
 
-export function AssetLoansPanel() {
+export function AssetLoansPanel({ customerId }: { customerId: string }) {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [loans, setLoans] = React.useState<AssetLoan[]>(() => generateLoans(1000));
+  const search = value.q ?? "";
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
 
-  const [activeLoanId, setActiveLoanId] = React.useState<string | null>(null);
+  const query = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(search ? { q: search } : {}),
+  });
+
+  const { data: response, isLoading } = useCustomerLoans(customerId, query);
+  const loans = React.useMemo(() => response?.data ?? [], [response?.data]);
+
+  const { data: rejectionReasonsData } = useLoanRejectionReasons();
+  const rejectionReasons = React.useMemo(
+    () => rejectionReasonsData?.data ?? [],
+    [rejectionReasonsData?.data],
+  );
+
+  const [activeLoanRef, setActiveLoanRef] = React.useState<string | null>(null);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [step, setStep] = React.useState<AssetLoanStep>("INFO");
   const [resultMessage, setResultMessage] = React.useState<{
@@ -123,150 +88,124 @@ export function AssetLoansPanel() {
     description: string;
   } | null>(null);
 
-  const [pendingApprovePayload, setPendingApprovePayload] = React.useState<{
-    loanId: string;
-    liquidationThresholdAmount: number;
-    disbursedDateLabel: string;
-    repaymentDueLabel: string;
-  } | null>(null);
+  const activeLoan = React.useMemo(
+    () => (activeLoanRef ? (loans.find((l) => l.loanRef === activeLoanRef) ?? null) : null),
+    [activeLoanRef, loans],
+  );
 
-  const searchQuery = (value.q ?? "").trim().toLowerCase();
-  const filtered = (() => {
-    if (!searchQuery) return loans;
-    return loans.filter((loan) => loan.loanId.toLowerCase().includes(searchQuery));
-  })();
+  const { approveLoan, rejectLoan } = useLoanFns();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0
-      ? Math.min(Math.floor(parsedPage), totalPages)
-      : 1;
+  const rows: TableRow[] = React.useMemo(
+    () =>
+      loans.map((loan) => ({
+        id: loan.loanRef,
+        loanId: loan.loanId,
+        loanValue: formatCurrency(loan.loanValue.value, loan.loanValue.currencyCode),
+        collateral: loan.collateral.assetName,
+        collateralValue: formatCurrency(
+          loan.collateralValue.value,
+          loan.collateralValue.currencyCode,
+        ),
+        ltv: `${loan.ltv.toFixed(1)}%`,
+        liquidationThreshold: formatLiquidationThreshold(loan.liquidationThreshold),
+        status: loan.status,
+      })),
+    [loans],
+  );
 
-  const pagedRows = (() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  })();
-
-  const activeLoan = activeLoanId ? (loans.find((loan) => loan.id === activeLoanId) ?? null) : null;
-
-  const rows: LoanRow[] = pagedRows.map((loan) => ({
-    id: loan.id,
-    loanId: loan.loanId,
-    principalAmount: loan.principalAmount,
-    collateralType: loan.collateralType,
-    collateralValue: loan.collateralValue,
-    ltvPercent: loan.ltvPercent,
-    liquidationThresholdPercent: loan.liquidationThresholdPercent,
-    status: loan.status,
-  }));
-
-  const columns: ColumnDef<LoanRow, unknown>[] = [
-    createSerialColumn<LoanRow>(),
-    createIdentifierColumn<LoanRow>("Loan ID", "loanId"),
-    {
-      accessorKey: "principalAmount",
-      header: "Loan Value",
-      cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
-    },
-    {
-      accessorKey: "collateralType",
-      header: "Collateral",
-      cell: ({ getValue }) => <span className="truncate">{String(getValue() ?? "-")}</span>,
-    },
-    {
-      accessorKey: "collateralValue",
-      header: "Collateral Value",
-      cell: ({ getValue }) => <span>{formatCurrency(Number(getValue() ?? 0))}</span>,
-    },
-    {
-      accessorKey: "ltvPercent",
-      header: "LTV",
-      cell: ({ getValue }) => <span>{Number(getValue() ?? 0).toFixed(1)}%</span>,
-    },
-    {
-      accessorKey: "liquidationThresholdPercent",
-      header: "Liquidation Threshold",
-      cell: ({ getValue }) => <span>{Number(getValue() ?? 0).toFixed(1)}%</span>,
-    },
-    {
-      accessorKey: "status",
-      header: "Status ID",
-      cell: ({ getValue }) => {
-        const status = getValue() as LoanStatus;
-        const badge = getStatusBadge(status);
-        return (
-          <Badge variant={badge.variant} showStatusDot>
-            {badge.label}
-          </Badge>
-        );
+  const columns = React.useMemo<ColumnDef<TableRow, unknown>[]>(
+    () => [
+      createSerialColumn<TableRow>(),
+      createIdentifierColumn<TableRow>("Loan ID", "loanId"),
+      {
+        accessorKey: "loanValue",
+        header: "Loan Value",
       },
-    },
-    createActionColumnWithOptions<LoanRow>({
-      ariaLabel: "View asset loan information",
-      onView: (row) => {
-        setActiveLoanId(row.id);
-        setStep("INFO");
-        setResultMessage(null);
-        setModalOpen(true);
+      {
+        accessorKey: "collateral",
+        header: "Collateral",
+        cell: ({ getValue }) => <span className="truncate">{String(getValue() ?? "-")}</span>,
       },
-    }),
-  ];
+      {
+        accessorKey: "collateralValue",
+        header: "Collateral Value",
+      },
+      {
+        accessorKey: "ltv",
+        header: "LTV",
+      },
+      {
+        accessorKey: "liquidationThreshold",
+        header: "Liquidation Threshold",
+      },
+      {
+        accessorKey: "status",
+        header: "Status ID",
+        cell: ({ getValue }) => {
+          const status = getValue() as LoanStatus;
+          const badge = getStatusBadge(status);
+          return (
+            <Badge variant={badge.variant} showStatusDot>
+              {badge.label}
+            </Badge>
+          );
+        },
+      },
+      createActionColumnWithOptions<TableRow>({
+        ariaLabel: "View asset loan information",
+        onView: (row) => {
+          setActiveLoanRef(row.id);
+          setStep("INFO");
+          setResultMessage(null);
+          setModalOpen(true);
+        },
+      }),
+    ],
+    [],
+  );
 
   const handleRequestApprove = (payload: {
-    loanId: string;
-    liquidationThresholdAmount: number;
-    disbursedDateLabel: string;
-    repaymentDueLabel: string;
+    loanRef: string;
+    liquidationThreshold: { value: number; currencyCode: string };
+    dateDisburse: string;
   }) => {
-    setPendingApprovePayload(payload);
     setStep("APPROVE_CONFIRM");
+    // Store the payload for confirm step — use a ref to avoid stale closure
+    setPendingApprovePayload(payload);
   };
+
+  const [pendingApprovePayload, setPendingApprovePayload] = React.useState<{
+    loanRef: string;
+    liquidationThreshold: { value: number; currencyCode: string };
+    dateDisburse: string;
+  } | null>(null);
 
   const handleConfirmApprove = () => {
     if (!pendingApprovePayload) return;
 
-    setLoans((prev) =>
-      prev.map((loan) =>
-        loan.id === pendingApprovePayload.loanId
-          ? {
-              ...loan,
-              status: "active",
-              liquidationThresholdAmount: pendingApprovePayload.liquidationThresholdAmount,
-              disbursedDateLabel: pendingApprovePayload.disbursedDateLabel,
-              repaymentDueLabel: pendingApprovePayload.repaymentDueLabel,
-            }
-          : loan,
-      ),
-    );
-
-    setPendingApprovePayload(null);
-    setStep("RESULT");
-    setResultMessage({
-      title: "Loan Disbursement Approved",
-      description: "Beneficiary will receive allocated loan amount in their wallet once processed.",
+    approveLoan(pendingApprovePayload.loanRef, {
+      liquidationThreshold: pendingApprovePayload.liquidationThreshold,
+      dateDisburse: pendingApprovePayload.dateDisburse,
+    }, () => {
+      setPendingApprovePayload(null);
+      setStep("RESULT");
+      setResultMessage({
+        title: "Loan Disbursement Approved",
+        description:
+          "Beneficiary will receive allocated loan amount in their wallet once processed.",
+      });
     });
   };
 
   const handleConfirmReject = (reason: string) => {
-    if (!activeLoanId) return;
+    if (!activeLoanRef) return;
 
-    setLoans((prev) =>
-      prev.map((loan) =>
-        loan.id === activeLoanId
-          ? {
-              ...loan,
-              status: "rejected",
-              rejectionReason: reason,
-            }
-          : loan,
-      ),
-    );
-
-    setStep("RESULT");
-    setResultMessage({
-      title: "Loan Request Rejected",
-      description: `Reason for Rejection: ${reason}`,
+    rejectLoan(activeLoanRef, { rejectionReason: reason }, () => {
+      setStep("RESULT");
+      setResultMessage({
+        title: "Loan Request Rejected",
+        description: `Reason for Rejection: ${reason}`,
+      });
     });
   };
 
@@ -275,32 +214,21 @@ export function AssetLoansPanel() {
     if (!open) {
       setStep("INFO");
       setResultMessage(null);
+      setPendingApprovePayload(null);
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TableSearchField placeholder="Search Transaction ID" className="max-w-md" />
+      <TableSearchToolbar placeholder="Search Transaction ID" />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-12 rounded-2xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"
-          >
-            Filter Options
-            <ChevronDown className="h-4 w-4 text-text-grey" />
-          </Button>
-        </div>
-      </div>
-
-      <DataTable<LoanRow, unknown>
+      <DataTable<TableRow, unknown>
         columns={columns}
         data={rows}
+        loading={isLoading}
         enableCheckbox
         pagination={{
-          totalEntries: filtered.length,
+          totalEntries: response?.pagination.total ?? 0,
           pageSize: PAGE_SIZE,
           maxVisiblePages: 3,
         }}
@@ -308,7 +236,7 @@ export function AssetLoansPanel() {
 
       {activeLoan && (
         <AssetLoanModal
-          key={activeLoan.id}
+          key={activeLoan.loanRef}
           open={modalOpen}
           onOpenChange={handleModalOpenChange}
           loan={activeLoan}
@@ -318,6 +246,7 @@ export function AssetLoansPanel() {
           onConfirmApprove={handleConfirmApprove}
           onConfirmReject={handleConfirmReject}
           resultMessage={resultMessage}
+          rejectionReasons={rejectionReasons}
         />
       )}
     </div>

@@ -62,7 +62,6 @@ export type CreateAssetClassPayloadType = {
     listingExpiry: DurationValueType;
     canFeature: boolean;
     canList: boolean;
-    offerPattern: string;
   };
   riskSettings: {
     riskCategory: string;
@@ -144,27 +143,110 @@ export type AssetClassConfigSectionsType = Pick<
   | "investorEligibility"
 >;
 
+// UI-only — the real GET response has no "listing status" field. The Manage
+// Assets table derives this from AssetItemType's `onSale` boolean.
 export type AssetItemListingStatus = "listed" | "unlisted";
 
-export type AssetItemType = {
-  assetItemId: string;
-  assetClassId: string;
+export type AssetPriceType = { value: number; currencyCode: string };
+export type AssetCaseType = { colour: string; size: number; unit: string };
+export type AssetWeightType = { value: number; unit: string };
+
+// ---- POST /v1/assets request payload ----
+// `overrideParentClassConfigurations`/`configuration` aren't in the sample body
+// we were given — they're sent by assumption, mirroring how asset categories
+// support a config override. See docs/STATUS.md — Asset Management API gaps.
+export type CreateAssetPayloadType = {
   name: string;
-  assetCategoryName: string;
-  year: string;
-  caseColour: string;
-  caseSize: string;
-  weight: string;
+  assetCategoryId: string;
+  price: AssetPriceType;
+  productionYear: string;
+  hasPapers: boolean;
+  isBoxed: boolean;
+  case: AssetCaseType;
+  weight: AssetWeightType;
   dialColour: string;
-  /** Feeds the class's "Total Asset Value" stat; set manually or from a Quick Add pick. */
-  estimatedValue: number;
-  images: string[];
-  listingStatus: AssetItemListingStatus;
-  overwriteParentClassConfigurations: boolean;
-  /** Only present once the admin has toggled the override on for this item. */
-  itemConfig?: AssetClassConfigFormValues;
-  createdAt: string;
+  uploads: string[];
+  overrideParentClassConfigurations: boolean;
+  configuration?: Omit<CreateAssetClassPayloadType, "description">;
 };
+
+// ---- GET /v1/assets (list item) ----
+// Confirmed against a real GET /v1/assets response sample (2026-08-05) — see
+// docs/STATUS.md for what's still unconfirmed
+// (e.g. query params, PATCH/DELETE, and the `configuration` field, which
+// wasn't visible in the sample since every item had the override off).
+export type AssetItemType = {
+  assetId: string;
+  status: string;
+  verificationStatus: string;
+  isVerified: boolean;
+  ownerType: string;
+  ownerId: string;
+  ownershipRef: string;
+  assetRef: string;
+  assetType: AssetClassAssetType;
+  name: string;
+  price: AssetPriceType;
+  productionYear: string;
+  hasPapers: boolean;
+  isBoxed: boolean;
+  case: AssetCaseType;
+  weight: AssetWeightType;
+  dialColour: string;
+  uploads: string[];
+  defectComment: string | null;
+  watchChartId: string | null;
+  quantity: number;
+  pawnValuationPrice: number | null;
+  assetExamination: unknown | null;
+  onSale: boolean;
+  assetCategoryRef: string;
+  assetCategoryId: string;
+  assetCategoryName: string;
+  overrideParentClassConfigurations: boolean;
+  /** Only present when overrideParentClassConfigurations is true — no sample showed one set. */
+  configuration?: AssetClassConfigSectionsType;
+  assetClassId: string;
+  assetClass: AssetClassType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssetsResponseType = PaginatedApiResponse<AssetItemType[]>;
+
+export type CreateAssetResponseType = ApiResponse<AssetItemType>;
+
+// ---- GET /v1/assets/quick-search ----
+// Only carries id/slug/name/prices/url — no brand/year/case/weight/dial-colour,
+// unlike the form it's meant to help fill out. See ADR 0003.
+export type AssetQuickSearchResultType = {
+  id: string;
+  slug: string;
+  name: string;
+  retail_price: string;
+  market_price: string;
+  url: string;
+};
+
+export type AssetQuickSearchResponseType = ApiResponse<{
+  providerId: string;
+  providerName: string;
+  assets: AssetQuickSearchResultType[];
+}>;
+
+// ---- POST /v1/assets/upload-url ----
+export type AssetUploadFileRequestType = { fileName: string; contentType: string };
+
+export type AssetUploadUrlResultType = {
+  uploadUrl: string;
+  fileUrl: string;
+  key: string;
+  expiresIn: number;
+  fileName: string;
+  contentType: string;
+};
+
+export type AssetUploadUrlResponseType = ApiResponse<{ uploads: AssetUploadUrlResultType[] }>;
 
 export type UserAssetPortfolioType = {
   portfolioId: string;
@@ -191,22 +273,26 @@ export type CreateAssetCategoryPayloadType = {
   configuration?: Omit<CreateAssetClassPayloadType, "description">;
 };
 
-// ---- PATCH /v1/asset-categories/:categoryId request payload ----
+// ---- PATCH /v1/asset-categories/:categoryRef request payload ----
 export type UpdateAssetCategoryPayloadType = {
   name?: string;
   status?: AssetCategoryStatus;
+  overrideParentClassConfigurations?: boolean;
+  configuration?: Omit<CreateAssetClassPayloadType, "description">;
 };
 
-// ---- GET /v1/asset-categories (list item) / GET /v1/asset-categories/:categoryId ----
+// ---- GET /v1/asset-categories (list item) / GET /v1/asset-categories/:categoryRef ----
+// No `categoryId`/`assetClass` (nested class object) anymore — `reference` (aliased
+// as `categoryRef`) is the identifier, and `assetType` is echoed back flat instead.
 export type AssetCategoryType = {
-  categoryId: string;
   name: string;
   status: AssetCategoryStatus;
-  brandsCount: number;
+  assetType: AssetClassAssetType;
+  /** Only present on categories that support brands (e.g. watches). */
+  brandsCount?: number;
   assetsCount: number;
   overrideParentClassConfigurations: boolean;
   assetClassId: string;
-  assetClass: AssetClassType;
   /** Only present when overrideParentClassConfigurations is true. */
   configuration?: AssetClassConfigSectionsType;
   categoryRef: string;
@@ -234,16 +320,20 @@ export type AssetVerificationLogEntry = {
   initiatorRole: string;
 };
 
-export type WatchChartsSearchResultType = {
-  id: string;
+// ---- GET /v1/asset-valuation-providers ----
+// NOTE: paginated even though callers need the full list for a dropdown — see
+// docs/STATUS.md. `perPage` is set high enough
+// in fetchValuationProviders to cover the current provider count as a stopgap.
+export type ValuationProviderType = {
+  providerId: string;
   name: string;
-  referenceNumber: string;
-  brand: string;
-  year: string;
-  caseColour: string;
-  caseSize: string;
-  weight: string;
-  dialColour: string;
-  price: number;
-  discountPercent: number;
+  assetType: AssetClassAssetType;
+  listingAssetsUrl: string;
+  viewingAssetUrl: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  providerRef: string;
 };
+
+export type ValuationProvidersResponseType = PaginatedApiResponse<ValuationProviderType[]>;

@@ -5,13 +5,9 @@ const numericText = requiredText.refine(
   (value) => !Number.isNaN(Number(value)) && Number(value) > 0,
   "Enter a valid amount",
 );
-const optionalText = z.string().trim();
-
 export const addToMarketplaceSchema = z.object({
   unitListingPrice: numericText,
-  additionalInformation: optionalText,
-  isBoxPackaged: z.boolean(),
-  hasCertificationPapers: z.boolean(),
+  quantity: numericText,
 });
 
 export type AddToMarketplaceFormValues = z.infer<typeof addToMarketplaceSchema>;

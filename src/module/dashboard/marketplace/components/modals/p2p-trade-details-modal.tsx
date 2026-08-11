@@ -4,24 +4,20 @@ import { AssetDetailsPanel } from "@/module/dashboard/marketplace/components/mod
 import { OfferReviewModal } from "@/module/dashboard/marketplace/components/modals/offer-review-modal";
 import { ModalStatusBadge, OfferSummaryCard } from "@/module/dashboard/marketplace/components/modals/offer-panels";
 import { TradeStatusHistoryPanel } from "@/module/dashboard/marketplace/components/modals/trade-status-history-panel";
-import {
-  P2P_TRADE_MODAL_STATUS_LABELS,
-  P2P_TRADE_STATUS_CONFIG,
-  resolveAssetItemById,
-} from "@/module/dashboard/marketplace/data";
-import type { P2PTradeRequestType } from "@/types/marketplace.type";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG, ASSET_MARKET_MODAL_STATUS_LABELS } from "@/module/dashboard/marketplace/data";
+import useMarketplaceFns from "@/services/functions/marketplace.fns";
+import type { AssetMarketListingType } from "@/types/marketplace.type";
 
 type P2PTradeDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  trade: P2PTradeRequestType;
-  onTradeUpdated: (tradeId: string, patch: Partial<P2PTradeRequestType>) => void;
+  listing: AssetMarketListingType;
 };
 
-export function P2PTradeDetailsModal({ open, onOpenChange, trade, onTradeUpdated }: P2PTradeDetailsModalProps) {
-  const assetItem = resolveAssetItemById(trade.assetItemId) ?? null;
-  const isPending = trade.status === "in-progress";
-  const assetLabel = assetItem ? `${assetItem.name} ${assetItem.assetItemId}` : trade.assetItemId;
+export function P2PTradeDetailsModal({ open, onOpenChange, listing }: P2PTradeDetailsModalProps) {
+  const { reviewListing } = useMarketplaceFns();
+  const isPending = listing.listingStatus === "pending";
+  const assetLabel = `${listing.assetDetails.assetName} ${listing.assetDetails.assetId}`;
 
   return (
     <OfferReviewModal
@@ -37,17 +33,16 @@ export function P2PTradeDetailsModal({ open, onOpenChange, trade, onTradeUpdated
         description: (
           <>
             You are about to approve this P2P trade for{" "}
-            <span className="font-semibold text-text-black">{assetLabel}</span> between{" "}
-            <span className="font-semibold text-text-black">{trade.sellerName}</span> and{" "}
-            <span className="font-semibold text-text-black">{trade.buyerName}</span>.
+            <span className="font-semibold text-text-black">{assetLabel}</span> from{" "}
+            <span className="font-semibold text-text-black">{listing.seller.name}</span>.
           </>
         ),
       }}
       rejectDialog={{
         offerTypeLabel: "P2P trade",
-        assetName: assetItem?.name ?? "",
-        assetId: assetItem?.assetItemId ?? trade.assetItemId,
-        partyName: trade.buyerName,
+        assetName: listing.assetDetails.assetName,
+        assetId: listing.assetDetails.assetId,
+        partyName: listing.seller.name,
       }}
       approveSuccess={{
         title: "Trade Approved",
@@ -57,14 +52,8 @@ export function P2PTradeDetailsModal({ open, onOpenChange, trade, onTradeUpdated
         title: "Trade Cancelled",
         description: "This P2P trade has been rejected and cancelled.",
       }}
-      onApprove={() => onTradeUpdated(trade.tradeId, { status: "completed", resolvedAt: new Date().toISOString() })}
-      onReject={(values) =>
-        onTradeUpdated(trade.tradeId, {
-          status: "cancelled",
-          resolvedAt: new Date().toISOString(),
-          rejectionReason: values.rejectionReason,
-        })
-      }
+      onApprove={() => reviewListing(listing.listingId, { status: "approved" })}
+      onReject={() => reviewListing(listing.listingId, { status: "rejected" })}
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div className="space-y-3">
@@ -73,26 +62,30 @@ export function P2PTradeDetailsModal({ open, onOpenChange, trade, onTradeUpdated
           <OfferSummaryCard
             statusBadge={
               <ModalStatusBadge
-                variant={P2P_TRADE_STATUS_CONFIG[trade.status].variant}
-                label={P2P_TRADE_MODAL_STATUS_LABELS[trade.status]}
+                variant={ASSET_MARKET_LISTING_STATUS_CONFIG[listing.listingStatus].variant}
+                label={ASSET_MARKET_MODAL_STATUS_LABELS[listing.listingStatus]}
               />
             }
-            orderId={trade.orderId}
+            orderId="-"
             parties={[
-              { label: "Seller Name:", value: trade.sellerName },
-              { label: "Buyer Name:", value: trade.buyerName },
-              { label: "Buyer ID:", value: trade.buyerId },
+              { label: "Seller Name:", value: listing.seller.name },
+              { label: "Buyer Name:", value: "-" },
+              { label: "Buyer ID:", value: "-" },
             ]}
             primaryPriceLabel="Initial Listed Offer"
-            primaryPriceValue={trade.initialListedOffer}
+            primaryPriceValue={listing.listingPrice.value}
             secondaryPriceLabel="Seller Accepted Offer"
-            secondaryPriceValue={trade.sellerAcceptedOffer}
+            secondaryPriceValue={null}
           />
 
-          <AssetDetailsPanel assetItem={assetItem} />
+          <AssetDetailsPanel assetDetails={listing.assetDetails} images={listing.assetImages} />
         </div>
 
-        <TradeStatusHistoryPanel trade={trade} />
+        <TradeStatusHistoryPanel
+          submittedAt={listing.listingDate}
+          resolvedAt={listing.listingStatus !== "pending" ? listing.lastUpdated : undefined}
+          status={listing.listingStatus}
+        />
       </div>
     </OfferReviewModal>
   );

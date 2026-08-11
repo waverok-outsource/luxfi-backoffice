@@ -1,23 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 
 import { ConfirmDialogContent, ModalShell, SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME, SuccessModalContent } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
-import { AssetDetailsPanel, AssetValuationPanel, InfoBox } from "@/module/dashboard/marketplace/components/modals/asset-panels";
-import { LISTING_STATUS_CONFIG, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import { addToMarketplaceSchema, type AddToMarketplaceFormValues } from "@/schema/marketplace.schema";
-import type { MarketplaceListingType } from "@/types/marketplace.type";
+import { AssetDetailsPanel, InfoBox } from "@/module/dashboard/marketplace/components/modals/asset-panels";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import type { AssetMarketListingType } from "@/types/marketplace.type";
 import { formatCurrency } from "@/util/format-currency";
 
 type AssetListingDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  listing: MarketplaceListingType;
-  onListingUpdated: (listingId: string, patch: Partial<MarketplaceListingType>) => void;
-  onListingDeleted: (listingId: string) => void;
+  listing: AssetMarketListingType;
 };
 
 type ModalStage = "FORM" | "CONFIRM_DELETE" | "CONFIRM_UNLIST" | "SUCCESS_SAVE" | "SUCCESS_UNLIST";
@@ -38,48 +33,9 @@ export function AssetListingDetailsModal({
   open,
   onOpenChange,
   listing,
-  onListingUpdated,
-  onListingDeleted,
 }: AssetListingDetailsModalProps) {
   const [stage, setStage] = React.useState<ModalStage>("FORM");
-  const assetItem = resolveAssetItemById(listing.assetItemId) ?? null;
-  const statusConfig = LISTING_STATUS_CONFIG[listing.listingStatus];
-
-  const { control, handleSubmit } = useForm<AddToMarketplaceFormValues>({
-    resolver: zodResolver(addToMarketplaceSchema),
-    defaultValues: {
-      unitListingPrice: String(listing.listingPrice),
-      additionalInformation: listing.additionalInfo,
-      isBoxPackaged: listing.isBoxPackaged,
-      hasCertificationPapers: listing.hasCertificationPapers,
-    },
-    mode: "all",
-  });
-  const formId = React.useId();
-
-  const onSaveChanges = (values: AddToMarketplaceFormValues) => {
-    onListingUpdated(listing.listingId, {
-      listingPrice: Number(values.unitListingPrice),
-      additionalInfo: values.additionalInformation,
-      isBoxPackaged: values.isBoxPackaged,
-      hasCertificationPapers: values.hasCertificationPapers,
-      lastUpdatedAt: new Date().toISOString(),
-    });
-    setStage("SUCCESS_SAVE");
-  };
-
-  const performUnlist = () => {
-    onListingUpdated(listing.listingId, {
-      listingStatus: "unlisted",
-      lastUpdatedAt: new Date().toISOString(),
-    });
-    setStage("SUCCESS_UNLIST");
-  };
-
-  const performDelete = () => {
-    onListingDeleted(listing.listingId);
-    onOpenChange(false);
-  };
+  const statusConfig = ASSET_MARKET_LISTING_STATUS_CONFIG[listing.listingStatus];
 
   const stageConfig: Record<
     ModalStage,
@@ -100,35 +56,30 @@ export function AssetListingDetailsModal({
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <InfoBox
               label="Total Available (Quantity)"
-              value={<StatValue value={String(listing.totalAvailableQuantity)} />}
+              value={<StatValue value={String(listing.qtyAvailable)} />}
             />
             <InfoBox
               label="Total Available (Cost)"
-              value={<StatValue value={formatCurrency(listing.totalAvailableCost)} />}
+              value={<StatValue value={formatCurrency(listing.totalAmountRemaining.value, listing.totalAmountRemaining.currencyCode)} />}
             />
             <InfoBox
               label="Total Sold (Quantity)"
-              value={<StatValue value={String(listing.totalSoldQuantity)} />}
+              value={<StatValue value={String(listing.qtySold)} />}
             />
             <InfoBox
-              label="Total Sold  (Cost)"
-              value={<StatValue value={formatCurrency(listing.totalSoldCost)} />}
+              label="Total Sold (Cost)"
+              value={<StatValue value={formatCurrency(listing.totalAmountSold.value, listing.totalAmountSold.currencyCode)} />}
             />
           </div>
 
           <ModalShell.Body>
-            <form
-              id={formId}
-              onSubmit={handleSubmit(onSaveChanges)}
-              className="grid grid-cols-1 gap-4 lg:grid-cols-2"
-            >
-              <AssetDetailsPanel assetItem={assetItem} />
-              <AssetValuationPanel assetItem={assetItem} control={control} />
-            </form>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <AssetDetailsPanel assetDetails={listing.assetDetails} images={listing.assetImages} />
+            </div>
           </ModalShell.Body>
 
           <div className="space-y-3">
-            <InfoBox label="Listed By" value={<StatValue value={listing.listedBy} />} />
+            <InfoBox label="Listed By" value={<StatValue value={listing.seller.name} />} />
             <InfoBox
               label="Listing Status"
               value={
@@ -137,23 +88,24 @@ export function AssetListingDetailsModal({
                 </Badge>
               }
             />
-            <InfoBox label="Last Updated" value={<StatValue value={formatDateLabel(listing.lastUpdatedAt)} />} />
+            <InfoBox label="Last Updated" value={<StatValue value={formatDateLabel(listing.lastUpdated)} />} />
           </div>
 
           <ModalShell.Footer align="between">
             <ModalShell.Action
               type="button"
               className="bg-alertSoft-error text-alert-error hover:bg-alertSoft-error/80"
-              onClick={() => setStage("CONFIRM_DELETE")}
+              disabled
+              title="Not yet supported by the backend"
             >
               Delete
             </ModalShell.Action>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row">
-              <ModalShell.Action type="submit" form={formId} variant="grey-stroke">
+              <ModalShell.Action type="button" variant="grey-stroke" disabled title="Not yet supported by the backend">
                 Save Changes
               </ModalShell.Action>
-              <ModalShell.Action type="button" onClick={() => setStage("CONFIRM_UNLIST")}>
+              <ModalShell.Action type="button" disabled title="Not yet supported by the backend">
                 Unlist Asset
               </ModalShell.Action>
             </div>
@@ -170,7 +122,7 @@ export function AssetListingDetailsModal({
           description="You are about to permanently remove this listing from the marketplace."
           confirmVariant="danger"
           onCancel={() => setStage("FORM")}
-          onConfirm={performDelete}
+          onConfirm={() => onOpenChange(false)}
         />
       ),
     },
@@ -183,7 +135,7 @@ export function AssetListingDetailsModal({
           description="This asset will be removed from the live marketplace but kept in your listings."
           confirmVariant="success"
           onCancel={() => setStage("FORM")}
-          onConfirm={performUnlist}
+          onConfirm={() => onOpenChange(false)}
         />
       ),
     },

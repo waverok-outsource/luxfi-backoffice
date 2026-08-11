@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, parse } from "date-fns";
+import { format as formatDateFns } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -16,17 +16,15 @@ import {
   FormField,
   FormSelectTrigger,
 } from "@/components/util/form-controller";
+import type { LoanType } from "@/types/loan.type";
+import { formatCurrency } from "@/util/format-currency";
+import { formatDate } from "@/util/helper";
 import {
   CollateralDetailsCard,
   CollateralValueBar,
-  type AssetLoan,
 } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
-import type {
-  AssetLoanApprovalPayload,
-  AssetLoanStep,
-} from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-types";
+import type { AssetLoanStep } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-types";
 import {
-  formatLoanCaseMoney,
   getLoanCaseStatusBadge,
   LoanCaseCard,
   LoanCaseDetailList,
@@ -40,30 +38,7 @@ import {
   type LoanCaseRejectFormInputValues,
 } from "@/schema/customers.schema";
 
-const reasonOptions = [
-  { label: "Asset Collateral Low", value: "Asset Collateral Low" },
-  { label: "Insufficient Credit Score", value: "Insufficient Credit Score" },
-  { label: "High Risk Profile", value: "High Risk Profile" },
-  { label: "Incomplete Documentation", value: "Incomplete Documentation" },
-];
-
-function formatApprovalDate(value: Date | undefined) {
-  return value ? format(value, "dd/MM/yyyy") : "-";
-}
-
-function parseApprovalDate(value: string) {
-  if (!value || value === "-") return undefined;
-  const parsed = parse(value, "dd/MM/yyyy", new Date());
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
-function getLoanApprovalDefaults(loan: AssetLoan): LoanCaseApprovalFormInputValues {
-  return {
-    thresholdAmount: String(loan.liquidationThresholdAmount || 0),
-    disbursementDate: parseApprovalDate(loan.disbursedDateLabel),
-    repaymentDue: parseApprovalDate(loan.repaymentDueLabel),
-  };
-}
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function LiquidatedBanner() {
   return (
@@ -73,8 +48,20 @@ function LiquidatedBanner() {
   );
 }
 
-function LoanDetailsCard({ loan }: { loan: AssetLoan }) {
+function RepaymentWarning() {
+  return (
+    <LoanCaseNotice variant="warning">
+      The collateral asset will be automatically liquidated to repay the loan if its market value
+      drops below the set liquidation price threshold.
+    </LoanCaseNotice>
+  );
+}
+
+// ── Loan Details Card ──────────────────────────────────────────────────────
+
+function LoanDetailsCard({ loan }: { loan: LoanType }) {
   const statusBadge = getLoanCaseStatusBadge(loan.status);
+  const proposedInterestLabel = `${formatCurrency(loan.totalInterest, loan.loanValue.currencyCode)} (${loan.apr}%)`;
 
   return (
     <LoanCaseSection title="Loan Details">
@@ -89,30 +76,33 @@ function LoanDetailsCard({ loan }: { loan: AssetLoan }) {
                 </Badge>
               ),
             },
-            { label: "Borrower Name:", value: loan.borrowerName },
+            { label: "Borrower Name:", value: loan.borrower.name },
             {
               label: "Borrower Risk Credit Score:",
-              value: `${loan.borrowerRiskCreditScorePercent}%`,
+              value: loan.borrower.creditScore != null ? `${loan.borrower.creditScore}%` : "-",
             },
             {
               label: "Principal Loan Amount",
-              value: formatLoanCaseMoney(loan.principalAmount),
+              value: formatCurrency(loan.loanValue.value, loan.loanValue.currencyCode),
               valueClassName: "text-2xl",
               dividerBefore: true,
             },
-            { label: "Duration", value: loan.durationLabel },
-            { label: "Proposed Interest (rate):", value: loan.proposedInterestLabel },
+            { label: "Duration", value: `${loan.loanTerm.value} ${loan.loanTerm.unit}` },
+            { label: "Proposed Interest (rate):", value: proposedInterestLabel },
             {
               label: "Repayment Amount",
-              value: formatLoanCaseMoney(loan.repaymentAmount),
+              value: formatCurrency(loan.totalRepayable, loan.loanValue.currencyCode),
               valueClassName: "text-2xl",
             },
             {
               label: "Disbursed Date",
-              value: loan.disbursedDateLabel,
+              value: loan.dateDisburse ? formatDate(loan.dateDisburse, "do MMMM, yyyy") : "-",
               dividerBefore: true,
             },
-            { label: "Repayment Due", value: loan.repaymentDueLabel },
+            {
+              label: "Repayment Due",
+              value: loan.dueDate ? formatDate(loan.dueDate, "do MMMM, yyyy") : "-",
+            },
           ]}
         />
       </LoanCaseCard>
@@ -120,23 +110,20 @@ function LoanDetailsCard({ loan }: { loan: AssetLoan }) {
   );
 }
 
-function RepaymentWarning() {
-  return (
-    <LoanCaseNotice variant="warning">
-      The collateral asset will be automatically liquidated to repay the loan if its market value
-      drops below the set liquidation price threshold.
-    </LoanCaseNotice>
-  );
-}
+// ── Pending Loan Actions ───────────────────────────────────────────────────
 
 function PendingLoanActions({
   loan,
   onStepChange,
   onRequestApprove,
 }: {
-  loan: AssetLoan;
+  loan: LoanType;
   onStepChange: (step: AssetLoanStep) => void;
-  onRequestApprove: (payload: AssetLoanApprovalPayload) => void;
+  onRequestApprove: (payload: {
+    loanRef: string;
+    liquidationThreshold: { value: number; currencyCode: string };
+    dateDisburse: string;
+  }) => void;
 }) {
   const {
     control,
@@ -144,22 +131,24 @@ function PendingLoanActions({
     formState: { isValid },
   } = useForm<LoanCaseApprovalFormInputValues>({
     resolver: zodResolver(loanCaseApprovalSchema),
-    defaultValues: getLoanApprovalDefaults(loan),
+    defaultValues: { thresholdAmount: "", disbursementDate: undefined },
     mode: "all",
   });
 
   const handleApprove = handleSubmit((values) => {
     onRequestApprove({
-      loanId: loan.id,
-      liquidationThresholdAmount: Number(values.thresholdAmount),
-      disbursedDateLabel: formatApprovalDate(values.disbursementDate),
-      repaymentDueLabel: formatApprovalDate(values.repaymentDue),
+      loanRef: loan.loanRef,
+      liquidationThreshold: {
+        value: Number(values.thresholdAmount),
+        currencyCode: loan.loanValue.currencyCode,
+      },
+      dateDisburse: formatDateFns(values.disbursementDate!, "yyyy-MM-dd"),
     });
   });
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <FormField
           control={control}
           name="thresholdAmount"
@@ -173,15 +162,6 @@ function PendingLoanActions({
           )}
         </FormField>
         <FormField control={control} name="disbursementDate" label="Date of Disbursement" required>
-          {({ field }) => (
-            <FormDatePicker
-              date={field.value}
-              onDateChange={field.onChange}
-              placeholder="DD/MM/YYYY"
-            />
-          )}
-        </FormField>
-        <FormField control={control} name="repaymentDue" label="Repayment Due Date" required>
           {({ field }) => (
             <FormDatePicker
               date={field.value}
@@ -215,15 +195,13 @@ function PendingLoanActions({
   );
 }
 
-function ResolvedLoanActions({ loan, onClose }: { loan: AssetLoan; onClose: () => void }) {
+// ── Resolved Loan Actions ──────────────────────────────────────────────────
+
+function ResolvedLoanActions({ loan, onClose }: { loan: LoanType; onClose: () => void }) {
   return (
     <>
       <RepaymentWarning />
-      <CollateralValueBar
-        liquidationThresholdAmount={loan.liquidationThresholdAmount}
-        currentCollateralValue={loan.currentCollateralValue}
-        status={loan.status}
-      />
+      <CollateralValueBar loan={loan} />
       <div className="flex items-center justify-end pt-2">
         <Button type="button" className="h-12 min-w-[180px] rounded-2xl" onClick={onClose}>
           Close
@@ -233,16 +211,22 @@ function ResolvedLoanActions({ loan, onClose }: { loan: AssetLoan; onClose: () =
   );
 }
 
+// ── Info Step ──────────────────────────────────────────────────────────────
+
 export function InfoStepContent({
   loan,
   onClose,
   onStepChange,
   onRequestApprove,
 }: {
-  loan: AssetLoan;
+  loan: LoanType;
   onClose: () => void;
   onStepChange: (step: AssetLoanStep) => void;
-  onRequestApprove: (payload: AssetLoanApprovalPayload) => void;
+  onRequestApprove: (payload: {
+    loanRef: string;
+    liquidationThreshold: { value: number; currencyCode: string };
+    dateDisburse: string;
+  }) => void;
 }) {
   const isPending = loan.status === "pending";
 
@@ -257,6 +241,11 @@ export function InfoStepContent({
         descriptionClassName="text-sm text-text-grey"
       />
       {loan.status === "liquidated" ? <LiquidatedBanner /> : null}
+      {loan.status === "rejected" && loan.rejectionReason ? (
+        <LoanCaseNotice variant="error">
+          Reason for Rejection: {loan.rejectionReason}
+        </LoanCaseNotice>
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-2">
         <LoanDetailsCard loan={loan} />
         <CollateralDetailsCard loan={loan} />
@@ -277,12 +266,16 @@ export function InfoStepContent({
   );
 }
 
+// ── Reject Step ────────────────────────────────────────────────────────────
+
 export function RejectStepContent({
   borrowerName,
+  rejectionReasons,
   onStepChange,
   onConfirmReject,
 }: {
   borrowerName: string;
+  rejectionReasons: string[];
   onStepChange: (step: AssetLoanStep) => void;
   onConfirmReject: (reason: string) => void;
 }) {
@@ -320,9 +313,9 @@ export function RejectStepContent({
                 <SelectValue placeholder="Select Options" />
               </FormSelectTrigger>
               <SelectContent>
-                {reasonOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {rejectionReasons.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -352,6 +345,8 @@ export function RejectStepContent({
     </div>
   );
 }
+
+// ── Approve Confirm Step ───────────────────────────────────────────────────
 
 export function ApproveConfirmStepContent({
   onStepChange,

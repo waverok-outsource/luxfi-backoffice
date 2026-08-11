@@ -3,7 +3,7 @@
 import { AssetDetailsPanel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
 import { OfferReviewModal } from "@/module/dashboard/marketplace/components/modals/offer-review-modal";
 import { OfferStatusBadge, OfferSummaryCard } from "@/module/dashboard/marketplace/components/modals/offer-panels";
-import { resolveAssetItemById } from "@/module/dashboard/marketplace/data";
+import { resolveAssetClassName, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
 import type { BuyOfferType } from "@/types/marketplace.type";
 
 type BuyOfferDetailsModalProps = {
@@ -16,7 +16,7 @@ type BuyOfferDetailsModalProps = {
 export function BuyOfferDetailsModal({ open, onOpenChange, offer, onOfferUpdated }: BuyOfferDetailsModalProps) {
   const assetItem = resolveAssetItemById(offer.assetItemId) ?? null;
   const isPending = offer.status === "pending";
-  const assetLabel = assetItem ? `${assetItem.name} ${assetItem.assetItemId}` : offer.assetItemId;
+  const assetLabel = assetItem ? `${assetItem.name} ${assetItem.assetId}` : offer.assetItemId;
 
   return (
     <OfferReviewModal
@@ -39,7 +39,7 @@ export function BuyOfferDetailsModal({ open, onOpenChange, offer, onOfferUpdated
       rejectDialog={{
         offerTypeLabel: "buy offer",
         assetName: assetItem?.name ?? "",
-        assetId: assetItem?.assetItemId ?? offer.assetItemId,
+        assetId: assetItem?.assetId ?? offer.assetItemId,
         partyName: offer.buyerName,
       }}
       approveSuccess={{
@@ -81,7 +81,26 @@ export function BuyOfferDetailsModal({ open, onOpenChange, offer, onOfferUpdated
           }}
         />
 
-        <AssetDetailsPanel assetItem={assetItem} />
+        <AssetDetailsPanel
+          assetDetails={
+            assetItem
+              ? {
+                  dialColour: assetItem.dialColour,
+                  productionYear: assetItem.productionYear,
+                  weight: assetItem.weight,
+                  case: assetItem.case,
+                  category: assetItem.assetCategoryName,
+                  assetType: assetItem.assetType ?? "",
+                  assetId: assetItem.assetId,
+                  assetName: assetItem.name,
+                  assetClass: resolveAssetClassName(assetItem.assetClassId),
+                  hasPapers: assetItem.hasPapers,
+                  isBoxed: assetItem.isBoxed,
+                }
+              : null
+          }
+          images={assetItem?.uploads ?? []}
+        />
       </div>
     </OfferReviewModal>
   );

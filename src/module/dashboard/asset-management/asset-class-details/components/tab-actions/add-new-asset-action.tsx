@@ -4,7 +4,6 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { AssetItemConfigurationModal } from "@/module/dashboard/asset-management/asset-class-details/components/modals/asset-item-configuration-modal";
-import { useAssetItemsContext } from "@/module/dashboard/asset-management/asset-class-details/context";
 import type { AssetClassType } from "@/types/asset-management.type";
 
 type AddNewAssetActionProps = {
@@ -13,7 +12,6 @@ type AddNewAssetActionProps = {
 
 export function AddNewAssetAction({ assetClass }: AddNewAssetActionProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { addItem } = useAssetItemsContext();
 
   return (
     <>
@@ -22,13 +20,7 @@ export function AddNewAssetAction({ assetClass }: AddNewAssetActionProps) {
       </Button>
 
       {isOpen && (
-        <AssetItemConfigurationModal
-          mode="create"
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          assetClass={assetClass}
-          onAssetItemCreated={addItem}
-        />
+        <AssetItemConfigurationModal mode="create" open={isOpen} onOpenChange={setIsOpen} assetClass={assetClass} />
       )}
     </>
   );

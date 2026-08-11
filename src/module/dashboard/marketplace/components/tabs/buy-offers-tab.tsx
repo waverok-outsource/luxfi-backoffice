@@ -63,7 +63,7 @@ export function BuyOffersTab() {
         id: offer.offerId,
         assetId: offer.assetItemId,
         assetName: assetItem?.name ?? "-",
-        marketPrice: assetItem?.estimatedValue ?? 0,
+        marketPrice: assetItem?.price.value ?? 0,
         buyerName: offer.buyerName,
         listingPrice: offer.listingPrice,
         offerDate: formatTableDateLabel(offer.submittedAt),

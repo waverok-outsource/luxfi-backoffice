@@ -7,40 +7,36 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { mockWatchChartsSearchResults } from "@/module/dashboard/asset-management/data";
-import type { WatchChartsSearchResultType } from "@/types/asset-management.type";
+import { useAssetQuickSearch } from "@/services/queries/asset-management.queries";
+import type { AssetQuickSearchResultType } from "@/types/asset-management.type";
 
-function filterResults(query: string): WatchChartsSearchResultType[] {
-  const normalized = query.trim().toLowerCase();
-
-  if (!normalized) {
-    return [];
-  }
-
-  return mockWatchChartsSearchResults.filter((result) =>
-    [result.name, result.brand, result.referenceNumber].some((field) =>
-      field.toLowerCase().includes(normalized),
-    ),
-  );
-}
+// Hardcoded since the sample response only ever showed one provider ("parse").
+// See docs/STATUS.md for whether this should
+// become user-selectable if more providers are added.
+const VALUATOR_NAME = "parse";
 
 type QuickAddSearchFieldProps = {
-  onSelect: (result: WatchChartsSearchResultType) => void;
+  onSelect: (result: AssetQuickSearchResultType) => void;
 };
 
 /**
- * Search-as-you-type against the (future) WatchCharts API integration. Renders
+ * Search-as-you-type against the real quick-search valuation lookup. Renders
  * results in an interactive popover so an admin can Quick Add without typing
  * every field manually.
+ *
+ * The response only carries id/slug/name/prices/url — no brand, year, case,
+ * weight, or dial colour — so selecting a result only autofills the item
+ * name; see ADR 0003 for the backend follow-up on richer autofill data.
  */
 export function QuickAddSearchField({ onSelect }: QuickAddSearchFieldProps) {
   const [query, setQuery] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
   const debouncedQuery = useDebouncedValue(query, 300);
-  const results = React.useMemo(() => filterResults(debouncedQuery), [debouncedQuery]);
+  const { data: quickSearchResponse } = useAssetQuickSearch(debouncedQuery, VALUATOR_NAME, 1);
+  const results = quickSearchResponse?.data.assets ?? [];
   const isOpen = debouncedQuery.trim().length > 0;
 
-  const handleSelect = (result: WatchChartsSearchResultType) => {
+  const handleSelect = (result: AssetQuickSearchResultType) => {
     onSelect(result);
     setQuery("");
   };
@@ -83,10 +79,9 @@ export function QuickAddSearchField({ onSelect }: QuickAddSearchFieldProps) {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-text-black">{result.name}</p>
                     <div className="flex items-center gap-2 text-xs text-text-grey">
-                      <span>${result.price.toLocaleString()}</span>
-                      <span className="text-alert-error">-{result.discountPercent}%</span>
+                      <span>Retail {result.retail_price}</span>
                       <Badge variant="neutral" className="h-5 px-1.5 text-[10px]">
-                        Market Price
+                        Market {result.market_price}
                       </Badge>
                     </div>
                   </div>

@@ -6,5 +6,5 @@ export type LoanCaseApprovalPayload = {
   loanId: string;
   liquidationThresholdAmount: number;
   disbursedDateLabel: string;
-  repaymentDueLabel: string;
+  repaymentDueLabel?: string;
 };

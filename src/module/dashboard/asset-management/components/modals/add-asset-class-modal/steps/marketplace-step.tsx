@@ -91,18 +91,6 @@ export function MarketplaceStep({ control }: MarketplaceStepProps) {
           </ToggleGroup>
         )}
       </FormField>
-
-      <FormField control={control} name="marketPlace.offerPattern" label="Offer pattern">
-        {({ field }) => (
-          <ToggleGroup selection="single" look="segmented" value={field.value} onValueChange={field.onChange}>
-            {VISIBILITY_PATTERN_OPTIONS.map((option) => (
-              <ToggleGroupItem key={option.value} value={option.value}>
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        )}
-      </FormField>
     </div>
   );
 }

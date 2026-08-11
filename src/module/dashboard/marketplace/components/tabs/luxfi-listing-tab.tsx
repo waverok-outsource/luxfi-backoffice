@@ -3,13 +3,23 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createStatusColumn, createTextColumn } from "@/components/table";
+import {
+  DataTable,
+  createActionColumnWithOptions,
+  createIdentifierColumn,
+  createStatusColumn,
+  createTextColumn,
+} from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
 import { AssetListingDetailsModal } from "@/module/dashboard/marketplace/components/modals/asset-listing-details-modal";
-import { useMarketplaceListingsContext } from "@/module/dashboard/marketplace/context";
-import { LISTING_STATUS_CONFIG, resolveAssetClassName, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { MarketplaceListingStatus, MarketplaceListingType } from "@/types/marketplace.type";
+import {
+  createAmountColumn,
+  formatTableDateLabel,
+} from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import { useAssetMarketListings } from "@/services/queries/marketplace.queries";
+import type { AssetMarketListingStatus, AssetMarketListingType } from "@/types/marketplace.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type LuxfiListingRow = Record<string, unknown> & {
   id: string;
@@ -20,58 +30,40 @@ type LuxfiListingRow = Record<string, unknown> & {
   marketPrice: number;
   listingPrice: number;
   listingDate: string;
-  status: MarketplaceListingStatus;
+  status: AssetMarketListingStatus;
 };
 
 const PAGE_SIZE = 10;
 
-function matchesQuery(listing: MarketplaceListingType, query: string) {
-  const normalized = query.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  const assetItem = resolveAssetItemById(listing.assetItemId);
-  return (
-    listing.assetItemId.toLowerCase().includes(normalized) ||
-    Boolean(assetItem?.name.toLowerCase().includes(normalized))
-  );
-}
-
 export function LuxfiListingTab() {
-  const { listings, updateListing, removeListing } = useMarketplaceListingsContext();
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeListing, setActiveListing] = React.useState<MarketplaceListingType | null>(null);
+  const [activeListing, setActiveListing] = React.useState<AssetMarketListingType | null>(null);
 
-  const filtered = React.useMemo(
-    () => listings.filter((listing) => matchesQuery(listing, value.q ?? "")),
-    [listings, value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const listingsQuery = convertObjectToQuery({
+    ownerType: "platform",
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows: LuxfiListingRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((listing) => {
-      const assetItem = resolveAssetItemById(listing.assetItemId);
+  const { data: response, isLoading } = useAssetMarketListings(listingsQuery);
 
-      return {
-        id: listing.listingId,
-        assetId: listing.assetItemId,
-        assetName: assetItem?.name ?? "-",
-        assetClass: resolveAssetClassName(listing.assetClassId),
-        stockQty: listing.totalAvailableQuantity,
-        marketPrice: assetItem?.estimatedValue ?? 0,
-        listingPrice: listing.listingPrice,
-        listingDate: formatTableDateLabel(listing.listedAt),
-        status: listing.listingStatus,
-      };
-    });
-  }, [currentPage, filtered]);
+  const listings = response?.data ?? [];
+
+  const rows: LuxfiListingRow[] = listings.map((listing) => ({
+    id: listing.listingId,
+    assetId: listing.assetDetails.assetId,
+    assetName: listing.assetDetails.assetName,
+    assetClass: listing.assetDetails.assetClass,
+    stockQty: listing.qtyAvailable,
+    marketPrice: listing.marketPrice.value,
+    listingPrice: listing.listingPrice.value,
+    listingDate: formatTableDateLabel(listing.listingDate),
+    status: listing.listingStatus,
+  }));
 
   const columns: ColumnDef<LuxfiListingRow, unknown>[] = [
     createIdentifierColumn<LuxfiListingRow>("Asset ID", "assetId"),
@@ -81,7 +73,10 @@ export function LuxfiListingTab() {
     createAmountColumn<LuxfiListingRow>("Market Price", "marketPrice"),
     createAmountColumn<LuxfiListingRow>("Listing Price", "listingPrice"),
     createTextColumn<LuxfiListingRow>("Listing Date", "listingDate"),
-    createStatusColumn<LuxfiListingRow, MarketplaceListingStatus>("Listing Status", LISTING_STATUS_CONFIG),
+    createStatusColumn<LuxfiListingRow, AssetMarketListingStatus>(
+      "Listing Status",
+      ASSET_MARKET_LISTING_STATUS_CONFIG,
+    ),
     createActionColumnWithOptions<LuxfiListingRow>({
       ariaLabel: "View listing details",
       onView: (row) => {
@@ -96,8 +91,13 @@ export function LuxfiListingTab() {
       <DataTable
         columns={columns}
         data={rows}
+        loading={isLoading}
         emptyStateLabel="No listings found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        pagination={{
+          totalEntries: response?.pagination.total ?? 0,
+          pageSize: PAGE_SIZE,
+          maxVisiblePages: 3,
+        }}
       />
 
       {activeListing ? (
@@ -107,14 +107,6 @@ export function LuxfiListingTab() {
             if (!open) setActiveListing(null);
           }}
           listing={activeListing}
-          onListingUpdated={(listingId, patch) => {
-            updateListing(listingId, patch);
-            setActiveListing((previous) => (previous ? { ...previous, ...patch } : previous));
-          }}
-          onListingDeleted={(listingId) => {
-            removeListing(listingId);
-            setActiveListing(null);
-          }}
         />
       ) : null}
     </>

@@ -12,6 +12,8 @@ type ImageEntry = {
   url: string;
   /** Present only for newly-added files, whose blob URL we own and must revoke. */
   isObjectUrl: boolean;
+  /** Present only for newly-added files — kept so it can be uploaded on submit. */
+  file?: File;
 };
 
 export function useAssetItemImages(initialUrls: string[]) {
@@ -53,7 +55,7 @@ export function useAssetItemImages(initialUrls: string[]) {
 
       const newEntries = Array.from(fileList)
         .slice(0, availableSlots)
-        .map((file) => ({ url: URL.createObjectURL(file), isObjectUrl: true }));
+        .map((file) => ({ url: URL.createObjectURL(file), isObjectUrl: true, file }));
 
       return [...previous, ...newEntries];
     });
@@ -72,8 +74,11 @@ export function useAssetItemImages(initialUrls: string[]) {
   };
 
   const urls = entries.map((entry) => entry.url);
+  const pendingFiles = entries.flatMap((entry) => (entry.file ? [entry.file] : []));
+  // Already-uploaded remote URLs (edit mode) that should pass through unchanged.
+  const existingUploads = entries.filter((entry) => !entry.file).map((entry) => entry.url);
 
-  return { urls, addFiles, removeAt };
+  return { urls, addFiles, removeAt, pendingFiles, existingUploads };
 }
 
 type ImageUploadGridProps = {

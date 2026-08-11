@@ -7,14 +7,14 @@ import { ConfirmDialogContent, ModalShell, SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNA
 import { Badge } from "@/components/ui/badge";
 import { AssetDetailsPanel, DetailField, InfoBox, formatDateLabel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
 import { CustomerListingValuationPanel } from "@/module/dashboard/marketplace/components/modals/customer-listing-valuation-panel";
-import { CUSTOMER_LISTING_STATUS_CONFIG, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { CustomerListingType } from "@/types/marketplace.type";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import useMarketplaceFns from "@/services/functions/marketplace.fns";
+import type { AssetMarketListingType } from "@/types/marketplace.type";
 
 type CustomerListingReviewModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  listing: CustomerListingType;
-  onListingUpdated: (listingId: string, patch: Partial<CustomerListingType>) => void;
+  listing: AssetMarketListingType;
 };
 
 type ModalStage = "REVIEW" | "CONFIRM_APPROVE" | "CONFIRM_REJECT" | "SUCCESS";
@@ -23,12 +23,11 @@ export function CustomerListingReviewModal({
   open,
   onOpenChange,
   listing,
-  onListingUpdated,
 }: CustomerListingReviewModalProps) {
   const [stage, setStage] = React.useState<ModalStage>("REVIEW");
   const [resultCopy, setResultCopy] = React.useState({ title: "", description: "" });
-  const assetItem = resolveAssetItemById(listing.assetItemId) ?? null;
-  const statusConfig = CUSTOMER_LISTING_STATUS_CONFIG[listing.listingStatus];
+  const { reviewListing } = useMarketplaceFns();
+  const statusConfig = ASSET_MARKET_LISTING_STATUS_CONFIG[listing.listingStatus];
   const isPending = listing.listingStatus === "pending";
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -39,21 +38,23 @@ export function CustomerListingReviewModal({
   };
 
   const performApprove = () => {
-    onListingUpdated(listing.listingId, { listingStatus: "active", lastUpdatedAt: new Date().toISOString() });
-    setResultCopy({
-      title: "Listing Approved",
-      description: "This customer listing is now live on the marketplace.",
+    reviewListing(listing.listingId, { status: "approved" }, () => {
+      setResultCopy({
+        title: "Listing Approved",
+        description: "This customer listing is now live on the marketplace.",
+      });
+      setStage("SUCCESS");
     });
-    setStage("SUCCESS");
   };
 
   const performReject = () => {
-    onListingUpdated(listing.listingId, { listingStatus: "rejected", lastUpdatedAt: new Date().toISOString() });
-    setResultCopy({
-      title: "Listing Rejected",
-      description: "This customer listing has been rejected.",
+    reviewListing(listing.listingId, { status: "rejected" }, () => {
+      setResultCopy({
+        title: "Listing Rejected",
+        description: "This customer listing has been rejected.",
+      });
+      setStage("SUCCESS");
     });
-    setStage("SUCCESS");
   };
 
   const handleTriggerBuyOffer = () => {
@@ -79,16 +80,16 @@ export function CustomerListingReviewModal({
           <ModalShell.Body>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <AssetDetailsPanel
-                assetItem={assetItem}
+                assetDetails={listing.assetDetails}
+                images={listing.assetImages}
                 extraRows={
                   <div className="grid grid-cols-2 gap-y-2 border-t border-primary-grey-stroke pt-4">
-                    <DetailField label="Box-Packaged" value={listing.isBoxPackaged ? "YES" : "NO"} />
-                    <DetailField label="Papers Available" value={listing.hasCertificationPapers ? "YES" : "NO"} />
+                    <DetailField label="Box-Packaged" value={listing.assetDetails.isBoxed ? "YES" : "NO"} />
+                    <DetailField label="Papers Available" value={listing.assetDetails.hasPapers ? "YES" : "NO"} />
                   </div>
                 }
               />
               <CustomerListingValuationPanel
-                assetItem={assetItem}
                 listing={listing}
                 onTriggerBuyOffer={handleTriggerBuyOffer}
               />
@@ -106,7 +107,7 @@ export function CustomerListingReviewModal({
             />
             <InfoBox
               label={isPending ? "Date Uploaded" : "Date Listed"}
-              value={<p className="text-lg font-semibold text-text-black">{formatDateLabel(listing.submittedAt)}</p>}
+              value={<p className="text-lg font-semibold text-text-black">{formatDateLabel(listing.listingDate)}</p>}
             />
             <InfoBox
               label="Listed By"
@@ -115,7 +116,7 @@ export function CustomerListingReviewModal({
                   <Badge variant="neutral" className="h-5 px-1.5 text-[10px]">
                     Customer
                   </Badge>
-                  <span className="font-semibold text-text-black">{listing.customerName}</span>
+                  <span className="font-semibold text-text-black">{listing.seller.name}</span>
                 </div>
               }
             />

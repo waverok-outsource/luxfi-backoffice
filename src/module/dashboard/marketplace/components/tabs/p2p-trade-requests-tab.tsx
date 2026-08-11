@@ -7,87 +7,78 @@ import { DataTable, createActionColumnWithOptions, createIdentifierColumn, creat
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { P2PTradeDetailsModal } from "@/module/dashboard/marketplace/components/modals/p2p-trade-details-modal";
 import { createAmountColumn, formatTableDateLabel, formatTableTimeLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
-import { useP2PTradeRequestsContext } from "@/module/dashboard/marketplace/context";
-import { P2P_TRADE_STATUS_CONFIG, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { P2PTradeRequestType, P2PTradeStatus } from "@/types/marketplace.type";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import { useAssetMarketListings } from "@/services/queries/marketplace.queries";
+import type { AssetMarketListingStatus, AssetMarketListingType } from "@/types/marketplace.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type P2PTradeRow = Record<string, unknown> & {
   id: string;
   assetId: string;
   assetName: string;
-  lockedPrice: number;
+  initialListedOffer: number;
+  sellerAcceptedOffer: string;
   sellerName: string;
+  sellerId: string;
   buyerName: string;
+  buyerId: string;
+  orderId: string;
   tradeDate: string;
   tradeTimestamp: string;
-  status: P2PTradeStatus;
+  status: AssetMarketListingStatus;
 };
 
 const PAGE_SIZE = 10;
 
-function matchesQuery(trade: P2PTradeRequestType, query: string) {
-  const normalized = query.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  const assetItem = resolveAssetItemById(trade.assetItemId);
-  return (
-    trade.assetItemId.toLowerCase().includes(normalized) ||
-    trade.sellerName.toLowerCase().includes(normalized) ||
-    trade.buyerName.toLowerCase().includes(normalized) ||
-    Boolean(assetItem?.name.toLowerCase().includes(normalized))
-  );
-}
-
 export function P2PTradeRequestsTab() {
-  const { trades, updateTrade } = useP2PTradeRequestsContext();
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeTrade, setActiveTrade] = React.useState<P2PTradeRequestType | null>(null);
+  const [activeTrade, setActiveTrade] = React.useState<AssetMarketListingType | null>(null);
 
-  const filtered = React.useMemo(
-    () => trades.filter((trade) => matchesQuery(trade, value.q ?? "")),
-    [trades, value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const listingsQuery = convertObjectToQuery({
+    listingType: "p2p",
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows: P2PTradeRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((trade) => {
-      const assetItem = resolveAssetItemById(trade.assetItemId);
+  const { data: response, isLoading } = useAssetMarketListings(listingsQuery);
 
-      return {
-        id: trade.tradeId,
-        assetId: trade.assetItemId,
-        assetName: assetItem?.name ?? "-",
-        lockedPrice: trade.sellerAcceptedOffer,
-        sellerName: trade.sellerName,
-        buyerName: trade.buyerName,
-        tradeDate: formatTableDateLabel(trade.submittedAt),
-        tradeTimestamp: formatTableTimeLabel(trade.submittedAt),
-        status: trade.status,
-      };
-    });
-  }, [currentPage, filtered]);
+  const listings = response?.data ?? [];
+
+  const rows: P2PTradeRow[] = listings.map((listing) => ({
+    id: listing.listingId,
+    assetId: listing.assetDetails.assetId,
+    assetName: listing.assetDetails.assetName,
+    initialListedOffer: listing.listingPrice.value,
+    sellerAcceptedOffer: "-",
+    sellerName: listing.seller.name,
+    sellerId: listing.seller.email,
+    buyerName: "-",
+    buyerId: "-",
+    orderId: "-",
+    tradeDate: formatTableDateLabel(listing.listingDate),
+    tradeTimestamp: formatTableTimeLabel(listing.listingDate),
+    status: listing.listingStatus,
+  }));
 
   const columns: ColumnDef<P2PTradeRow, unknown>[] = [
     createIdentifierColumn<P2PTradeRow>("Asset ID", "assetId"),
     createTextColumn<P2PTradeRow>("Asset Name", "assetName", "max-w-[180px]"),
-    createAmountColumn<P2PTradeRow>("Locked Price", "lockedPrice"),
+    createAmountColumn<P2PTradeRow>("Initial Listed Offer", "initialListedOffer"),
+    createTextColumn<P2PTradeRow>("Seller Accepted Offer", "sellerAcceptedOffer"),
     createTextColumn<P2PTradeRow>("Seller Name", "sellerName", "max-w-[160px]"),
     createTextColumn<P2PTradeRow>("Buyer Name", "buyerName", "max-w-[160px]"),
+    createTextColumn<P2PTradeRow>("Order ID", "orderId"),
     createTextColumn<P2PTradeRow>("Date", "tradeDate"),
     createTextColumn<P2PTradeRow>("Timestamp", "tradeTimestamp"),
-    createStatusColumn<P2PTradeRow, P2PTradeStatus>("Trade Status", P2P_TRADE_STATUS_CONFIG),
+    createStatusColumn<P2PTradeRow, AssetMarketListingStatus>("Trade Status", ASSET_MARKET_LISTING_STATUS_CONFIG),
     createActionColumnWithOptions<P2PTradeRow>({
       ariaLabel: "Review P2P trade",
       onView: (row) => {
-        const trade = trades.find((candidate) => candidate.tradeId === row.id);
+        const trade = listings.find((candidate) => candidate.listingId === row.id);
         if (trade) setActiveTrade(trade);
       },
     }),
@@ -98,8 +89,9 @@ export function P2PTradeRequestsTab() {
       <DataTable
         columns={columns}
         data={rows}
+        loading={isLoading}
         emptyStateLabel="No P2P trade requests found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        pagination={{ totalEntries: response?.pagination.total ?? 0, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
       />
 
       {activeTrade ? (
@@ -108,11 +100,7 @@ export function P2PTradeRequestsTab() {
           onOpenChange={(open) => {
             if (!open) setActiveTrade(null);
           }}
-          trade={activeTrade}
-          onTradeUpdated={(tradeId, patch) => {
-            updateTrade(tradeId, patch);
-            setActiveTrade((previous) => (previous ? { ...previous, ...patch } : previous));
-          }}
+          listing={activeTrade}
         />
       ) : null}
     </>

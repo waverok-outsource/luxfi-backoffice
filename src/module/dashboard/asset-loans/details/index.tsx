@@ -22,7 +22,6 @@ import {
 import { assetLoanRequestRows, type AssetLoanStatus } from "@/module/dashboard/asset-loans/data";
 import {
   CollateralDetailsCard,
-  type AssetLoan,
 } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
 import {
   formatLoanCaseMoney,
@@ -39,9 +38,37 @@ import {
   type LoanCaseRejectFormInputValues,
 } from "@/schema/customers.schema";
 
-type AssetLoanDetail = AssetLoan & {
+type AssetLoanDetail = {
+  id: string;
+  loanId: string;
   borrowerId: string;
+  borrowerName: string;
+  borrowerRiskCreditScorePercent: number;
+  principalAmount: number;
+  durationLabel: string;
+  proposedInterestLabel: string;
+  repaymentAmount: number;
   loanRequestDateLabel: string;
+  disbursedDateLabel: string;
+  repaymentDueLabel: string;
+  collateralType: string;
+  collateralValue: number;
+  collateralTrendLabel: string;
+  collateralVerified: boolean;
+  collateralAssetName: string;
+  collateralBrandCategory: string;
+  collateralYear: string;
+  collateralDialColour: string;
+  collateralWeight: string;
+  collateralBox: string;
+  collateralCaseColour: string;
+  collateralCaseSize: string;
+  ltvPercent: number;
+  liquidationThresholdPercent: number;
+  currentCollateralValue: number;
+  liquidationThresholdAmount: number;
+  status: AssetLoanStatus;
+  rejectionReason?: string;
 };
 
 const REJECTION_OPTIONS = [
@@ -595,7 +622,19 @@ export function AssetLoanDetailsDashboard() {
         </div>
 
         <div className="space-y-4">
-          <CollateralDetailsCard loan={loan} />
+          <CollateralDetailsCard
+            collateralValue={loan.collateralValue}
+            collateralTrendLabel={loan.collateralTrendLabel}
+            collateralVerified={loan.collateralVerified}
+            collateralAssetName={loan.collateralAssetName}
+            collateralBrandCategory={loan.collateralBrandCategory}
+            collateralYear={loan.collateralYear}
+            collateralDialColour={loan.collateralDialColour}
+            collateralWeight={loan.collateralWeight}
+            collateralBox={loan.collateralBox}
+            collateralCaseColour={loan.collateralCaseColour}
+            collateralCaseSize={loan.collateralCaseSize}
+          />
 
           {showPendingActions ? <PendingApprovalPanel control={control} /> : null}
           {showRepaymentSection ? <LoanRepaymentPanel loan={loan} /> : null}

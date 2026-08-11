@@ -3,106 +3,119 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import {
+  DataTable,
+  createActionColumnWithOptions,
+  createIdentifierColumn,
+  createSerialColumn,
+  createTextColumn,
+} from "@/components/table";
 import { ActivityLogDetailsModal } from "@/components/modal";
-import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { mockMarketplaceAuditLogs } from "@/module/dashboard/marketplace/data";
-import type { MarketplaceAuditLogEntry } from "@/types/marketplace.type";
+import { useAuditLogs } from "@/services/queries/audit.queries";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { formatDate, getSerialNumberOffset } from "@/util/helper";
 
-type AuditLogRow = Record<string, unknown> & {
+type AuditLogRow = {
   id: string;
+  logId: string;
+  action: string;
   initiatorName: string;
   initiatorRole: string;
-  action: string;
-  assetId: string;
-  actionTimestamp: string;
   actionDate: string;
+  actionTimestamp: string;
 };
 
-const PAGE_SIZE = 10;
-
-function matchesQuery(log: MarketplaceAuditLogEntry, query: string) {
-  const normalizedQuery = query.trim().toLowerCase();
-  return (
-    !normalizedQuery ||
-    log.logId.toLowerCase().includes(normalizedQuery) ||
-    log.assetId.toLowerCase().includes(normalizedQuery) ||
-    log.initiatorName.toLowerCase().includes(normalizedQuery)
-  );
-}
+const PAGE_SIZE = 5;
 
 export function AuditLogTab() {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeLog, setActiveLog] = React.useState<MarketplaceAuditLogEntry | null>(null);
+  const [activeLogId, setActiveLogId] = React.useState<string | null>(null);
 
-  const filtered = React.useMemo(
-    () => mockMarketplaceAuditLogs.filter((log) => matchesQuery(log, value.q ?? "")),
-    [value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const listQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows: AuditLogRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((log) => ({
-      id: log.logId,
-      initiatorName: log.initiatorName,
-      initiatorRole: log.initiatorRole,
-      action: log.action,
-      assetId: log.assetId,
-      actionTimestamp: log.actionTimestampLabel,
-      actionDate: log.actionDateLabel,
-    }));
-  }, [currentPage, filtered]);
+  const { data: auditResponse, isLoading } = useAuditLogs("assetMarket", listQuery);
+  const logs = auditResponse?.data ?? [];
+  const paginationMeta = auditResponse?.pagination;
+
+  const serialNumberOffset = getSerialNumberOffset({
+    currentPage,
+    pageSize: PAGE_SIZE,
+    pagination: paginationMeta,
+  });
+
+  const rows: AuditLogRow[] = logs.map((log) => ({
+    id: log.logId,
+    logId: log.logId,
+    action: log.event,
+    initiatorName: log.initiatorName,
+    initiatorRole: log.maker,
+    actionDate: formatDate(log.createdAt, "dd/MM/yyyy"),
+    actionTimestamp: formatDate(log.createdAt, "h:mm a"),
+  }));
+
+  const activeLog =
+    activeLogId != null ? (logs.find((log) => log.logId === activeLogId) ?? null) : null;
 
   const columns: ColumnDef<AuditLogRow, unknown>[] = [
-    createIdentifierColumn<AuditLogRow>("Log ID", "id"),
-    createTextColumn<AuditLogRow>("User", "initiatorName"),
-    createTextColumn<AuditLogRow>("Role", "initiatorRole"),
-    createTextColumn<AuditLogRow>("Action", "action"),
-    createIdentifierColumn<AuditLogRow>("Asset ID", "assetId"),
-    createTextColumn<AuditLogRow>("Action Timestamp", "actionTimestamp"),
+    createSerialColumn<AuditLogRow>({ offset: serialNumberOffset }),
+    createIdentifierColumn<AuditLogRow>("Log ID", "logId"),
+    createTextColumn<AuditLogRow>("Action", "action", "max-w-[160px]"),
+    createTextColumn<AuditLogRow>("Initiator Name", "initiatorName"),
+    createTextColumn<AuditLogRow>("Initiator Role", "initiatorRole", "max-w-[180px]"),
     createTextColumn<AuditLogRow>("Action Date", "actionDate"),
+    createTextColumn<AuditLogRow>("Action Timestamp", "actionTimestamp"),
     createActionColumnWithOptions<AuditLogRow>({
-      ariaLabel: "View marketplace activity log",
+      header: "",
+      ariaLabel: "View activity log details",
       onView: (row) => {
-        const log = mockMarketplaceAuditLogs.find((candidate) => candidate.logId === row.id);
-        if (log) setActiveLog(log);
+        setActiveLogId(row.logId);
       },
     }),
   ];
 
   return (
     <>
-      <DataTable
+      <DataTable<AuditLogRow, unknown>
         columns={columns}
         data={rows}
-        emptyStateLabel="No marketplace activity found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        loading={isLoading}
+        emptyStateLabel="No audit logs found."
+        pagination={{
+          totalEntries: paginationMeta?.total ?? 0,
+          pageSize: PAGE_SIZE,
+          maxVisiblePages: 3,
+        }}
       />
 
       {activeLog ? (
         <ActivityLogDetailsModal
           open={Boolean(activeLog)}
           onOpenChange={(open) => {
-            if (!open) setActiveLog(null);
+            if (!open) setActiveLogId(null);
           }}
-          title="Marketplace Activity Details"
-          description="View and manage marketplace activity log"
+          title="Activity Details"
+          description="View and manage Activity Log entry"
           rowGroups={[
             [{ label: "Log ID:", value: activeLog.logId, copyText: activeLog.logId }],
             [
-              { label: "Action:", value: activeLog.action },
-              { label: "Action Date:", value: activeLog.actionDateLabel },
-              { label: "Timestamp:", value: activeLog.actionTimestampLabel },
+              { label: "Action:", value: activeLog.event },
+              { label: "Message:", value: activeLog.message },
+              { label: "Status:", value: activeLog.status },
+              { label: "Action Date:", value: formatDate(activeLog.createdAt, "do MMMM, yyyy") },
+              { label: "Timestamp:", value: formatDate(activeLog.createdAt, "h:mm a") },
             ],
             [
-              { label: "Initiator ID:", value: activeLog.initiatorId, copyText: activeLog.initiatorId },
               { label: "Initiator Name:", value: activeLog.initiatorName },
-              { label: "Initiator Role:", value: activeLog.initiatorRole },
+              { label: "Initiator Role:", value: activeLog.maker },
+              { label: "Initiator ID:", value: activeLog.userId, copyText: activeLog.userId },
             ],
           ]}
         />

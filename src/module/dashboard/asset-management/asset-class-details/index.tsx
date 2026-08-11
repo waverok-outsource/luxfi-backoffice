@@ -11,16 +11,17 @@ import { AssetClassDetailsHeader } from "@/module/dashboard/asset-management/ass
 import { AssetClassMetrics } from "@/module/dashboard/asset-management/asset-class-details/components/asset-class-metrics";
 import { ASSET_CLASS_DETAILS_TAB_COMPONENTS } from "@/module/dashboard/asset-management/asset-class-details/components/tab-table-components";
 import {
-  AssetItemsProvider,
-  useAssetItemsContext,
-} from "@/module/dashboard/asset-management/asset-class-details/context";
-import {
   DEFAULT_ASSET_CLASS_DETAILS_TAB,
   assetClassDetailsTabs,
   type AssetClassDetailsTabValue,
 } from "@/module/dashboard/asset-management/asset-class-details/data";
-import { useAssetClassDetails } from "@/services/queries/asset-management.queries";
+import {
+  useAssetCategories,
+  useAssetClassDetails,
+  useAssets,
+} from "@/services/queries/asset-management.queries";
 import type { AssetClassType } from "@/types/asset-management.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import route from "@/util/route";
 
 type AssetClassDetailsQuery = {
@@ -37,7 +38,6 @@ function isAssetClassDetailsTab(value: string | null | undefined): value is Asse
 
 function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }) {
   const router = useRouter();
-  const { items } = useAssetItemsContext();
   const { value, setURLQuery } = useURLQuery<AssetClassDetailsQuery>();
 
   const activeTab = isAssetClassDetailsTab(value.tab) ? value.tab : DEFAULT_ASSET_CLASS_DETAILS_TAB;
@@ -45,13 +45,18 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
   const activeCategory = value.category ?? "all";
   const activeYear = value.year ?? "all";
 
-  const categoryOptions = React.useMemo(
-    () => Array.from(new Set(items.map((item) => item.assetCategoryName))).sort(),
-    [items],
+  const { data: categoriesResponse } = useAssetCategories(
+    convertObjectToQuery({ assetClassId: assetClass.classId }),
   );
+  const { data: assetsResponse } = useAssets(convertObjectToQuery({ assetClassId: assetClass.classId }));
+
+  const categoryOptions = categoriesResponse?.data ?? [];
   const yearOptions = React.useMemo(
-    () => Array.from(new Set(items.map((item) => item.year))).sort().reverse(),
-    [items],
+    () =>
+      Array.from(new Set((assetsResponse?.data ?? []).map((item) => item.productionYear)))
+        .sort()
+        .reverse(),
+    [assetsResponse],
   );
 
   const handleTabChange = (nextTab: string) => {
@@ -69,7 +74,7 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
         onBack={() => router.push(route.dashboard.assetManagement)}
       />
 
-      <AssetClassMetrics />
+      <AssetClassMetrics assetClass={assetClass} />
 
       <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -106,16 +111,19 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
                 >
                   <SelectTrigger className="w-[170px]" size="sm">
                     <SelectValue>
-                      {(selected: string | null) =>
-                        selected && selected !== "all" ? selected : "All Categories"
-                      }
+                      {(selected: string | null) => {
+                        if (!selected || selected === "all") {
+                          return "All Categories";
+                        }
+                        return categoryOptions.find((category) => category.reference === selected)?.name ?? "All Categories";
+                      }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     {categoryOptions.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem key={category.reference} value={category.reference}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -188,9 +196,5 @@ export function AssetClassDetailsDashboard() {
     );
   }
 
-  return (
-    <AssetItemsProvider assetClassId={assetClass.classId}>
-      <AssetClassDetailsContent assetClass={assetClass} />
-    </AssetItemsProvider>
-  );
+  return <AssetClassDetailsContent assetClass={assetClass} />;
 }

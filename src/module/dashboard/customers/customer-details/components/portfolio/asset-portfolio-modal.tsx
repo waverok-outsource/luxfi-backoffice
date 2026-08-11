@@ -7,24 +7,21 @@ import {
   SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
   SuccessModalContent,
 } from "@/components/modal";
+import type { CustomerAssetType, ReviewCustomerAssetPayloadType } from "@/types/customer-asset.type";
 import {
   AssetPortfolioApproveConfirmStepContent,
   AssetPortfolioInfoStepContent,
   AssetPortfolioRejectStepContent,
 } from "@/module/dashboard/customers/customer-details/components/portfolio/asset-portfolio-modal-content";
-import type {
-  AssetPortfolioRecord,
-  AssetPortfolioStep,
-  AssetVerificationPayload,
-} from "@/module/dashboard/customers/customer-details/components/portfolio/asset-portfolio-types";
+import type { AssetPortfolioStep } from "@/module/dashboard/customers/customer-details/components/portfolio/asset-portfolio-types";
 
 type AssetPortfolioModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  asset: AssetPortfolioRecord | null;
+  asset: CustomerAssetType | null;
   step: AssetPortfolioStep;
   onStepChange: (step: AssetPortfolioStep) => void;
-  onRequestApprove: (payload: AssetVerificationPayload) => void;
+  onRequestApprove: (payload: ReviewCustomerAssetPayloadType) => void;
   onConfirmApprove: () => void;
   onConfirmReject: (reason: string) => void;
   onUnverify: () => void;
@@ -67,7 +64,7 @@ export function AssetPortfolioModal({
       contentClassName: "max-w-[680px]",
       content: (
         <AssetPortfolioRejectStepContent
-          borrowerName={asset.borrowerName}
+          borrowerName="customer"
           onStepChange={onStepChange}
           onConfirmReject={onConfirmReject}
         />

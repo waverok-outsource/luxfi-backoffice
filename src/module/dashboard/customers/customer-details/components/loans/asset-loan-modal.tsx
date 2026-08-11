@@ -7,27 +7,32 @@ import {
   SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
   SuccessModalContent,
 } from "@/components/modal";
-import type { AssetLoan } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-shared";
+import type { LoanType } from "@/types/loan.type";
 import {
   ApproveConfirmStepContent,
   InfoStepContent,
   RejectStepContent,
 } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-content";
-import type { AssetLoanApprovalPayload, AssetLoanStep } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-types";
+import type { AssetLoanStep } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-types";
 
 type AssetLoanModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  loan: AssetLoan | null;
+  loan: LoanType | null;
   step: AssetLoanStep;
   onStepChange: (step: AssetLoanStep) => void;
-  onRequestApprove: (payload: AssetLoanApprovalPayload) => void;
+  onRequestApprove: (payload: {
+    loanRef: string;
+    liquidationThreshold: { value: number; currencyCode: string };
+    dateDisburse: string;
+  }) => void;
   onConfirmApprove: () => void;
   onConfirmReject: (reason: string) => void;
   resultMessage: { title: string; description: string } | null;
+  rejectionReasons: string[];
 };
 
-export type { AssetLoanApprovalPayload, AssetLoanStep };
+export type { AssetLoanStep };
 
 export function AssetLoanModal({
   open,
@@ -39,6 +44,7 @@ export function AssetLoanModal({
   onConfirmApprove,
   onConfirmReject,
   resultMessage,
+  rejectionReasons,
 }: AssetLoanModalProps) {
   if (!loan) return null;
 
@@ -63,7 +69,8 @@ export function AssetLoanModal({
       contentClassName: "max-w-[682px]",
       content: (
         <RejectStepContent
-          borrowerName={loan.borrowerName}
+          borrowerName={loan.borrower.name}
+          rejectionReasons={rejectionReasons}
           onStepChange={onStepChange}
           onConfirmReject={onConfirmReject}
         />

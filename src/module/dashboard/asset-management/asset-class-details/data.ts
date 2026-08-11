@@ -14,7 +14,8 @@ export const assetClassDetailsTabs: TabConfig[] = [
 
 export const DEFAULT_ASSET_CLASS_DETAILS_TAB: AssetClassDetailsTabValue = "manage-assets";
 
-// Used by the Manage Assets table (asset items are still mock/local for now).
+// Used by the Manage Assets table — status field is currently an assumption,
+// no GET /v1/assets sample confirmed it. See docs/STATUS.md.
 export const LISTING_STATUS_CONFIG: Record<
   AssetItemListingStatus,
   { label: string; variant: "success" | "neutral" }

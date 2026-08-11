@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, parse } from "date-fns";
+import { format as formatDateFns } from "date-fns";
 import { ShieldCheck } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Control } from "react-hook-form";
@@ -20,13 +20,14 @@ import {
   FormTextarea,
 } from "@/components/util/form-controller";
 import type {
-  AssetPortfolioRecord,
-  AssetPortfolioStatus,
-  AssetPortfolioStep,
-  AssetVerificationPayload,
-} from "@/module/dashboard/customers/customer-details/components/portfolio/asset-portfolio-types";
+  CustomerAssetType,
+  CustomerAssetStatus,
+  ReviewCustomerAssetPayloadType,
+} from "@/types/customer-asset.type";
+import { formatCurrency } from "@/util/format-currency";
+import { cn } from "@/lib/utils";
+import type { AssetPortfolioStep } from "@/module/dashboard/customers/customer-details/components/portfolio/asset-portfolio-types";
 import {
-  formatLoanCaseMoney,
   LoanCaseCard,
   LoanCaseDetailRow,
   LoanCaseNotice,
@@ -38,13 +39,12 @@ import {
   type AssetPortfolioInfoFormInputValues,
   type AssetPortfolioRejectFormInputValues,
 } from "@/schema/customers.schema";
-import { cn } from "@/lib/utils";
+import { toTitleCase } from "@/util/helper";
 
-const rejectionOptions = [
-  { label: "Asset Outdated", value: "Asset Outdated" },
-  { label: "Condition Mismatch", value: "Condition Mismatch" },
-  { label: "Incomplete Certification", value: "Incomplete Certification" },
-  { label: "Authenticity Concern", value: "Authenticity Concern" },
+const assetThumbThemes = [
+  "from-[#F4E2C8] via-[#D3B58E] to-[#9F6A3B]",
+  "from-[#F6E8D9] via-[#D8B58C] to-[#8F6849]",
+  "from-[#F1DBC7] via-[#D7BA9D] to-[#7D9E9B]",
 ] as const;
 
 const officerOptions = [
@@ -53,13 +53,7 @@ const officerOptions = [
   "admin@pawnshopbyblu.com",
 ] as const;
 
-const assetThumbThemes = [
-  "from-[#F4E2C8] via-[#D3B58E] to-[#9F6A3B]",
-  "from-[#F6E8D9] via-[#D8B58C] to-[#8F6849]",
-  "from-[#F1DBC7] via-[#D7BA9D] to-[#7D9E9B]",
-] as const;
-
-function getStatusBadge(status: AssetPortfolioStatus) {
+function getStatusBadge(status: CustomerAssetStatus) {
   switch (status) {
     case "pending":
       return { variant: "warning" as const, label: "Pending Verification" };
@@ -74,28 +68,19 @@ function getStatusBadge(status: AssetPortfolioStatus) {
   }
 }
 
-function parseEditableDate(value: string) {
-  if (!value || value === "-") return undefined;
-  const parsed = parse(value, "dd/MM/yyyy", new Date());
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
-function formatEditableDate(value: Date | undefined) {
-  return value ? format(value, "dd/MM/yyyy") : "-";
-}
-
 function getAssetPortfolioFormDefaults(
-  asset: AssetPortfolioRecord,
+  asset: CustomerAssetType,
 ): AssetPortfolioInfoFormInputValues {
+  const exam = asset.assetExamination;
   return {
-    pawnValue: asset.pawnValue ? String(asset.pawnValue.toFixed(2)) : "",
-    submittedDate: parseEditableDate(asset.submittedDateLabel),
-    examinationDate: parseEditableDate(asset.examinationDateLabel),
-    officerEmail: asset.examinationOfficerEmail,
-    physicalDefects: asset.physicalDefects,
-    officerRemark: asset.officerRemark,
-    certificationPapers: asset.certificationPapers,
-    boxPackaged: asset.boxPackaged,
+    pawnValue: asset.pawnValuationPrice ? String(asset.pawnValuationPrice.value) : "",
+    submittedDate: exam?.dateSubmitted ? new Date(exam.dateSubmitted) : undefined,
+    examinationDate: exam?.dateExamined ? new Date(exam.dateExamined) : undefined,
+    officerEmail: exam?.examinationOfficerIdentity ?? "",
+    physicalDefects: asset.defectComment ?? "",
+    officerRemark: exam?.examinationOfficerRemark ?? "",
+    certificationPapers: exam ? exam.hasCertificationPapers : asset.hasPapers,
+    boxPackaged: exam ? exam.isBoxPackaged : asset.isBoxed,
   };
 }
 
@@ -114,19 +99,58 @@ function FieldLabel({
   );
 }
 
-function AssetThumb({ assetName, index }: { assetName: string; index: number }) {
-  return (
-    <div
-      className={cn(
-        "relative h-20 overflow-hidden rounded-2xl border border-primary-grey-stroke",
-        "bg-linear-to-br",
-        assetThumbThemes[index % assetThumbThemes.length],
-      )}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.55),transparent_55%)]" />
-      <div className="absolute inset-x-3 bottom-3 rounded-full bg-black/15 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
-        {assetName}
+function AssetThumb({ asset }: { asset: CustomerAssetType; index: number }) {
+  // Show real images from uploads, fall back to gradient placeholder
+  if (asset.uploads.length > 0) {
+    return (
+      <div className="grid grid-cols-3 gap-3">
+        {Array.from({ length: 3 }).map((_, index) => {
+          const url = asset.uploads[index];
+          return url ? (
+            <img
+              key={index}
+              src={url}
+              alt={asset.name}
+              className="h-20 w-full rounded-2xl border border-primary-grey-stroke object-cover"
+            />
+          ) : (
+            <div
+              key={index}
+              className={cn(
+                "relative h-20 overflow-hidden rounded-2xl border border-primary-grey-stroke",
+                "bg-linear-to-br",
+                assetThumbThemes[index % assetThumbThemes.length],
+              )}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.55),transparent_55%)]" />
+              <div className="absolute inset-x-3 bottom-3 rounded-full bg-black/15 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+                {asset.name}
+              </div>
+            </div>
+          );
+        })}
       </div>
+    );
+  }
+
+  // Fallback: all gradient placeholders
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className={cn(
+            "relative h-20 overflow-hidden rounded-2xl border border-primary-grey-stroke",
+            "bg-linear-to-br",
+            assetThumbThemes[index % assetThumbThemes.length],
+          )}
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.55),transparent_55%)]" />
+          <div className="absolute inset-x-3 bottom-3 rounded-full bg-black/15 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+            {asset.name}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -185,17 +209,15 @@ function BinaryChoiceField({
   );
 }
 
-function AssetDetailsCard({ asset }: { asset: AssetPortfolioRecord }) {
+function AssetDetailsCard({ asset }: { asset: CustomerAssetType }) {
   const statusBadge = getStatusBadge(asset.status);
 
   return (
     <LoanCaseSection title="Luxury Asset Details">
       <LoanCaseCard className="space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="grid flex-1 gap-3 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <AssetThumb key={index} assetName={asset.assetName} index={index} />
-            ))}
+          <div className="flex-1">
+            <AssetThumb asset={asset} index={0} />
           </div>
           <Badge variant={statusBadge.variant} showStatusDot className="shrink-0">
             {statusBadge.label}
@@ -204,17 +226,23 @@ function AssetDetailsCard({ asset }: { asset: AssetPortfolioRecord }) {
 
         <div className="border-t border-primary-grey-stroke pt-4">
           <div className="space-y-2">
-            <LoanCaseDetailRow label="Asset Name:" value={asset.assetName} />
-            <LoanCaseDetailRow label="Brand (Category):" value={asset.brandCategory} />
+            <LoanCaseDetailRow label="Asset Name:" value={asset.name} />
+            <LoanCaseDetailRow label="Brand (Category):" value={toTitleCase(asset.assetCategoryName)} />
           </div>
 
           <div className="mt-4 grid gap-3 border-t border-primary-grey-stroke pt-4 md:grid-cols-2">
-            <LoanCaseDetailRow label="Year" value={asset.year} />
-            <LoanCaseDetailRow label="Box" value={asset.box} />
+            <LoanCaseDetailRow label="Year" value={asset.productionYear} />
+            <LoanCaseDetailRow label="Box" value={asset.isBoxed ? "Yes" : "No"} />
             <LoanCaseDetailRow label="Dial Colour" value={asset.dialColour} />
-            <LoanCaseDetailRow label="Case Colour" value={asset.caseColour} />
-            <LoanCaseDetailRow label="Weight" value={asset.weight} />
-            <LoanCaseDetailRow label="Case Size" value={asset.caseSize} />
+            <LoanCaseDetailRow label="Case Colour" value={asset.case?.colour ?? "-"} />
+            <LoanCaseDetailRow
+              label="Weight"
+              value={asset.weight ? `${asset.weight.value}${asset.weight.unit}` : "-"}
+            />
+            <LoanCaseDetailRow
+              label="Case Size"
+              value={asset.case ? `${asset.case.size}${asset.case.unit}` : "-"}
+            />
           </div>
         </div>
       </LoanCaseCard>
@@ -227,7 +255,7 @@ function PriceValuationCard({
   control,
   showPawnInput,
 }: {
-  asset: AssetPortfolioRecord;
+  asset: CustomerAssetType;
   control: Control<AssetPortfolioInfoFormInputValues>;
   showPawnInput: boolean;
 }) {
@@ -238,11 +266,8 @@ function PriceValuationCard({
           <FieldLabel>Current Market Valuation Price</FieldLabel>
           <div className="mt-2 flex items-center gap-3">
             <p className="text-2xl font-bold text-text-black">
-              {formatLoanCaseMoney(asset.marketValue)}
+              {formatCurrency(asset.price.value, asset.price.currencyCode)}
             </p>
-            <Badge variant="success" className="text-[10px]" showStatusDot>
-              {asset.marketTrendLabel}
-            </Badge>
           </div>
         </div>
 
@@ -281,10 +306,10 @@ export function AssetPortfolioInfoStepContent({
   onRequestApprove,
   onUnverify,
 }: {
-  asset: AssetPortfolioRecord;
+  asset: CustomerAssetType;
   onClose: () => void;
   onStepChange: (step: AssetPortfolioStep) => void;
-  onRequestApprove: (payload: AssetVerificationPayload) => void;
+  onRequestApprove: (payload: ReviewCustomerAssetPayloadType) => void;
   onUnverify: () => void;
 }) {
   const isPending = asset.status === "pending";
@@ -296,16 +321,29 @@ export function AssetPortfolioInfoStepContent({
   });
 
   const handleMarkVerified = handleSubmit((values) => {
+    const examinationDate = values.examinationDate
+      ? formatDateFns(values.examinationDate, "yyyy-MM-dd")
+      : "";
+    const submittedDate = values.submittedDate
+      ? formatDateFns(values.submittedDate, "yyyy-MM-dd")
+      : "";
+
+    // ASSUMPTION: defectComment carries physical defects description (see ADR 0020)
     onRequestApprove({
-      assetId: asset.id,
-      pawnValue: Number(values.pawnValue),
-      submittedDateLabel: formatEditableDate(values.submittedDate),
-      examinationDateLabel: formatEditableDate(values.examinationDate),
-      examinationOfficerEmail: values.officerEmail,
-      physicalDefects: values.physicalDefects.trim() || "None",
-      officerRemark: values.officerRemark.trim(),
-      certificationPapers: Boolean(values.certificationPapers),
-      boxPackaged: Boolean(values.boxPackaged),
+      status: "verified",
+      assetExamination: {
+        dateSubmitted: submittedDate,
+        dateExamined: examinationDate,
+        examinationOfficerRemark: values.officerRemark.trim(),
+        examinationOfficerIdentity: values.officerEmail,
+        hasCertificationPapers: Boolean(values.certificationPapers),
+        isBoxPackaged: Boolean(values.boxPackaged),
+      },
+      pawnValuationPrice: {
+        value: Number(values.pawnValue),
+        currencyCode: asset.price.currencyCode,
+      },
+      defectComment: values.physicalDefects.trim() || undefined,
     });
   });
 
@@ -320,9 +358,9 @@ export function AssetPortfolioInfoStepContent({
         descriptionClassName="text-sm text-text-grey"
       />
 
-      {asset.status === "rejected" && asset.rejectionReason ? (
+      {asset.status === "rejected" && asset.defectComment ? (
         <LoanCaseNotice variant="error">
-          Reason for Rejection: {asset.rejectionReason}
+          Reason for Rejection: {asset.defectComment}
         </LoanCaseNotice>
       ) : null}
 
@@ -499,6 +537,13 @@ export function AssetPortfolioRejectStepContent({
     mode: "all",
   });
 
+  const rejectionOptions = [
+    { label: "Asset Outdated", value: "Asset Outdated" },
+    { label: "Condition Mismatch", value: "Condition Mismatch" },
+    { label: "Incomplete Certification", value: "Incomplete Certification" },
+    { label: "Authenticity Concern", value: "Authenticity Concern" },
+  ] as const;
+
   return (
     <div className="space-y-6">
       <ModalShell.Header
@@ -572,8 +617,8 @@ export function AssetPortfolioApproveConfirmStepContent({
       <div className="space-y-2">
         <h2 className="text-4xl font-bold leading-tight">Approve Asset Verification?</h2>
         <p className="text-sm text-text-grey">
-          You are about to approve this asset with <span className="font-semibold">{assetId}</span>.
-          This will mark the item as verified.
+          You are about to approve this asset with{" "}
+          <span className="font-semibold">{assetId}</span>. This will mark the item as verified.
         </p>
       </div>
 

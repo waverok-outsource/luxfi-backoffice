@@ -10,12 +10,10 @@ import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
-  FormSwitchField,
-  FormTextarea,
 } from "@/components/util/form-controller";
-import { resolveAssetClassName } from "@/module/dashboard/marketplace/data";
 import type { AddToMarketplaceFormValues } from "@/schema/marketplace.schema";
 import type { AssetItemType } from "@/types/asset-management.type";
+import type { AssetMarketAssetDetails } from "@/types/marketplace.type";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/util/format-currency";
 
@@ -37,21 +35,22 @@ export function formatDateLabel(isoDate: string) {
 }
 
 type AssetDetailsPanelProps = {
-  assetItem: AssetItemType | null;
+  assetDetails: AssetMarketAssetDetails | null;
+  images: string[];
   className?: string;
   /** Extra rows rendered after the built-in Year/Dial/Case/Weight grid — lets callers compose
    * their own additional fields (e.g. Box-Packaged, Papers Available) without forking this panel. */
   extraRows?: ReactNode;
 };
 
-export function AssetDetailsPanel({ assetItem, className, extraRows }: AssetDetailsPanelProps) {
+export function AssetDetailsPanel({ assetDetails, images, className, extraRows }: AssetDetailsPanelProps) {
   return (
     <div className={cn("rounded-2xl bg-primary-white p-4", className)}>
       <h3 className="border-b border-primary-grey-stroke pb-3 font-semibold text-text-black">
         Asset Details
       </h3>
 
-      {!assetItem ? (
+      {!assetDetails ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-primary-grey-undertone text-text-grey">
             <FolderOpen className="size-5" />
@@ -61,9 +60,9 @@ export function AssetDetailsPanel({ assetItem, className, extraRows }: AssetDeta
       ) : (
         <div className="space-y-4 pt-4">
           <div className="grid grid-cols-4 gap-3">
-            {(assetItem.images.length ? assetItem.images : Array.from({ length: 4 }, () => null))
+            {(images.length ? images : Array.from({ length: 4 }, () => null))
               .slice(0, 4)
-              .map((url, index) => (
+              .map((url: string | null, index: number) => (
                 <div
                   key={url ?? index}
                   className="relative aspect-square overflow-hidden rounded-xl border border-primary-grey-stroke bg-primary-grey-undertone"
@@ -80,22 +79,18 @@ export function AssetDetailsPanel({ assetItem, className, extraRows }: AssetDeta
           </div>
 
           <div className="space-y-2 border-t border-primary-grey-stroke pt-4">
-            <DetailField label="Asset Name:" value={assetItem.name} />
-            <DetailField label="Asset ID:" value={assetItem.assetItemId} />
-            <DetailField label="Asset Category:" value={assetItem.assetCategoryName} />
-            <DetailField
-              label="Asset Class:"
-              value={resolveAssetClassName(assetItem.assetClassId)}
-            />
+            <DetailField label="Asset Name:" value={assetDetails.assetName} />
+            <DetailField label="Asset ID:" value={assetDetails.assetId} />
+            <DetailField label="Asset Category:" value={assetDetails.category} />
+            <DetailField label="Asset Class:" value={assetDetails.assetClass} />
           </div>
 
           <div className="grid grid-cols-2 gap-y-2 border-t border-primary-grey-stroke pt-4">
-            <DetailField label="Year" value={assetItem.year} />
-            <DetailField label="Date Added" value={formatDateLabel(assetItem.createdAt)} />
-            <DetailField label="Dial Colour" value={assetItem.dialColour} />
-            <DetailField label="Case Colour" value={assetItem.caseColour} />
-            <DetailField label="Weight" value={assetItem.weight} />
-            <DetailField label="Case Size" value={assetItem.caseSize} />
+            <DetailField label="Year" value={assetDetails.productionYear} />
+            <DetailField label="Dial Colour" value={assetDetails.dialColour} />
+            <DetailField label="Case Colour" value={assetDetails.case?.colour ?? "-"} />
+            <DetailField label="Weight" value={assetDetails.weight ? `${assetDetails.weight.value}${assetDetails.weight.unit}` : "-"} />
+            <DetailField label="Case Size" value={assetDetails.case ? `${assetDetails.case.size}${assetDetails.case.unit}` : "-"} />
           </div>
 
           {extraRows}
@@ -201,7 +196,7 @@ export function AssetValuationPanel<TFieldValues extends FieldValues = AddToMark
     <ValuationPanelShell className={className}>
       <ValuationInfoBox
         label={assetItem ? "Asset Market Price" : "Unit Market Price"}
-        value={assetItem ? formatCurrency(assetItem.estimatedValue) : "N/A"}
+        value={assetItem ? formatCurrency(assetItem.price.value, assetItem.price.currencyCode) : "N/A"}
         trend={assetItem ? { value: "2.2%", tone: "negative", period: "Last 24 hrs" } : undefined}
       />
 
@@ -220,29 +215,16 @@ export function AssetValuationPanel<TFieldValues extends FieldValues = AddToMark
 
       <FormField
         control={control}
-        name={"additionalInformation" as Path<TFieldValues>}
-        label="Additional Information (Optional)"
+        name={"quantity" as Path<TFieldValues>}
+        label="Quantity"
+        required
       >
         {({ field }) => (
           <FormControl>
-            <FormTextarea {...field} disabled={disabled} placeholder="Enter details here" />
+            <Input {...field} disabled={disabled} placeholder="0" />
           </FormControl>
         )}
       </FormField>
-
-      <FormSwitchField
-        control={control}
-        name={"isBoxPackaged" as Path<TFieldValues>}
-        label="Box-Packaged"
-        disabled={disabled}
-      />
-
-      <FormSwitchField
-        control={control}
-        name={"hasCertificationPapers" as Path<TFieldValues>}
-        label="Certification Papers Available"
-        disabled={disabled}
-      />
     </ValuationPanelShell>
   );
 }

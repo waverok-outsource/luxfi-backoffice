@@ -5,11 +5,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createStatusColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
 import { CustomerListingReviewModal } from "@/module/dashboard/marketplace/components/modals/customer-listing-review-modal";
-import { useCustomerListingsContext } from "@/module/dashboard/marketplace/context";
-import { CUSTOMER_LISTING_STATUS_CONFIG, resolveAssetClassName, resolveAssetItemById } from "@/module/dashboard/marketplace/data";
-import type { CustomerListingStatus, CustomerListingType } from "@/types/marketplace.type";
+import { createAmountColumn, formatTableDateLabel } from "@/module/dashboard/marketplace/components/tabs/offer-table-helpers";
+import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
+import { useAssetMarketListings } from "@/services/queries/marketplace.queries";
+import type { AssetMarketListingStatus, AssetMarketListingType } from "@/types/marketplace.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type CustomerListingRow = Record<string, unknown> & {
   id: string;
@@ -20,59 +21,40 @@ type CustomerListingRow = Record<string, unknown> & {
   marketPrice: number;
   listingPrice: number;
   listingDate: string;
-  status: CustomerListingStatus;
+  status: AssetMarketListingStatus;
 };
 
 const PAGE_SIZE = 10;
 
-function matchesQuery(listing: CustomerListingType, query: string) {
-  const normalized = query.trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  const assetItem = resolveAssetItemById(listing.assetItemId);
-  return (
-    listing.assetItemId.toLowerCase().includes(normalized) ||
-    listing.customerName.toLowerCase().includes(normalized) ||
-    Boolean(assetItem?.name.toLowerCase().includes(normalized))
-  );
-}
-
 export function CustomerListingsTab() {
-  const { listings, updateListing } = useCustomerListingsContext();
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeListing, setActiveListing] = React.useState<CustomerListingType | null>(null);
+  const [activeListing, setActiveListing] = React.useState<AssetMarketListingType | null>(null);
 
-  const filtered = React.useMemo(
-    () => listings.filter((listing) => matchesQuery(listing, value.q ?? "")),
-    [listings, value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = (value.q ?? "").trim();
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const listingsQuery = convertObjectToQuery({
+    ownerType: "customer",
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(query ? { q: query } : {}),
+  });
 
-  const rows: CustomerListingRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((listing) => {
-      const assetItem = resolveAssetItemById(listing.assetItemId);
+  const { data: response, isLoading } = useAssetMarketListings(listingsQuery);
 
-      return {
-        id: listing.listingId,
-        assetId: listing.assetItemId,
-        customerName: listing.customerName,
-        assetName: assetItem?.name ?? "-",
-        assetClass: resolveAssetClassName(listing.assetClassId),
-        marketPrice: assetItem?.estimatedValue ?? 0,
-        listingPrice: listing.sellerListingPrice,
-        listingDate: formatTableDateLabel(listing.submittedAt),
-        status: listing.listingStatus,
-      };
-    });
-  }, [currentPage, filtered]);
+  const listings = response?.data ?? [];
+
+  const rows: CustomerListingRow[] = listings.map((listing) => ({
+    id: listing.listingId,
+    assetId: listing.assetDetails.assetId,
+    customerName: listing.seller.name,
+    assetName: listing.assetDetails.assetName,
+    assetClass: listing.assetDetails.assetClass,
+    marketPrice: listing.marketPrice.value,
+    listingPrice: listing.listingPrice.value,
+    listingDate: formatTableDateLabel(listing.listingDate),
+    status: listing.listingStatus,
+  }));
 
   const columns: ColumnDef<CustomerListingRow, unknown>[] = [
     createIdentifierColumn<CustomerListingRow>("Asset ID", "assetId"),
@@ -82,9 +64,9 @@ export function CustomerListingsTab() {
     createAmountColumn<CustomerListingRow>("Market Price", "marketPrice"),
     createAmountColumn<CustomerListingRow>("Listing Price", "listingPrice"),
     createTextColumn<CustomerListingRow>("Listing Date", "listingDate"),
-    createStatusColumn<CustomerListingRow, CustomerListingStatus>(
+    createStatusColumn<CustomerListingRow, AssetMarketListingStatus>(
       "Listing Status",
-      CUSTOMER_LISTING_STATUS_CONFIG,
+      ASSET_MARKET_LISTING_STATUS_CONFIG,
     ),
     createActionColumnWithOptions<CustomerListingRow>({
       ariaLabel: "Review customer listing",
@@ -100,8 +82,9 @@ export function CustomerListingsTab() {
       <DataTable
         columns={columns}
         data={rows}
+        loading={isLoading}
         emptyStateLabel="No customer listings found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        pagination={{ totalEntries: response?.pagination.total ?? 0, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
       />
 
       {activeListing ? (
@@ -111,10 +94,6 @@ export function CustomerListingsTab() {
             if (!open) setActiveListing(null);
           }}
           listing={activeListing}
-          onListingUpdated={(listingId, patch) => {
-            updateListing(listingId, patch);
-            setActiveListing((previous) => (previous ? { ...previous, ...patch } : previous));
-          }}
         />
       ) : null}
     </>

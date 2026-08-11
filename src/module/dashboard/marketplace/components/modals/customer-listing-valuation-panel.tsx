@@ -2,42 +2,39 @@
 
 import { Button } from "@/components/ui/button";
 import { ValuationInfoBox, ValuationPanelShell } from "@/module/dashboard/marketplace/components/modals/asset-panels";
-import type { AssetItemType } from "@/types/asset-management.type";
-import type { CustomerListingType } from "@/types/marketplace.type";
+import type { AssetMarketListingType } from "@/types/marketplace.type";
 import { formatCurrency } from "@/util/format-currency";
 
 type CustomerListingValuationPanelProps = {
-  assetItem: AssetItemType | null;
-  listing: CustomerListingType;
+  listing: AssetMarketListingType;
   onTriggerBuyOffer: () => void;
 };
 
 export function CustomerListingValuationPanel({
-  assetItem,
   listing,
   onTriggerBuyOffer,
 }: CustomerListingValuationPanelProps) {
-  const isActive = listing.listingStatus === "active";
+  const isActive = listing.listingStatus === "approved";
 
   return (
     <ValuationPanelShell>
       <ValuationInfoBox
         label="Unit Market Price"
-        value={assetItem ? formatCurrency(assetItem.estimatedValue) : "N/A"}
-        trend={assetItem ? { value: "2.2%", tone: "negative", period: "Last 24 hrs" } : undefined}
+        value={formatCurrency(listing.marketPrice.value, listing.marketPrice.currencyCode)}
+        trend={{ value: "2.2%", tone: "negative", period: "Last 24 hrs" }}
       />
 
       <ValuationInfoBox
         label="Unit Retail Price"
-        value={formatCurrency(listing.unitRetailPrice)}
+        value={formatCurrency(listing.retailPrice.value, listing.retailPrice.currencyCode)}
         trend={{ value: "2.2%", tone: "negative", period: "Last 24 hrs" }}
       />
 
-      <ValuationInfoBox label="Initial Liquidation Offer" value={formatCurrency(listing.initialLiquidationOffer)} />
+      <ValuationInfoBox label="Initial Liquidation Offer" value={formatCurrency(listing.liquidationPrice.value, listing.liquidationPrice.currencyCode)} />
 
       <ValuationInfoBox
         label="Seller Listing Price"
-        value={formatCurrency(listing.sellerListingPrice)}
+        value={formatCurrency(listing.listingPrice.value, listing.listingPrice.currencyCode)}
         tone="highlight"
       />
 

@@ -7,7 +7,8 @@ import { Mail } from "lucide-react";
 
 import { ModalDetailRow, ModalShell } from "@/components/modal";
 import { Switch } from "@/components/ui/switch";
-import type { SupportTicketRow } from "@/module/dashboard/help-support/data";
+import type { SupportTicketType } from "@/types/support.type";
+import { formatDate, toTitleCase } from "@/util/helper";
 import {
   supportTicketRequestSchema,
   type SupportTicketRequestFormInputValues,
@@ -16,12 +17,12 @@ import {
 type SupportTicketDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  ticket: SupportTicketRow;
-  onSave: (ticketId: string, nextResolved: boolean) => void;
+  ticket: SupportTicketType;
+  onSave: (ticketRef: string, nextResolved: boolean) => void;
 };
 
 function getSupportTicketDefaults(
-  ticket: SupportTicketRow,
+  ticket: SupportTicketType,
 ): SupportTicketRequestFormInputValues {
   return {
     resolved: ticket.status === "resolved",
@@ -43,8 +44,7 @@ export function SupportTicketDetailsModal({
   });
 
   const onSubmit = ({ resolved }: SupportTicketRequestFormInputValues) => {
-    onSave(ticket.id, resolved);
-    onOpenChange(false);
+    onSave(ticket.ticketRef, resolved);
   };
 
   return (
@@ -69,22 +69,22 @@ export function SupportTicketDetailsModal({
               <ModalDetailRow label="Ticket ID:" value={ticket.ticketId} copyText={ticket.ticketId} />
               <ModalDetailRow
                 label="Customer Email Address:"
-                value={ticket.customerEmail}
-                copyText={ticket.customerEmail}
+                value={ticket.email}
+                copyText={ticket.email}
               />
               <ModalDetailRow
                 label="Customer  Phone number:"
-                value={ticket.customerPhone}
-                copyText={ticket.customerPhone}
+                value={ticket.phoneNumber}
+                copyText={ticket.phoneNumber}
               />
-              <ModalDetailRow label="Channel:" value={ticket.channel} />
+              <ModalDetailRow label="Channel:" value={toTitleCase(ticket.channel)} />
             </div>
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
             <div className="space-y-[14px]">
-              <ModalDetailRow label="Date:" value={ticket.dateLabel} />
-              <ModalDetailRow label="Timestamp:" value={ticket.timestampLabel} />
+              <ModalDetailRow label="Date:" value={formatDate(ticket.requestDate, "do MMMM, yyyy")} />
+              <ModalDetailRow label="Timestamp:" value={formatDate(ticket.requestDate, "h:mm a")} />
             </div>
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
@@ -126,7 +126,7 @@ export function SupportTicketDetailsModal({
             variant="gold"
             className="min-w-0 rounded-[14px] px-4 text-base font-semibold"
             onClick={() => {
-              window.location.href = `mailto:${ticket.customerEmail}`;
+              window.location.href = `mailto:${ticket.email}`;
             }}
           >
             <Mail className="h-4 w-4" />

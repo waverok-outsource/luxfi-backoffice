@@ -3,19 +3,26 @@
 import { Check, CheckCircle2, Clock, Undo2 } from "lucide-react";
 
 import { formatDateLabel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
-import type { P2PTradeRequestType } from "@/types/marketplace.type";
+import type { AssetMarketListingStatus } from "@/types/marketplace.type";
 import { cn } from "@/lib/utils";
+
+type TradeStatusHistoryPanelProps = {
+  submittedAt: string;
+  resolvedAt?: string;
+  status: AssetMarketListingStatus;
+  rejectionReason?: string;
+};
 
 type TradeStep = {
   title: string;
   description: string;
 };
 
-function buildTradeSteps(trade: P2PTradeRequestType): TradeStep[] {
+function buildTradeSteps(submittedAt: string): TradeStep[] {
   return [
     {
       title: "Send request for verification",
-      description: `The first step is to send in your request for verification. (submitted date: ${formatDateLabel(trade.submittedAt)})`,
+      description: `The first step is to send in your request for verification. (submitted date: ${formatDateLabel(submittedAt)})`,
     },
     {
       title: "Specialist reviews details",
@@ -28,7 +35,8 @@ function buildTradeSteps(trade: P2PTradeRequestType): TradeStep[] {
     },
     {
       title: "Final Sell Offer - Seller Receives Payment",
-      description: "Once the final offer is accepted, the buyer's locked payment is released to the seller.",
+      description:
+        "Once the final offer is accepted, the buyer's locked payment is released to the seller.",
     },
     {
       title: "Asset Released to Buyer",
@@ -37,18 +45,23 @@ function buildTradeSteps(trade: P2PTradeRequestType): TradeStep[] {
   ];
 }
 
-// How far along the timeline each trade status reads as — completed/cancelled trades have
-// already passed review, so only the in-progress state shows unfinished steps.
-const COMPLETED_STEPS_BY_STATUS: Record<P2PTradeRequestType["status"], number> = {
-  "in-progress": 3,
-  completed: 5,
-  cancelled: 3,
+// How far along the timeline each listing status reads as — approved/rejected listings have
+// already passed review, so only the pending state shows unfinished steps.
+const COMPLETED_STEPS_BY_STATUS: Record<AssetMarketListingStatus, number> = {
+  pending: 3,
+  approved: 5,
+  rejected: 3,
 };
 
-export function TradeStatusHistoryPanel({ trade }: { trade: P2PTradeRequestType }) {
-  const steps = buildTradeSteps(trade);
-  const completedSteps = COMPLETED_STEPS_BY_STATUS[trade.status];
-  const resolvedDateLabel = trade.resolvedAt ? formatDateLabel(trade.resolvedAt) : null;
+export function TradeStatusHistoryPanel({
+  submittedAt,
+  resolvedAt,
+  status,
+  rejectionReason,
+}: TradeStatusHistoryPanelProps) {
+  const steps = buildTradeSteps(submittedAt);
+  const completedSteps = COMPLETED_STEPS_BY_STATUS[status];
+  const resolvedDateLabel = resolvedAt ? formatDateLabel(resolvedAt) : null;
 
   return (
     <div className="rounded-2xl bg-primary-white p-5">
@@ -77,7 +90,7 @@ export function TradeStatusHistoryPanel({ trade }: { trade: P2PTradeRequestType 
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute left-[11px] top-6 h-[calc(100%-1.25rem)] w-px",
+                    "absolute left-2.75 top-6 h-[calc(100%-1.25rem)] w-px",
                     isCompleted ? "bg-alert-success" : "bg-primary-grey-stroke",
                   )}
                 />
@@ -86,21 +99,32 @@ export function TradeStatusHistoryPanel({ trade }: { trade: P2PTradeRequestType 
               <span
                 className={cn(
                   "mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full",
-                  isCompleted ? "bg-alert-success text-primary-white" : "border border-primary-grey-stroke text-text-grey",
+                  isCompleted
+                    ? "bg-alert-success text-primary-white"
+                    : "border border-primary-grey-stroke text-text-grey",
                 )}
               >
                 <Check className="h-3.5 w-3.5" />
               </span>
 
               <div className="space-y-1.5">
-                <p className={cn("font-semibold", isCompleted ? "text-text-black" : "text-text-grey")}>{step.title}</p>
-                {step.description ? <p className="text-sm text-text-grey">{step.description}</p> : null}
+                <p
+                  className={cn(
+                    "font-semibold",
+                    isCompleted ? "text-text-black" : "text-text-grey",
+                  )}
+                >
+                  {step.title}
+                </p>
+                {step.description ? (
+                  <p className="text-sm text-text-grey">{step.description}</p>
+                ) : null}
 
-                {isLast && trade.status !== "in-progress" && resolvedDateLabel ? (
+                {isLast && status !== "pending" && resolvedDateLabel ? (
                   <div
                     className={cn(
                       "mt-2 flex items-center gap-2 rounded-2xl p-4 text-sm",
-                      trade.status === "completed"
+                      status === "approved"
                         ? "bg-alertSoft-success text-text-black"
                         : "bg-alertSoft-error text-text-black",
                     )}
@@ -108,13 +132,13 @@ export function TradeStatusHistoryPanel({ trade }: { trade: P2PTradeRequestType 
                     <CheckCircle2
                       className={cn(
                         "h-5 w-5 shrink-0",
-                        trade.status === "completed" ? "text-alert-success" : "text-alert-error",
+                        status === "approved" ? "text-alert-success" : "text-alert-error",
                       )}
                     />
                     <span>
-                      {trade.status === "completed"
+                      {status === "approved"
                         ? `Trade has been approved as at ${resolvedDateLabel}`
-                        : `Trade was cancelled as at ${resolvedDateLabel}${trade.rejectionReason ? ` — ${trade.rejectionReason}` : ""}`}
+                        : `Trade was cancelled as at ${resolvedDateLabel}${rejectionReason ? ` — ${rejectionReason}` : ""}`}
                     </span>
                   </div>
                 ) : null}

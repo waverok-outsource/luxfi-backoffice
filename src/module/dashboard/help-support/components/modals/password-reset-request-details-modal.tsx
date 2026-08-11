@@ -12,13 +12,14 @@ import {
 } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
 import { getPasswordResetStatusConfig } from "@/module/dashboard/help-support/components/status-config";
-import type { PasswordResetRequestRow } from "@/module/dashboard/help-support/data";
+import type { PasswordResetRequestType } from "@/types/support.type";
+import { formatDate, toTitleCase } from "@/util/helper";
 
 type PasswordResetRequestDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  request: PasswordResetRequestRow;
-  onReset: (requestId: string) => void;
+  request: PasswordResetRequestType;
+  onReset: (requestRef: string) => void;
 };
 
 type PasswordResetModalStep = "DETAIL" | "SUCCESS";
@@ -53,20 +54,20 @@ export function PasswordResetRequestDetailsModal({
               <ModalDetailRow label="Log ID:" value={request.logId} copyText={request.logId} />
               <ModalDetailRow
                 label="Username"
-                value={request.username}
-                copyText={request.username}
+                value={request.initiatorName}
+                copyText={request.initiatorName}
               />
               <ModalDetailRow
                 label="User Email Address:"
-                value={request.userEmail}
-                copyText={request.userEmail}
+                value={request.initiatorEmail}
+                copyText={request.initiatorEmail}
               />
-              <ModalDetailRow label="Channel:" value={request.channel} />
+              <ModalDetailRow label="Channel:" value={toTitleCase(request.channel)} />
 
               <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
-              <ModalDetailRow label="Date:" value={request.dateLabel} />
-              <ModalDetailRow label="Timestamp:" value={request.timestampLabel} />
+              <ModalDetailRow label="Date:" value={formatDate(request.requestDate, "do MMMM, yyyy")} />
+              <ModalDetailRow label="Timestamp:" value={formatDate(request.requestDate, "h:mm a")} />
               <ModalDetailRow
                 label="Reset Status"
                 value={
@@ -98,7 +99,7 @@ export function PasswordResetRequestDetailsModal({
                 type="button"
                 className="h-12 rounded-[14px] text-base font-semibold"
                 onClick={() => {
-                  onReset(request.id);
+                  onReset(request.requestRef);
                   setStep("SUCCESS");
                 }}
               >

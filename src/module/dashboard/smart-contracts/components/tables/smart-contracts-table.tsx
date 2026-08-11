@@ -194,7 +194,7 @@ export function SmartContractsTable() {
               status: "active",
               liquidationThresholdAmount: pendingApprovePayload.liquidationThresholdAmount,
               disbursedDateLabel: pendingApprovePayload.disbursedDateLabel,
-              repaymentDueLabel: pendingApprovePayload.repaymentDueLabel,
+              repaymentDueLabel: pendingApprovePayload.repaymentDueLabel ?? "",
             }
           : contract,
       ),

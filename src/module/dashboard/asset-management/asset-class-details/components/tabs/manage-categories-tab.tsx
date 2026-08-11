@@ -41,7 +41,7 @@ export function ManageCategoriesTab({ assetClass }: ManageCategoriesTabProps) {
   const categories = categoriesResponse?.data ?? [];
 
   const rows: AssetCategoryTableRow[] = categories.map((category) => ({
-    id: category.categoryId,
+    id: category.reference,
     categoryName: category.name,
     status: category.status,
   }));
@@ -52,7 +52,7 @@ export function ManageCategoriesTab({ assetClass }: ManageCategoriesTabProps) {
     createStatusColumn<AssetCategoryTableRow, AssetCategoryStatus>("Status", ASSET_CATEGORY_STATUS_CONFIG),
     createActionColumnWithOptions<AssetCategoryTableRow>({
       onView: (row) => {
-        const category = categories.find((candidate) => candidate.categoryId === row.id);
+        const category = categories.find((candidate) => candidate.reference === row.id);
         if (category) {
           setEditingCategory(category);
         }

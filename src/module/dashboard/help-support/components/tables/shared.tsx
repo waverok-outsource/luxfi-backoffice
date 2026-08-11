@@ -10,10 +10,9 @@ import {
   createSerialColumn as createSerialColumnBase,
   createStatusColumn as createStatusColumnBase,
   createTextColumn as createTextColumnBase,
-  useFilteredTableRows,
 } from "@/components/table";
 import { HELP_SUPPORT_STATUS_CONFIG } from "@/module/dashboard/help-support/components/status-config";
-import type { SupportTicketStatus } from "@/module/dashboard/help-support/data";
+import type { SupportTicketStatus } from "@/types/support.type";
 
 type HelpSupportRowBase = {
   id: string;
@@ -59,12 +58,14 @@ export function HelpSupportBaseTable<TData>({
   rows,
   columns,
   pageSize = 5,
-  totalEntries = 1000,
+  totalEntries,
+  loading = false,
 }: {
   rows: TData[];
   columns: ColumnDef<TData, unknown>[];
   pageSize?: number;
-  totalEntries?: number;
+  totalEntries: number;
+  loading?: boolean;
 }) {
   return (
     <BaseTable<TData>
@@ -72,7 +73,7 @@ export function HelpSupportBaseTable<TData>({
       columns={columns}
       pageSize={pageSize}
       totalEntries={totalEntries}
+      loading={loading}
     />
   );
 }
-export { useFilteredTableRows as useFilteredRows };

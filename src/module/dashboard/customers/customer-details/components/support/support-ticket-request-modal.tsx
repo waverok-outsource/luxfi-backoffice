@@ -8,7 +8,8 @@ import { Copy, Mail } from "lucide-react";
 import { ModalShell } from "@/components/modal";
 import { Switch } from "@/components/ui/switch";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import type { SupportTicketRecord } from "@/module/dashboard/customers/customer-details/components/support/support-ticket-types";
+import type { SupportTicketType } from "@/types/support.type";
+import { formatDate, toTitleCase } from "@/util/helper";
 import {
   supportTicketRequestSchema,
   type SupportTicketRequestFormInputValues,
@@ -17,8 +18,8 @@ import {
 type SupportTicketRequestModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  ticket: SupportTicketRecord;
-  onSave: (ticketId: string, nextResolved: boolean) => void;
+  ticket: SupportTicketType;
+  onSave: (ticketRef: string, nextResolved: boolean) => void;
 };
 
 type DetailRowProps = {
@@ -56,7 +57,7 @@ function Divider() {
 }
 
 function getSupportTicketRequestDefaults(
-  ticket: SupportTicketRecord,
+  ticket: SupportTicketType,
 ): SupportTicketRequestFormInputValues {
   return {
     resolved: ticket.status === "resolved",
@@ -78,8 +79,7 @@ export function SupportTicketRequestModal({
   });
 
   const onSubmit = ({ resolved }: SupportTicketRequestFormInputValues) => {
-    onSave(ticket.id, resolved);
-    onOpenChange(false);
+    onSave(ticket.ticketRef, resolved);
   };
 
   return (
@@ -104,22 +104,22 @@ export function SupportTicketRequestModal({
               <DetailRow label="Ticket ID:" value={ticket.ticketId} copyText={ticket.ticketId} />
               <DetailRow
                 label="Customer Email Address:"
-                value={ticket.customerEmailAddress}
-                copyText={ticket.customerEmailAddress}
+                value={ticket.email}
+                copyText={ticket.email}
               />
               <DetailRow
                 label="Customer  Phone number:"
-                value={ticket.customerPhoneNumber}
-                copyText={ticket.customerPhoneNumber}
+                value={ticket.phoneNumber}
+                copyText={ticket.phoneNumber}
               />
-              <DetailRow label="Channel:" value={ticket.channel} />
+              <DetailRow label="Channel:" value={toTitleCase(ticket.channel)} />
             </div>
 
             <Divider />
 
             <div className="space-y-[14px]">
-              <DetailRow label="Date:" value={ticket.dateLabel} />
-              <DetailRow label="Timestamp:" value={ticket.timestampLabel} />
+              <DetailRow label="Date:" value={formatDate(ticket.requestDate, "do MMMM, yyyy")} />
+              <DetailRow label="Timestamp:" value={formatDate(ticket.requestDate, "h:mm a")} />
             </div>
 
             <Divider />
@@ -161,7 +161,7 @@ export function SupportTicketRequestModal({
             variant="gold"
             className="min-w-0 rounded-[14px] px-4 text-base font-semibold"
             onClick={() => {
-              window.location.href = `mailto:${ticket.customerEmailAddress}`;
+              window.location.href = `mailto:${ticket.email}`;
             }}
           >
             <Mail className="h-4 w-4" />

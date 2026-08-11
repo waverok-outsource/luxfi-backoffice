@@ -100,7 +100,6 @@ const BASE_DEFAULT_VALUES: AddAssetClassFormValues = {
     listingExpiry: { value: 30, unit: "days" },
     canFeature: false,
     canList: false,
-    offerPattern: "",
   },
 
   riskSettings: {
