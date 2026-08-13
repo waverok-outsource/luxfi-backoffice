@@ -24,14 +24,17 @@ type OfferReviewModalProps = {
   reviewShellClassName?: string;
   /** Pending offers show Reject/Approve actions; resolved ones only show Close. */
   isPending: boolean;
+  /** True while the approve/reject mutation is in flight — disables and shows a spinner on the confirm dialogs' buttons. */
+  pending?: boolean;
   approveLabel: string;
   rejectLabel: string;
   approveDialog: { title: string; description: React.ReactNode };
   rejectDialog: { offerTypeLabel: string; assetName: string; assetId: string; partyName: string };
   approveSuccess: ResultCopy;
   rejectSuccess: ResultCopy;
-  onApprove: () => void;
-  onReject: (values: RejectOfferFormValues) => void;
+  /** Call `onSuccess` only once the mutation actually succeeds — the SUCCESS stage waits for it. */
+  onApprove: (onSuccess: () => void) => void;
+  onReject: (values: RejectOfferFormValues, onSuccess: () => void) => void;
   children: React.ReactNode;
 };
 
@@ -48,6 +51,7 @@ export function OfferReviewModal({
   description = "View and manage customer buy offer here",
   reviewShellClassName = "max-w-[680px] p-4 sm:p-6",
   isPending,
+  pending = false,
   approveLabel,
   rejectLabel,
   approveDialog,
@@ -69,15 +73,17 @@ export function OfferReviewModal({
   };
 
   const performApprove = () => {
-    onApprove();
-    setResultCopy(approveSuccess);
-    setStage("SUCCESS");
+    onApprove(() => {
+      setResultCopy(approveSuccess);
+      setStage("SUCCESS");
+    });
   };
 
   const performReject = (values: RejectOfferFormValues) => {
-    onReject(values);
-    setResultCopy(rejectSuccess);
-    setStage("SUCCESS");
+    onReject(values, () => {
+      setResultCopy(rejectSuccess);
+      setStage("SUCCESS");
+    });
   };
 
   const stageConfig: Record<ModalStage, { contentClassName: string; content: React.ReactNode }> = {
@@ -97,15 +103,27 @@ export function OfferReviewModal({
           <ModalShell.Footer>
             {isPending ? (
               <>
-                <ModalShell.Action type="button" variant="danger" onClick={() => setStage("CONFIRM_REJECT")}>
+                <ModalShell.Action
+                  type="button"
+                  variant="danger"
+                  onClick={() => setStage("CONFIRM_REJECT")}
+                >
                   {rejectLabel}
                 </ModalShell.Action>
-                <ModalShell.Action type="button" variant="success" onClick={() => setStage("CONFIRM_APPROVE")}>
+                <ModalShell.Action
+                  type="button"
+                  variant="success"
+                  onClick={() => setStage("CONFIRM_APPROVE")}
+                >
                   {approveLabel}
                 </ModalShell.Action>
               </>
             ) : (
-              <ModalShell.Action type="button" variant="grey-stroke" onClick={() => handleOpenChange(false)}>
+              <ModalShell.Action
+                type="button"
+                variant="grey-stroke"
+                onClick={() => handleOpenChange(false)}
+              >
                 Close
               </ModalShell.Action>
             )}
@@ -120,6 +138,7 @@ export function OfferReviewModal({
           title={approveDialog.title}
           description={approveDialog.description}
           confirmVariant="success"
+          pending={pending}
           onCancel={() => setStage("REVIEW")}
           onConfirm={performApprove}
         />
@@ -133,6 +152,7 @@ export function OfferReviewModal({
           assetName={rejectDialog.assetName}
           assetId={rejectDialog.assetId}
           partyName={rejectDialog.partyName}
+          pending={pending}
           onCancel={() => setStage("REVIEW")}
           onConfirm={performReject}
         />

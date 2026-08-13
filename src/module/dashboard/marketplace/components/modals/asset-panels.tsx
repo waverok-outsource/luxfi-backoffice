@@ -86,8 +86,11 @@ export function AssetDetailsPanel({ assetDetails, images, className, extraRows }
           </div>
 
           <div className="grid grid-cols-2 gap-y-2 border-t border-primary-grey-stroke pt-4">
-            <DetailField label="Year" value={assetDetails.productionYear} />
-            <DetailField label="Dial Colour" value={assetDetails.dialColour} />
+            <DetailField
+              label="Year"
+              value={assetDetails.productionYear && assetDetails.productionYear !== "undefined" ? assetDetails.productionYear : "-"}
+            />
+            <DetailField label="Dial Colour" value={assetDetails.dialColour || "-"} />
             <DetailField label="Case Colour" value={assetDetails.case?.colour ?? "-"} />
             <DetailField label="Weight" value={assetDetails.weight ? `${assetDetails.weight.value}${assetDetails.weight.unit}` : "-"} />
             <DetailField label="Case Size" value={assetDetails.case ? `${assetDetails.case.size}${assetDetails.case.unit}` : "-"} />

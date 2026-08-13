@@ -69,7 +69,6 @@ export function CollateralDetailsCard({
   const displayAssetName = isLegacy ? (collateralAssetName ?? "-") : loan!.collateral.assetName;
   const displayCollateralValue = isLegacy ? (collateralValue ?? 0) : loan!.collateralValue.value;
   const currencyCode = isLegacy ? undefined : loan!.collateralValue.currencyCode;
-  const displayAssetValue = isLegacy ? (collateralValue ?? 0) : loan!.collateral.assetValue.value;
   const hasImages = !isLegacy && loan!.collateral.media.length > 0;
   const showVerified = isLegacy ? collateralVerified : loan!.status !== "pending";
 
@@ -90,32 +89,34 @@ export function CollateralDetailsCard({
             <p className="mt-2 text-[20px] font-bold text-text-black">
               {formatCurrency(displayCollateralValue, currencyCode)}
             </p>
-            <Badge variant="success" className="mt-2 text-xs" showStatusDot>
-              {isLegacy
-                ? (collateralTrendLabel ?? "")
-                : formatCurrency(displayAssetValue, currencyCode)}
+            <Badge
+              variant={isLegacy ? "success" : "neutral"}
+              className="mt-2 text-xs"
+              showStatusDot
+            >
+              {/* No real trend/change data exists on LoanType — this is not a fabricated value, just "-". */}
+              {isLegacy ? (collateralTrendLabel ?? "") : "-"}
             </Badge>
           </div>
 
           <div className="flex min-w-0 flex-1 justify-end">
             <div className="w-full">
               <div className="grid w-full grid-cols-3 gap-3">
-                {Array.from({ length: 3 }).map((_, index) => {
-                  const url = hasImages ? loan!.collateral.media[index] : undefined;
-                  return url ? (
-                    <img
-                      key={index}
-                      src={url}
-                      alt={displayAssetName}
-                      className="h-[112px] w-full rounded-2xl border border-primary-grey-stroke object-cover"
-                    />
-                  ) : (
-                    <div
-                      key={index}
-                      className="h-[112px] w-full rounded-2xl border border-primary-grey-stroke bg-[linear-gradient(135deg,#d7c0a6_0%,#f3ede6_50%,#c3b4a6_100%)]"
-                    />
-                  );
-                })}
+                {hasImages
+                  ? loan!.collateral.media.slice(0, 3).map((url, index) => (
+                      <img
+                        key={url || index}
+                        src={url}
+                        alt={displayAssetName}
+                        className="h-[112px] w-full rounded-2xl border border-primary-grey-stroke object-cover"
+                      />
+                    ))
+                  : Array.from({ length: 3 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-[112px] w-full rounded-2xl border border-primary-grey-stroke bg-[linear-gradient(135deg,#d7c0a6_0%,#f3ede6_50%,#c3b4a6_100%)]"
+                      />
+                    ))}
               </div>
             </div>
           </div>

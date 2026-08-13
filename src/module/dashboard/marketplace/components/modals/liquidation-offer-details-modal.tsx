@@ -18,7 +18,7 @@ export function LiquidationOfferDetailsModal({
   onOpenChange,
   listing,
 }: LiquidationOfferDetailsModalProps) {
-  const { reviewListing } = useMarketplaceFns();
+  const { reviewListing, loading } = useMarketplaceFns();
   const isPending = listing.listingStatus === "pending";
   const assetLabel = `${listing.assetDetails.assetName} ${listing.assetDetails.assetId}`;
 
@@ -28,6 +28,7 @@ export function LiquidationOfferDetailsModal({
       onOpenChange={onOpenChange}
       title="Liquidation Offer Details"
       isPending={isPending}
+      pending={loading.REVIEW_LISTING}
       rejectLabel="Reject Offer"
       approveLabel="Approve Offer"
       approveDialog={{
@@ -54,8 +55,8 @@ export function LiquidationOfferDetailsModal({
         title: "Offer Rejected",
         description: "This liquidation offer has been rejected.",
       }}
-      onApprove={() => reviewListing(listing.listingId, { status: "approved" })}
-      onReject={() => reviewListing(listing.listingId, { status: "rejected" })}
+      onApprove={(onSuccess) => reviewListing(listing.listingId, { status: "approved" }, onSuccess)}
+      onReject={(_values, onSuccess) => reviewListing(listing.listingId, { status: "rejected" }, onSuccess)}
     >
       <div className="space-y-3">
         <p className="text-sm font-semibold text-text-black">Buy Offer Details</p>

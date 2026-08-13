@@ -47,7 +47,15 @@
       "requestDate": "2026-07-16T14:22:38.339Z"
     }
   ],
-  "pagination": { "total": 2, "currentPage": 1, "totalPages": 1, "perPage": 5, "offset": 0, "prevPage": null, "nextPage": null }
+  "pagination": {
+    "total": 2,
+    "currentPage": 1,
+    "totalPages": 1,
+    "perPage": 5,
+    "offset": 0,
+    "prevPage": null,
+    "nextPage": null
+  }
 }
 ```
 
@@ -59,24 +67,37 @@
   "data": [],
   "message": "Request successful",
   "code": "MELO00000",
-  "pagination": { "total": 0, "currentPage": 1, "totalPages": 1, "perPage": 5, "offset": 0, "prevPage": null, "nextPage": null }
+  "pagination": {
+    "total": 0,
+    "currentPage": 1,
+    "totalPages": 1,
+    "perPage": 5,
+    "offset": 0,
+    "prevPage": null,
+    "nextPage": null
+  }
 }
 ```
 
 ### Expected
+
 The two tickets above should appear in the customer-scoped list — they're unambiguously this customer's tickets by email and phone.
 
 ### Actual
+
 Empty result set. `total: 0`.
 
 ### Likely cause
+
 The two tickets are not associated with the customer record by `customerId` on the backend (e.g. created via a flow that stored contact info but not the FK), so whatever join/filter the scoped endpoint uses on `customerId` finds nothing, even though the same ticket is trivially matchable by email/phone.
 
 ### Impact
+
 The Customer Detail page's embedded **Support Tickets** tab ([support-tickets-panel.tsx](../../src/module/dashboard/customers/customer-details/components/support/support-tickets-panel.tsx)) will show "No results" for customers who do have tickets, visible in the admin-wide Help & Support list. This isn't a frontend rendering bug — it's a data-completeness gap in the API response itself.
 
 ### Note
-This does *not* affect the separate, now-resolved question of the endpoint's response *shape* — the envelope (`{status, data: [], message, code, pagination}`) is a well-formed paginated array as expected. Only the *contents* are wrong for this customer.
+
+This does _not_ affect the separate, now-resolved question of the endpoint's response _shape_ — the envelope (`{status, data: [], message, code, pagination}`) is a well-formed paginated array as expected. Only the _contents_ are wrong for this customer.
 
 ---
 
@@ -112,23 +133,30 @@ Authorization: Bearer <token>
 Reproduced twice (once per ticket toggle attempt), same result both times.
 
 ### Expected
+
 `200 OK`, ticket `status` updated to `"pending"`, matching the documented contract in [ADR 0019](../adr/0019-support-tickets-api-integration.md#decision) (inferred from the Postman collection's response sample, which shows `status` flipping between `"pending"` and `"resolved"` with no other request fields implied by the existing UI).
 
 ### Actual
+
 `400` with a validation message claiming `status` wasn't provided, despite the request body containing exactly `{"status": "pending"}` with a correct `Content-Type: application/json` header.
 
 ### Likely cause
+
 One of:
+
 - The endpoint expects a different field name than `status` (e.g. a nested object, or a differently-cased/named key).
 - A validation middleware bug that's failing to parse the body correctly (e.g. reading from the wrong body location, or a stricter schema than documented).
 
 Needs backend-side investigation to confirm which — the frontend has no visibility into the validator's expectations beyond the field name implied by the Postman sample's response shape.
 
 ### Impact
+
 **The "mark ticket resolved/pending" feature is completely non-functional against production** — every review attempt from either the admin-wide table or the customer-embedded panel will fail with this 400. This is a full feature outage, not a degraded case.
 
 ### Frontend behavior on this failure (working as intended)
+
 The frontend correctly surfaces this failure — worth confirming the fix doesn't regress it:
+
 - The modal does **not** close on failed PATCH (an earlier build silently closed on any submit; that was fixed prior to this test).
 - The 400's `message` ("Please, provide a value for status") surfaces verbatim to the admin via toast.
 - No optimistic/local state corruption — the underlying ticket list still shows the pre-toggle status after the failed save.

@@ -4,45 +4,76 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 
+import { DataTable, TableSearchToolbar, createActionColumnWithOptions, createIdentifierColumn, createStatusColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { ASSET_LOANS_STATUS_CONFIG } from "@/module/dashboard/asset-loans/components/status-config";
-import {
-  AssetLoansBaseTable,
-  AssetLoansTableToolbar,
-  createActionColumnWithOptions,
-  createCurrencyColumn,
-  createIdentifierColumn,
-  createPercentColumn,
-  createSerialColumn,
-  createStatusColumn,
-  useFilteredRows,
-} from "@/module/dashboard/asset-loans/components/tables/shared";
-import {
-  assetLoanRequestRows,
-  type AssetLoanRequestRow,
-} from "@/module/dashboard/asset-loans/data";
+import { useLoans } from "@/services/queries/loan.queries";
+import type { LoanStatus, LoanType } from "@/types/loan.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
+import { formatCurrency } from "@/util/format-currency";
 
-const SEARCH_FIELDS: Array<keyof AssetLoanRequestRow> = ["loanId", "borrowerId"];
+function formatLiquidationThreshold(lt: LoanType["liquidationThreshold"]): string {
+  if (typeof lt === "object" && lt !== null) {
+    return formatCurrency(lt.value, lt.currencyCode);
+  }
+  if (typeof lt === "number" && lt > 0) {
+    return formatCurrency(lt);
+  }
+  return "-";
+}
+
+type AssetLoanRequestRow = Record<string, unknown> & {
+  id: string;
+  loanId: string;
+  borrowerName: string;
+  borrowerId: string;
+  loanValue: string;
+  collateralValue: string;
+  ltv: string;
+  liquidationThreshold: string;
+  status: LoanStatus;
+};
+
+const PAGE_SIZE = 10;
 
 export function AssetLoanRequestsTable() {
   const router = useRouter();
-  const { value } = useURLQuery<{ q?: string }>();
-  const search = value.q ?? "";
-  const rows = useFilteredRows(assetLoanRequestRows, search, SEARCH_FIELDS);
+  const { value } = useURLQuery<{ page?: string; q?: string }>();
+
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const search = (value.q ?? "").trim();
+
+  const loansQuery = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...(search ? { q: search } : {}),
+  });
+
+  const { data: response, isLoading } = useLoans(loansQuery);
+  const loans = response?.data ?? [];
+
+  const rows: AssetLoanRequestRow[] = loans.map((loan) => ({
+    id: loan.loanRef,
+    loanId: loan.loanId,
+    borrowerName: loan.borrower.name,
+    borrowerId: loan.borrower.id,
+    loanValue: formatCurrency(loan.loanValue.value, loan.loanValue.currencyCode),
+    collateralValue: formatCurrency(loan.collateralValue.value, loan.collateralValue.currencyCode),
+    ltv: `${loan.ltv.toFixed(1)}%`,
+    liquidationThreshold: formatLiquidationThreshold(loan.liquidationThreshold),
+    status: loan.status,
+  }));
 
   const columns = React.useMemo<ColumnDef<AssetLoanRequestRow, unknown>[]>(
     () => [
-      createSerialColumn<AssetLoanRequestRow>(),
       createIdentifierColumn<AssetLoanRequestRow>("Loan ID", "loanId"),
+      createTextColumn<AssetLoanRequestRow>("Borrower Name", "borrowerName", "max-w-[160px]"),
       createIdentifierColumn<AssetLoanRequestRow>("Borrower ID", "borrowerId"),
-      createCurrencyColumn<AssetLoanRequestRow>("Loan Value", "loanValue"),
-      createCurrencyColumn<AssetLoanRequestRow>("Collateral Value", "collateralValue"),
-      createPercentColumn<AssetLoanRequestRow>("LTV", "ltv"),
-      createPercentColumn<AssetLoanRequestRow>("Liquidation Threshold", "liquidationThreshold"),
-      createStatusColumn<AssetLoanRequestRow, AssetLoanRequestRow["status"]>(
-        "Status ID",
-        ASSET_LOANS_STATUS_CONFIG,
-      ),
+      createTextColumn<AssetLoanRequestRow>("Loan Value", "loanValue"),
+      createTextColumn<AssetLoanRequestRow>("Collateral Value", "collateralValue"),
+      createTextColumn<AssetLoanRequestRow>("LTV", "ltv"),
+      createTextColumn<AssetLoanRequestRow>("Liquidation Threshold", "liquidationThreshold"),
+      createStatusColumn<AssetLoanRequestRow, LoanStatus>("Status ID", ASSET_LOANS_STATUS_CONFIG),
       createActionColumnWithOptions<AssetLoanRequestRow>({
         ariaLabel: "View asset loan request",
         onView: (row) => {
@@ -55,8 +86,15 @@ export function AssetLoanRequestsTable() {
 
   return (
     <div className="space-y-4">
-      <AssetLoansTableToolbar />
-      <AssetLoansBaseTable rows={rows} columns={columns} />
+      <TableSearchToolbar placeholder="Search Loan ID or Borrower ID" />
+
+      <DataTable
+        columns={columns}
+        data={rows}
+        loading={isLoading}
+        emptyStateLabel="No asset loan requests found."
+        pagination={{ totalEntries: response?.pagination.total ?? 0, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+      />
     </div>
   );
 }

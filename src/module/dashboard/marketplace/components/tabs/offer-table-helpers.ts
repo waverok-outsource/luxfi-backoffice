@@ -29,3 +29,22 @@ export function formatTableTimeLabel(isoDate: string) {
     hour12: false,
   });
 }
+
+/**
+ * Orders status values aren't a confirmed closed enum (only "pending"/"Pending" has been
+ * sampled) — this heuristic keeps unseen values visible with a reasonable badge tone instead
+ * of forcing them through a fixed config and silently falling back to "-".
+ */
+export function resolveOrderStatusVariant(status: string): "success" | "warning" | "error" {
+  const normalized = status.toLowerCase();
+
+  if (/reject|cancel|fail|declin/.test(normalized)) {
+    return "error";
+  }
+
+  if (/approv|complet|paid|settl|success/.test(normalized)) {
+    return "success";
+  }
+
+  return "warning";
+}

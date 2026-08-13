@@ -144,7 +144,7 @@ export function AssetCategoryConfigurationModal(props: AssetCategoryConfiguratio
       {
         name: values.categoryName.trim(),
         status,
-        assetClassId: assetClass.classId,
+        assetClassId: assetClass.assetClassId,
         overrideParentClassConfigurations: values.overrideParentClassConfigurations,
         ...(values.overrideParentClassConfigurations
           ? {

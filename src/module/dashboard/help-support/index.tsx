@@ -4,11 +4,14 @@ import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { HelpSupportMetrics } from "@/module/dashboard/help-support/components/help-support-metrics";
+import {
+  HelpSupportMetrics,
+  type HelpSupportMetric,
+} from "@/module/dashboard/help-support/components/help-support-metrics";
 import { HELP_SUPPORT_TAB_COMPONENTS } from "@/module/dashboard/help-support/components/tab-table-components";
+import { useSupportStats } from "@/services/queries/support.queries";
 import {
   DEFAULT_HELP_SUPPORT_TAB,
-  helpSupportMetrics,
   helpSupportTabs,
   type HelpSupportTabValue,
 } from "@/module/dashboard/help-support/data";
@@ -27,6 +30,20 @@ function isHelpSupportTab(value: string | null | undefined): value is HelpSuppor
 
 export function HelpSupportDashboard() {
   const { value, setURLQuery } = useURLQuery<HelpSupportQuery>();
+
+  const { data: statsData, isLoading: statsLoading } = useSupportStats();
+  const stats = statsData?.data;
+
+  const metricValue = (count: number | undefined) => {
+    if (statsLoading) return "…";
+    return count == null ? "-" : String(count);
+  };
+
+  const supportMetrics: HelpSupportMetric[] = [
+    { title: "Total Support Tickets", value: metricValue(stats?.totalSupportTickets) },
+    { title: "Total Pending Tickets", value: metricValue(stats?.totalPendingTickets) },
+    { title: "Total Resolved Tickets", value: metricValue(stats?.totalResolvedTickets) },
+  ];
 
   const activeTab = isHelpSupportTab(value.tab) ? value.tab : DEFAULT_HELP_SUPPORT_TAB;
   const ActiveTabContent = HELP_SUPPORT_TAB_COMPONENTS[activeTab].slots.content;
@@ -54,7 +71,7 @@ export function HelpSupportDashboard() {
 
       <AnalyticsToolbar />
 
-      <HelpSupportMetrics metrics={helpSupportMetrics} />
+      <HelpSupportMetrics metrics={supportMetrics} />
 
       <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

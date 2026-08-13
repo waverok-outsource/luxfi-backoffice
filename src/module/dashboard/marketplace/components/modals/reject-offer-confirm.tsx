@@ -17,6 +17,7 @@ type RejectOfferConfirmProps = {
   assetName: string;
   assetId: string;
   partyName: string;
+  pending?: boolean;
   onCancel: () => void;
   onConfirm: (values: RejectOfferFormValues) => void;
 };
@@ -26,6 +27,7 @@ export function RejectOfferConfirm({
   assetName,
   assetId,
   partyName,
+  pending = false,
   onCancel,
   onConfirm,
 }: RejectOfferConfirmProps) {
@@ -78,10 +80,16 @@ export function RejectOfferConfirm({
       </ModalShell.Body>
 
       <ModalShell.Footer className="pt-2">
-        <ModalShell.Action type="button" variant="grey-stroke" onClick={onCancel}>
+        <ModalShell.Action type="button" variant="grey-stroke" disabled={pending} onClick={onCancel}>
           No, Cancel
         </ModalShell.Action>
-        <ModalShell.Action type="submit" form={formId} variant="danger" disabled={!isValid}>
+        <ModalShell.Action
+          type="submit"
+          form={formId}
+          variant="danger"
+          disabled={!isValid || pending}
+          pending={pending}
+        >
           Yes, Confirm
         </ModalShell.Action>
       </ModalShell.Footer>

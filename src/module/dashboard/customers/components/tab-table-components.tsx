@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 
-import { AuditLogTable } from "@/module/dashboard/customers/components/tables/audit-log-table";
+import { AuditLogsTable } from "@/module/dashboard/shared/components/audit-logs-table";
 import { RegisteredCustomersTable } from "@/module/dashboard/customers/components/tables/registered-customers-table";
 import type { CustomersTabValue } from "@/module/dashboard/customers/data";
 
@@ -20,7 +20,7 @@ export const CUSTOMERS_TAB_COMPONENTS: Record<CustomersTabValue, CustomersTabVie
   },
   "audit-log": {
     slots: {
-      content: AuditLogTable,
+      content: () => <AuditLogsTable scope="customer" />,
     },
   },
 };

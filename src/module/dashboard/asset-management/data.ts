@@ -160,7 +160,7 @@ const DEFAULT_ASSET_CLASS_SECTIONS: Pick<
 // array is now only used by the marketplace module until that's wired up too.
 export const mockAssetClasses: AssetClassType[] = [
   {
-    classId: "AC-LUXWATCH",
+    assetClassId: "AC-LUXWATCH",
     id: "AC-LUXWATCH",
     name: "Luxury Watches",
     description: "Pre-owned luxury and vintage watches held as tangible collateral assets.",
@@ -172,7 +172,7 @@ export const mockAssetClasses: AssetClassType[] = [
     ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    classId: "AC-CRYPTO",
+    assetClassId: "AC-CRYPTO",
     id: "AC-CRYPTO",
     name: "Cryptocurrencies",
     description: "Digital currency holdings valued via internal appraisal.",
@@ -188,7 +188,7 @@ export const mockAssetClasses: AssetClassType[] = [
     },
   },
   {
-    classId: "AC-BAGS",
+    assetClassId: "AC-BAGS",
     id: "AC-BAGS",
     name: "Designer Bags",
     description: "Authenticated designer handbags awaiting onboarding.",
@@ -200,7 +200,7 @@ export const mockAssetClasses: AssetClassType[] = [
     ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    classId: "AC-JEWELRY",
+    assetClassId: "AC-JEWELRY",
     id: "AC-JEWELRY",
     name: "Jewelry",
     description: "Fine jewelry and gemstone pieces awaiting onboarding.",
@@ -212,7 +212,7 @@ export const mockAssetClasses: AssetClassType[] = [
     ...DEFAULT_ASSET_CLASS_SECTIONS,
   },
   {
-    classId: "AC-NFT",
+    assetClassId: "AC-NFT",
     id: "AC-NFT",
     name: "NFTs",
     description: "Non-fungible token collections awaiting onboarding.",

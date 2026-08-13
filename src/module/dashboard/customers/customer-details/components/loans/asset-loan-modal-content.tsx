@@ -40,7 +40,7 @@ import {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function LiquidatedBanner() {
+export function LiquidatedBanner() {
   return (
     <LoanCaseNotice variant="error">
       Collateral asset Item has been liquidated to repay this loan.
@@ -48,7 +48,7 @@ function LiquidatedBanner() {
   );
 }
 
-function RepaymentWarning() {
+export function RepaymentWarning() {
   return (
     <LoanCaseNotice variant="warning">
       The collateral asset will be automatically liquidated to repay the loan if its market value
@@ -59,7 +59,7 @@ function RepaymentWarning() {
 
 // ── Loan Details Card ──────────────────────────────────────────────────────
 
-function LoanDetailsCard({ loan }: { loan: LoanType }) {
+export function LoanDetailsCard({ loan }: { loan: LoanType }) {
   const statusBadge = getLoanCaseStatusBadge(loan.status);
   const proposedInterestLabel = `${formatCurrency(loan.totalInterest, loan.loanValue.currencyCode)} (${loan.apr}%)`;
 
@@ -76,7 +76,9 @@ function LoanDetailsCard({ loan }: { loan: LoanType }) {
                 </Badge>
               ),
             },
+            { label: "Loan ID:", value: loan.loanId },
             { label: "Borrower Name:", value: loan.borrower.name },
+            { label: "Borrower ID:", value: loan.borrower.id },
             {
               label: "Borrower Risk Credit Score:",
               value: loan.borrower.creditScore != null ? `${loan.borrower.creditScore}%` : "-",
@@ -95,9 +97,13 @@ function LoanDetailsCard({ loan }: { loan: LoanType }) {
               valueClassName: "text-2xl",
             },
             {
+              label: "Loan Request Date:",
+              value: loan.dateApplied ? formatDate(loan.dateApplied, "do MMMM, yyyy") : "-",
+              dividerBefore: true,
+            },
+            {
               label: "Disbursed Date",
               value: loan.dateDisburse ? formatDate(loan.dateDisburse, "do MMMM, yyyy") : "-",
-              dividerBefore: true,
             },
             {
               label: "Repayment Due",
@@ -112,7 +118,7 @@ function LoanDetailsCard({ loan }: { loan: LoanType }) {
 
 // ── Pending Loan Actions ───────────────────────────────────────────────────
 
-function PendingLoanActions({
+export function PendingLoanActions({
   loan,
   onStepChange,
   onRequestApprove,
@@ -271,11 +277,13 @@ export function InfoStepContent({
 export function RejectStepContent({
   borrowerName,
   rejectionReasons,
+  pending = false,
   onStepChange,
   onConfirmReject,
 }: {
   borrowerName: string;
   rejectionReasons: string[];
+  pending?: boolean;
   onStepChange: (step: AssetLoanStep) => void;
   onConfirmReject: (reason: string) => void;
 }) {
@@ -328,6 +336,7 @@ export function RejectStepContent({
           type="button"
           variant="grey-stroke"
           className="h-12 min-w-[180px] rounded-2xl"
+          disabled={pending}
           onClick={() => onStepChange("INFO")}
         >
           No, Cancel
@@ -336,7 +345,8 @@ export function RejectStepContent({
           type="button"
           variant="danger"
           className="h-12 min-w-[180px] rounded-2xl"
-          disabled={!isValid}
+          disabled={!isValid || pending}
+          pending={pending}
           onClick={handleSubmit(({ reason }) => onConfirmReject(reason))}
         >
           Yes, Confirm
@@ -349,9 +359,11 @@ export function RejectStepContent({
 // ── Approve Confirm Step ───────────────────────────────────────────────────
 
 export function ApproveConfirmStepContent({
+  pending = false,
   onStepChange,
   onConfirm,
 }: {
+  pending?: boolean;
   onStepChange: (step: AssetLoanStep) => void;
   onConfirm: () => void;
 }) {
@@ -369,6 +381,7 @@ export function ApproveConfirmStepContent({
           type="button"
           variant="grey-stroke"
           className="h-12 min-w-[180px] rounded-2xl"
+          disabled={pending}
           onClick={() => onStepChange("INFO")}
         >
           No, Cancel
@@ -377,6 +390,7 @@ export function ApproveConfirmStepContent({
           type="button"
           variant="success"
           className="h-12 min-w-[180px] rounded-2xl"
+          pending={pending}
           onClick={onConfirm}
         >
           Yes, Confirm

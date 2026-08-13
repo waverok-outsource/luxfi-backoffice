@@ -1,5 +1,9 @@
 import { StatCard } from "@/components/dashboard/stat-card";
-import type { HelpSupportMetric } from "@/module/dashboard/help-support/data";
+
+export type HelpSupportMetric = {
+  title: string;
+  value: string;
+};
 
 export function HelpSupportMetrics({ metrics }: { metrics: HelpSupportMetric[] }) {
   return (

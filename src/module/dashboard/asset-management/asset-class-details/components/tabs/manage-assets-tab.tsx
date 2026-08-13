@@ -37,7 +37,7 @@ export function ManageAssetsTab({ assetClass }: ManageAssetsTabProps) {
 
   const { data: assetsResponse } = useAssets(
     convertObjectToQuery({
-      assetClassId: assetClass.classId,
+      assetClassId: assetClass.assetClassId,
       ...(value.q ? { q: value.q } : {}),
       ...(value.category && value.category !== "all" ? { assetCategoryId: value.category } : {}),
       ...(value.year && value.year !== "all" ? { productionYear: value.year } : {}),

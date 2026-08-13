@@ -30,6 +30,8 @@ type AssetLoanModalProps = {
   onConfirmReject: (reason: string) => void;
   resultMessage: { title: string; description: string } | null;
   rejectionReasons: string[];
+  approvePending?: boolean;
+  rejectPending?: boolean;
 };
 
 export type { AssetLoanStep };
@@ -45,6 +47,8 @@ export function AssetLoanModal({
   onConfirmReject,
   resultMessage,
   rejectionReasons,
+  approvePending = false,
+  rejectPending = false,
 }: AssetLoanModalProps) {
   if (!loan) return null;
 
@@ -71,6 +75,7 @@ export function AssetLoanModal({
         <RejectStepContent
           borrowerName={loan.borrower.name}
           rejectionReasons={rejectionReasons}
+          pending={rejectPending}
           onStepChange={onStepChange}
           onConfirmReject={onConfirmReject}
         />
@@ -80,7 +85,11 @@ export function AssetLoanModal({
       closeOnBackdropClick: true,
       contentClassName: "max-w-[650px]",
       content: (
-        <ApproveConfirmStepContent onStepChange={onStepChange} onConfirm={onConfirmApprove} />
+        <ApproveConfirmStepContent
+          pending={approvePending}
+          onStepChange={onStepChange}
+          onConfirm={onConfirmApprove}
+        />
       ),
     },
     RESULT: {

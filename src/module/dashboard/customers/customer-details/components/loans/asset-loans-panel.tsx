@@ -93,7 +93,7 @@ export function AssetLoansPanel({ customerId }: { customerId: string }) {
     [activeLoanRef, loans],
   );
 
-  const { approveLoan, rejectLoan } = useLoanFns();
+  const { approveLoan, rejectLoan, loading } = useLoanFns();
 
   const rows: TableRow[] = React.useMemo(
     () =>
@@ -247,6 +247,8 @@ export function AssetLoansPanel({ customerId }: { customerId: string }) {
           onConfirmReject={handleConfirmReject}
           resultMessage={resultMessage}
           rejectionReasons={rejectionReasons}
+          approvePending={loading.APPROVE_LOAN}
+          rejectPending={loading.REJECT_LOAN}
         />
       )}
     </div>

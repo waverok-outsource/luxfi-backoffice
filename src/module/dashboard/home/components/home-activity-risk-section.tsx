@@ -1,17 +1,34 @@
 import { CardSectionHeader } from "@/components/dashboard/card-section-header";
 import { Badge } from "@/components/ui/badge";
-import { activityFeed, riskAlerts } from "@/module/dashboard/home/data";
+import type { DashboardActivity } from "@/types/analytics.type";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { ArrowUpRight } from "lucide-react";
 import ActivityIcon from "./icons/activvity";
 import RiskLevel from "./icons/risk-level";
 
-function riskToneBadge(tone: "critical" | "urgent" | "priority"): "active" | "error" {
-  if (tone === "critical" || tone === "urgent") return "error";
+type Props = {
+  activities: DashboardActivity[];
+  riskAlarms: unknown[];
+  isLoading: boolean;
+};
 
-  return "active";
+function formatActivityTime(isoString: string): { period: string; time: string } {
+  try {
+    const date = parseISO(isoString);
+    const time = format(date, "hh:mm a");
+    if (isToday(date)) return { period: "Today", time };
+    if (isYesterday(date)) return { period: "Yesterday", time };
+    return { period: format(date, "MMM d"), time };
+  } catch {
+    return { period: "", time: "" };
+  }
 }
 
-export function HomeActivityRiskSection() {
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function HomeActivityRiskSection({ activities, riskAlarms, isLoading }: Props) {
   return (
     <div className="mb-4 grid gap-3 xl:grid-cols-[1.9fr_1.1fr]">
       <section className="rounded-2xl bg-primary-white p-4">
@@ -25,14 +42,33 @@ export function HomeActivityRiskSection() {
           }
         />
         <div className="space-y-2.5">
-          {activityFeed.map((item) => (
-            <div key={item.message} className="rounded-xl bg-primary-grey-undertone p-3">
-              <p className="text-base font-medium text-primary-black">{item.message}</p>
-              <p className="text-sm text-text-grey">
-                {item.period} <span className="mx-1.5">.</span> {item.time}
-              </p>
-            </div>
-          ))}
+          {isLoading ? (
+            <p className="text-sm text-text-grey">Loading…</p>
+          ) : activities.length === 0 ? (
+            <p className="text-sm text-text-grey">No recent activity</p>
+          ) : (
+            activities.map((item) => {
+              const { period, time } = formatActivityTime(item.createdAt);
+              return (
+                <div key={item.id} className="rounded-xl bg-primary-grey-undertone p-3">
+                  <p className="text-base font-medium text-primary-black">
+                    {capitalize(item.event)}
+                  </p>
+                  <p className="text-sm text-text-grey">
+                    {item.maker}
+                    {period ? (
+                      <>
+                        <span className="mx-1.5">·</span>
+                        {period}
+                        <span className="mx-1.5">·</span>
+                        {time}
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
 
@@ -47,14 +83,25 @@ export function HomeActivityRiskSection() {
           }
         />
         <div className="space-y-2.5">
-          {riskAlerts.map((item) => (
-            <div key={item.label} className="rounded-xl bg-primary-grey-undertone p-3">
-              <p className="text-base font-medium text-primary-black">{item.label}</p>
-              <Badge variant={riskToneBadge(item.tone)} className="mt-2">
-                {item.tone}
+          {isLoading ? (
+            <p className="text-sm text-text-grey">Loading…</p>
+          ) : riskAlarms.length === 0 ? (
+            <div className="rounded-xl bg-primary-grey-undertone p-3">
+              <p className="text-base font-medium text-primary-black">No active risk alarms</p>
+              <Badge variant="active" className="mt-2">
+                all clear
               </Badge>
             </div>
-          ))}
+          ) : (
+            <div className="rounded-xl bg-primary-grey-undertone p-3">
+              <p className="text-base font-medium text-primary-black">
+                {riskAlarms.length} active risk alarm{riskAlarms.length !== 1 ? "s" : ""}
+              </p>
+              <Badge variant="error" className="mt-2">
+                alert
+              </Badge>
+            </div>
+          )}
         </div>
       </section>
     </div>

@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 export type DashboardStatCardProps = {
   title: string;
   value: string;
-  trend: string;
+  trend?: string;
   period?: string;
-  tone: "positive" | "negative";
+  tone?: "positive" | "negative";
   featured?: boolean;
   className?: string;
   valueClassName?: string;
@@ -55,7 +55,14 @@ export function StatCard({
       >
         {value}
       </p>
-      <TrendBadge trend={trend} tone={tone} period={period} className={trendClassName} />
+      {trend ? (
+        <TrendBadge
+          trend={trend}
+          tone={tone ?? "positive"}
+          period={period}
+          className={trendClassName}
+        />
+      ) : null}
     </article>
   );
 }

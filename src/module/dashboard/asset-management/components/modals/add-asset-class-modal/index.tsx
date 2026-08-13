@@ -228,7 +228,7 @@ export function AddAssetClassModal({ open, onOpenChange, assetClass }: AddAssetC
   const onSubmit = (values: AddAssetClassFormValues) => {
     if (isEditMode && assetClass) {
       updateAssetClass(
-        assetClass.classId,
+        assetClass.assetClassId,
         buildCreateAssetClassPayload(values, assetClass.status),
         () => setStage("SUCCESS"),
       );

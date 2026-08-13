@@ -12,7 +12,7 @@ type AssetClassMetricsProps = {
 
 export function AssetClassMetrics({ assetClass }: AssetClassMetricsProps) {
   const { data: assetsResponse } = useAssets(
-    convertObjectToQuery({ assetClassId: assetClass.classId }),
+    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
   );
   const items = assetsResponse?.data ?? [];
 

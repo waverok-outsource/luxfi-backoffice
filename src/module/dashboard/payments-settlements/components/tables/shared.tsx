@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import type { ComponentType } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useURLQuery } from "@/hooks/useUrlQuery";
 import {
   BaseTable,
   TableSearchToolbar,
@@ -90,3 +93,56 @@ export function PaymentsBaseTable({
   );
 }
 export { useFilteredTableRows as useFilteredPaymentRows };
+
+export type PaymentDetailModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  payment: PaymentSettlementRow;
+};
+
+type PaymentsHistoryTableProps = {
+  sourceRows: PaymentSettlementRow[];
+  searchFields: Array<keyof PaymentSettlementRow>;
+  buildColumns: (
+    onView: (row: PaymentSettlementRow) => void,
+  ) => ColumnDef<PaymentSettlementRow, unknown>[];
+  detailsModal?: ComponentType<PaymentDetailModalProps>;
+  toolbarPlaceholder?: string;
+};
+
+export function PaymentsHistoryTable({
+  sourceRows,
+  searchFields,
+  buildColumns,
+  detailsModal: DetailsModal,
+  toolbarPlaceholder,
+}: PaymentsHistoryTableProps) {
+  const { value } = useURLQuery<{ q?: string }>();
+  const search = value.q ?? "";
+  const [selectedPayment, setSelectedPayment] = useState<PaymentSettlementRow | null>(null);
+
+  const rows = useFilteredTableRows(sourceRows, search, searchFields);
+
+  const columns = useMemo(() => buildColumns(setSelectedPayment), [buildColumns]);
+
+  return (
+    <>
+      <div className="space-y-4">
+        <TableSearchToolbar placeholder={toolbarPlaceholder} />
+        <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
+      </div>
+
+      {selectedPayment && DetailsModal ? (
+        <DetailsModal
+          open={Boolean(selectedPayment)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedPayment(null);
+            }
+          }}
+          payment={selectedPayment}
+        />
+      ) : null}
+    </>
+  );
+}

@@ -69,17 +69,6 @@ export type AssetLoanStatus =
   | "rejected"
   | "completed";
 
-export type AssetLoanRequestRow = {
-  id: string;
-  loanId: string;
-  borrowerId: string;
-  loanValue: number;
-  collateralValue: number;
-  ltv: number;
-  liquidationThreshold: number;
-  status: AssetLoanStatus;
-};
-
 export type LoanRepaymentRow = {
   id: string;
   repaymentId: string;
@@ -112,70 +101,6 @@ export type LoanDisbursementRow = {
   paymentChannel: string;
   status: AssetLoanStatus;
 };
-
-export type LoanActivityLogRow = {
-  id: string;
-  logId: string;
-  activity: string;
-  initiatorId: string;
-  initiatorName: string;
-  initiatorRole: string;
-  actionDate: string;
-  actionTimestamp: string;
-};
-
-export const assetLoanRequestRows: AssetLoanRequestRow[] = [
-  {
-    id: "loan-request-1",
-    loanId: "CU-889095542245",
-    borrowerId: "CU-889095542245",
-    loanValue: 6000,
-    collateralValue: 10000,
-    ltv: 57.7,
-    liquidationThreshold: 57.7,
-    status: "pending",
-  },
-  {
-    id: "loan-request-2",
-    loanId: "CU-889095542246",
-    borrowerId: "CU-889095542246",
-    loanValue: 100000,
-    collateralValue: 150000,
-    ltv: 60.9,
-    liquidationThreshold: 60.9,
-    status: "active",
-  },
-  {
-    id: "loan-request-3",
-    loanId: "CU-889095542247",
-    borrowerId: "CU-889095542247",
-    loanValue: 24000,
-    collateralValue: 32000,
-    ltv: 78.2,
-    liquidationThreshold: 78.2,
-    status: "liquidated",
-  },
-  {
-    id: "loan-request-4",
-    loanId: "CU-889095542248",
-    borrowerId: "CU-889095542248",
-    loanValue: 2000,
-    collateralValue: 7000,
-    ltv: 82.9,
-    liquidationThreshold: 82.9,
-    status: "rejected",
-  },
-  {
-    id: "loan-request-5",
-    loanId: "CU-889095542249",
-    borrowerId: "CU-889095542249",
-    loanValue: 10000,
-    collateralValue: 50000,
-    ltv: 55,
-    liquidationThreshold: 55,
-    status: "completed",
-  },
-];
 
 export const loanRepaymentRows: LoanRepaymentRow[] = [
   {
@@ -338,55 +263,3 @@ export const loanDisbursementRows: LoanDisbursementRow[] = [
   },
 ];
 
-export const loanActivityLogRows: LoanActivityLogRow[] = [
-  {
-    id: "loan-log-1",
-    logId: "000085752257",
-    activity: "Loan Approved",
-    initiatorId: "000085752257",
-    initiatorName: "Dare Abdullahi",
-    initiatorRole: "Compliance Officer",
-    actionDate: "05/02/2026",
-    actionTimestamp: "10:23 AM",
-  },
-  {
-    id: "loan-log-2",
-    logId: "000085752258",
-    activity: "Loan Rejected",
-    initiatorId: "000085752258",
-    initiatorName: "Oreoluwa Akinmagbe",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionTimestamp: "10:23 AM",
-  },
-  {
-    id: "loan-log-3",
-    logId: "000085752259",
-    activity: "Loan Approved",
-    initiatorId: "000085752259",
-    initiatorName: "John Ndubuisi",
-    initiatorRole: "Compliance Officer II",
-    actionDate: "07/02/2026",
-    actionTimestamp: "10:23 AM",
-  },
-  {
-    id: "loan-log-4",
-    logId: "000085752260",
-    activity: "Loan Disbursed",
-    initiatorId: "000085752260",
-    initiatorName: "Hannah Amarachi",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionTimestamp: "10:23 AM",
-  },
-  {
-    id: "loan-log-5",
-    logId: "000085752261",
-    activity: "Loan Disbursed",
-    initiatorId: "000085752261",
-    initiatorName: "Fred Bassey",
-    initiatorRole: "Finance Manager",
-    actionDate: "07/02/2026",
-    actionTimestamp: "10:23 AM",
-  },
-];

@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 
 import { AddListingAction } from "@/module/dashboard/marketplace/components/tab-actions/add-listing-action";
-import { AuditLogTab } from "@/module/dashboard/marketplace/components/tabs/audit-log-tab";
+import { AuditLogsTable } from "@/module/dashboard/shared/components/audit-logs-table";
 import { BuyOffersTab } from "@/module/dashboard/marketplace/components/tabs/buy-offers-tab";
 import { CustomerListingsTab } from "@/module/dashboard/marketplace/components/tabs/customer-listings-tab";
 import { LiquidationOffersTab } from "@/module/dashboard/marketplace/components/tabs/liquidation-offers-tab";
@@ -47,7 +47,7 @@ export const MARKETPLACE_TAB_COMPONENTS: Record<MarketplaceTabValue, Marketplace
   },
   "audit-log": {
     slots: {
-      content: AuditLogTab,
+      content: () => <AuditLogsTable scope="assetMarket" />,
     },
   },
 };

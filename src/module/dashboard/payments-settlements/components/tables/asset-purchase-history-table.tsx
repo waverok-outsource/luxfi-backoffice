@@ -1,10 +1,6 @@
 "use client";
 
-import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-
-import { useURLQuery } from "@/hooks/useUrlQuery";
-import { AssetPurchaseDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/asset-purchase-details-modal";
+import { AssetTradeDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/asset-trade-details-modal";
 import {
   createActionColumnWithOptions,
   createAmountColumn,
@@ -12,9 +8,8 @@ import {
   createSerialColumn,
   createStatusColumn,
   createTextColumn,
-  PaymentsBaseTable,
-  PaymentsTableToolbar,
-  useFilteredPaymentRows,
+  PaymentsHistoryTable,
+  type PaymentDetailModalProps,
 } from "@/module/dashboard/payments-settlements/components/tables/shared";
 import { assetPurchaseHistoryRows, type PaymentSettlementRow } from "@/module/dashboard/payments-settlements/data";
 
@@ -26,51 +21,31 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
   "representativeName",
 ];
 
+function PurchaseDetailsModal(props: PaymentDetailModalProps) {
+  return <AssetTradeDetailsModal variant="purchase" {...props} />;
+}
+
 export function AssetPurchaseHistoryTable() {
-  const { value } = useURLQuery<{ q?: string }>();
-  const search = value.q ?? "";
-  const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
-
-  const rows = useFilteredPaymentRows(assetPurchaseHistoryRows, search, SEARCH_FIELDS);
-
-  const columns = React.useMemo<ColumnDef<PaymentSettlementRow, unknown>[]>(
-    () => [
-      createSerialColumn(),
-      createIdentifierColumn("Transaction ID", "transactionId"),
-      createIdentifierColumn("Asset ID", "assetId"),
-      createAmountColumn("Transaction Value", "transactionValue"),
-      createTextColumn("Seller", "partyName"),
-      createTextColumn("Pawn Representative", "representativeName"),
-      createTextColumn("Date", "date"),
-      createStatusColumn("Payment Status"),
-      createActionColumnWithOptions({
-        ariaLabel: "View asset purchase details",
-        onView: (row) => setSelectedPayment(row),
-      }),
-    ],
-    [],
-  );
-
   return (
-    <>
-      <div className="space-y-4">
-        <PaymentsTableToolbar
-          placeholder="Search Customer name or ID"
-        />
-        <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
-      </div>
-
-      {selectedPayment ? (
-        <AssetPurchaseDetailsModal
-          open={Boolean(selectedPayment)}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedPayment(null);
-            }
-          }}
-          payment={selectedPayment}
-        />
-      ) : null}
-    </>
+    <PaymentsHistoryTable
+      sourceRows={assetPurchaseHistoryRows}
+      searchFields={SEARCH_FIELDS}
+      detailsModal={PurchaseDetailsModal}
+      toolbarPlaceholder="Search Customer name or ID"
+      buildColumns={(onView) => [
+        createSerialColumn(),
+        createIdentifierColumn("Transaction ID", "transactionId"),
+        createIdentifierColumn("Asset ID", "assetId"),
+        createAmountColumn("Transaction Value", "transactionValue"),
+        createTextColumn("Seller", "partyName"),
+        createTextColumn("Pawn Representative", "representativeName"),
+        createTextColumn("Date", "date"),
+        createStatusColumn("Payment Status"),
+        createActionColumnWithOptions({
+          ariaLabel: "View asset purchase details",
+          onView,
+        }),
+      ]}
+    />
   );
 }

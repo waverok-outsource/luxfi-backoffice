@@ -15,7 +15,7 @@ type P2PTradeDetailsModalProps = {
 };
 
 export function P2PTradeDetailsModal({ open, onOpenChange, listing }: P2PTradeDetailsModalProps) {
-  const { reviewListing } = useMarketplaceFns();
+  const { reviewListing, loading } = useMarketplaceFns();
   const isPending = listing.listingStatus === "pending";
   const assetLabel = `${listing.assetDetails.assetName} ${listing.assetDetails.assetId}`;
 
@@ -26,6 +26,7 @@ export function P2PTradeDetailsModal({ open, onOpenChange, listing }: P2PTradeDe
       title="P2P Trade"
       reviewShellClassName="max-w-[1100px] p-4 sm:p-6"
       isPending={isPending}
+      pending={loading.REVIEW_LISTING}
       rejectLabel="Reject Offer"
       approveLabel="Approve Offer"
       approveDialog={{
@@ -52,8 +53,8 @@ export function P2PTradeDetailsModal({ open, onOpenChange, listing }: P2PTradeDe
         title: "Trade Cancelled",
         description: "This P2P trade has been rejected and cancelled.",
       }}
-      onApprove={() => reviewListing(listing.listingId, { status: "approved" })}
-      onReject={() => reviewListing(listing.listingId, { status: "rejected" })}
+      onApprove={(onSuccess) => reviewListing(listing.listingId, { status: "approved" }, onSuccess)}
+      onReject={(_values, onSuccess) => reviewListing(listing.listingId, { status: "rejected" }, onSuccess)}
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div className="space-y-3">

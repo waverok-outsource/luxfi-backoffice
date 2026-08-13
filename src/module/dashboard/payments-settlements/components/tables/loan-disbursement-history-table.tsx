@@ -1,10 +1,6 @@
 "use client";
 
-import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-
-import { useURLQuery } from "@/hooks/useUrlQuery";
-import { LoanDisbursementDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/loan-disbursement-details-modal";
+import { LoanDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/loan-details-modal";
 import {
   createActionColumnWithOptions,
   createAmountColumn,
@@ -12,9 +8,8 @@ import {
   createSerialColumn,
   createStatusColumn,
   createTextColumn,
-  PaymentsBaseTable,
-  PaymentsTableToolbar,
-  useFilteredPaymentRows,
+  PaymentsHistoryTable,
+  type PaymentDetailModalProps,
 } from "@/module/dashboard/payments-settlements/components/tables/shared";
 import { loanDisbursementHistoryRows, type PaymentSettlementRow } from "@/module/dashboard/payments-settlements/data";
 
@@ -25,48 +20,29 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
   "partyEmail",
 ];
 
+function DisbursementDetailsModal(props: PaymentDetailModalProps) {
+  return <LoanDetailsModal variant="disbursement" {...props} />;
+}
+
 export function LoanDisbursementHistoryTable() {
-  const { value } = useURLQuery<{ q?: string }>();
-  const search = value.q ?? "";
-  const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
-
-  const rows = useFilteredPaymentRows(loanDisbursementHistoryRows, search, SEARCH_FIELDS);
-
-  const columns = React.useMemo<ColumnDef<PaymentSettlementRow, unknown>[]>(
-    () => [
-      createSerialColumn(),
-      createIdentifierColumn("Transaction ID", "transactionId"),
-      createIdentifierColumn("Loan ID", "loanId"),
-      createAmountColumn("Loan Value", "loanValue"),
-      createAmountColumn("Disbursed Value", "disbursedValue"),
-      createTextColumn("Transaction Date", "date"),
-      createStatusColumn("Status ID"),
-      createActionColumnWithOptions({
-        ariaLabel: "View loan disbursement details",
-        onView: (row) => setSelectedPayment(row),
-      }),
-    ],
-    [],
-  );
-
   return (
-    <>
-      <div className="space-y-4">
-        <PaymentsTableToolbar />
-        <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
-      </div>
-
-      {selectedPayment ? (
-        <LoanDisbursementDetailsModal
-          open={Boolean(selectedPayment)}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedPayment(null);
-            }
-          }}
-          payment={selectedPayment}
-        />
-      ) : null}
-    </>
+    <PaymentsHistoryTable
+      sourceRows={loanDisbursementHistoryRows}
+      searchFields={SEARCH_FIELDS}
+      detailsModal={DisbursementDetailsModal}
+      buildColumns={(onView) => [
+        createSerialColumn(),
+        createIdentifierColumn("Transaction ID", "transactionId"),
+        createIdentifierColumn("Loan ID", "loanId"),
+        createAmountColumn("Loan Value", "loanValue"),
+        createAmountColumn("Disbursed Value", "disbursedValue"),
+        createTextColumn("Transaction Date", "date"),
+        createStatusColumn("Status ID"),
+        createActionColumnWithOptions({
+          ariaLabel: "View loan disbursement details",
+          onView,
+        }),
+      ]}
+    />
   );
 }

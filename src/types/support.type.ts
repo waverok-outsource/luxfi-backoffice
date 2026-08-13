@@ -19,6 +19,14 @@ export type SupportTicketType = {
 
 export type SupportTicketsResponseType = PaginatedApiResponse<SupportTicketType[]>;
 
+export type SupportStatsType = {
+  totalSupportTickets: number;
+  totalPendingTickets: number;
+  totalResolvedTickets: number;
+};
+
+export type SupportStatsResponseType = ApiResponse<SupportStatsType>;
+
 export type ReviewSupportTicketPayloadType = {
   status: SupportTicketStatus;
 };

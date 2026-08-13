@@ -79,20 +79,20 @@ src/
 
 ## Feature modules
 
-| Module | Route | Description |
-|--------|-------|-------------|
-| **Home** | `/` | Dashboard overview — inflow/outflow, asset inventory, customer counts, risk alerts, recent activity |
-| **Customers** | `/customers` | Registered customers list, customer detail with portfolio, session logs, blacklist |
-| **Marketplace** | `/marketplace` | LuxFi listings, customer listings, liquidation/buy offers, P2P trades, audit log |
-| **Asset Management** | `/asset-management` | Asset classes, categories, individual assets, user portfolios, verification logs |
-| **Asset Loans** | `/asset-loans` | Loan requests, repayments, disbursements, activity logs; loan detail view |
-| **Smart Contracts** | `/smart-contracts` | Active contracts, locked collateral, auto-liquidation, market asset prices |
-| **Risk Management** | `/risk-management` | Portfolio LTV, exposure concentration, liquidation metrics, collateral trends |
-| **Payments & Settlements** | `/payments-settlements` | Sales/purchases history, loan repayments/disbursements, wallet deposits, interest |
-| **Growth & Marketing** | `/growth-marketing` | User acquisition, location distribution, inflow/outflow, leads and sales |
-| **Help & Support** | `/help-support` | Support tickets, password reset requests |
-| **System Settings** | `/system-settings` | Team management, roles & permissions; member detail with activity/session logs |
-| **Portfolio Management** | `/portfolio-management` | ⚠️ Deprecated — scheduled for deletion. Portfolio inventory, asset brands, asset categories |
+| Module                     | Route                   | Description                                                                                         |
+| -------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| **Home**                   | `/`                     | Dashboard overview — inflow/outflow, asset inventory, customer counts, risk alerts, recent activity |
+| **Customers**              | `/customers`            | Registered customers list, customer detail with portfolio, session logs, blacklist                  |
+| **Marketplace**            | `/marketplace`          | LuxFi listings, customer listings, liquidation/buy offers, P2P trades, audit log                    |
+| **Asset Management**       | `/asset-management`     | Asset classes, categories, individual assets, user portfolios, verification logs                    |
+| **Asset Loans**            | `/asset-loans`          | Loan requests, repayments, disbursements, activity logs; loan detail view                           |
+| **Smart Contracts**        | `/smart-contracts`      | Active contracts, locked collateral, auto-liquidation, market asset prices                          |
+| **Risk Management**        | `/risk-management`      | Portfolio LTV, exposure concentration, liquidation metrics, collateral trends                       |
+| **Payments & Settlements** | `/payments-settlements` | Sales/purchases history, loan repayments/disbursements, wallet deposits, interest                   |
+| **Growth & Marketing**     | `/growth-marketing`     | User acquisition, location distribution, inflow/outflow, leads and sales                            |
+| **Help & Support**         | `/help-support`         | Support tickets, password reset requests                                                            |
+| **System Settings**        | `/system-settings`      | Team management, roles & permissions; member detail with activity/session logs                      |
+| **Portfolio Management**   | `/portfolio-management` | ⚠️ Deprecated — scheduled for deletion. Portfolio inventory, asset brands, asset categories         |
 
 ## Module conventions
 
@@ -130,6 +130,7 @@ Each tab maps to a `content` slot component (the table), and optionally an `acti
 ### DataTable pattern
 
 The shared `DataTable` component (from `@/components/table`) uses TanStack Table under the hood and provides:
+
 - Skeleton loading rows (auto-generated from column count and page size)
 - Empty state messaging
 - Server-side pagination via `TablePagination`

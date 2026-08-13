@@ -64,6 +64,11 @@ const keyFactory = {
       all: ["marketplace", "listings"],
       list: (query: string) => ["marketplace", "listings", query],
     },
+    orders: {
+      all: ["marketplace", "orders"],
+      list: (query: string) => ["marketplace", "orders", query],
+      details: (orderId: string) => ["marketplace", "orders", orderId],
+    },
   },
 
   customerAssets: {
@@ -74,6 +79,9 @@ const keyFactory = {
   loans: {
     all: ["loans"],
     customerList: (customerId: string, query: string) => ["loans", "customer", customerId, query],
+    list: (query: string) => ["loans", query],
+    details: (loanRef: string) => ["loans", loanRef],
+    schedule: (loanRef: string) => ["loans", loanRef, "schedule"],
     rejectionReasons: ["loans", "rejection-reasons"],
   },
 
@@ -91,6 +99,7 @@ const keyFactory = {
       all: ["support", "password-reset-requests"],
       list: (query: string) => ["support", "password-reset-requests", query],
     },
+    stats: () => ["support", "stats"],
   },
 
   systemSettings: {
@@ -107,6 +116,15 @@ const keyFactory = {
 
     roles: (query: string) => ["system-settings", "roles", query],
     permissions: ["system-settings", "permissions"],
+  },
+
+  analytics: {
+    dashboard: ["analytics", "dashboard"],
+  },
+
+  riskManagement: {
+    summary: ["risk-management", "summary"],
+    analytics: ["risk-management", "analytics"],
   },
 };
 

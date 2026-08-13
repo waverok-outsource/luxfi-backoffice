@@ -9,8 +9,7 @@ import { AssetBrandsTable } from "@/module/dashboard/portfolio-management/compon
 import { AssetCategoriesTable } from "@/module/dashboard/portfolio-management/components/tables/asset-categories-table";
 import { AuditLogTable } from "@/module/dashboard/portfolio-management/components/tables/audit-log-table";
 import { PortfolioInventoryTable } from "@/module/dashboard/portfolio-management/components/tables/portfolio-inventory-table";
-import { PurchaseRequestsTable } from "@/module/dashboard/portfolio-management/components/tables/purchase-requests-table";
-import { SaleRequestsTable } from "@/module/dashboard/portfolio-management/components/tables/sale-requests-table";
+import { RequestsTable } from "@/module/dashboard/portfolio-management/components/tables/requests-table";
 import type { PortfolioTabValue } from "@/module/dashboard/portfolio-management/data";
 
 type PortfolioTabView = {
@@ -42,12 +41,12 @@ export const PORTFOLIO_TAB_COMPONENTS: Record<PortfolioTabValue, PortfolioTabVie
   },
   "purchase-requests": {
     slots: {
-      content: PurchaseRequestsTable,
+      content: () => <RequestsTable variant="purchase" />,
     },
   },
   "sale-requests": {
     slots: {
-      content: SaleRequestsTable,
+      content: () => <RequestsTable variant="sale" />,
     },
   },
   "audit-log": {

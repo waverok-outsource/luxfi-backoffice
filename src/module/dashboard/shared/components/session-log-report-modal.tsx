@@ -1,18 +1,29 @@
 "use client";
 
 import { ModalDetailRow, ModalShell } from "@/components/modal";
-import type { CustomerSessionLogType } from "@/types/customer.type";
-import { formatDate } from "@/util/helper";
 
-type DeviceSessionLogModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  session: CustomerSessionLogType;
+export type SessionLogModalData = {
+  sessionLogId: string;
+  deviceName: string;
+  deviceModel?: string;
+  channel: string;
+  dateLabel: string;
+  timestampLabel: string;
+  locationLabel: string;
+  ipAddress: string;
 };
 
-export function DeviceSessionLogModal({ open, onOpenChange, session }: DeviceSessionLogModalProps) {
-  const dateLabel = formatDate(session.createdAt, "do MMMM, yyyy");
+type SessionLogReportModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  session: SessionLogModalData;
+};
 
+export function SessionLogReportModal({
+  open,
+  onOpenChange,
+  session,
+}: SessionLogReportModalProps) {
   return (
     <ModalShell.Root
       open={open}
@@ -37,10 +48,13 @@ export function DeviceSessionLogModal({ open, onOpenChange, session }: DeviceSes
               copyText={session.sessionLogId}
             />
             <ModalDetailRow label="Device Name" value={session.deviceName} />
+            {session.deviceModel ? (
+              <ModalDetailRow label="Device Model" value={session.deviceModel} />
+            ) : null}
             <ModalDetailRow label="Channel:" value={session.channel} />
-            <ModalDetailRow label="Date:" value={dateLabel} />
-            <ModalDetailRow label="Timestamp:" value={session.timestamp} />
-            <ModalDetailRow label="User Location:" value={session.userLocation} />
+            <ModalDetailRow label="Date:" value={session.dateLabel} />
+            <ModalDetailRow label="Timestamp:" value={session.timestampLabel} />
+            <ModalDetailRow label="User Location:" value={session.locationLabel} />
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 

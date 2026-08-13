@@ -19,6 +19,10 @@ type PaymentDetailModalLayoutProps = {
   partyNameLabel: string;
   partyEmailLabel: string;
   representativeLabel?: string;
+  /** Renders the Payment Method / Payment Channel rows. Defaults to true. */
+  showPaymentInfo?: boolean;
+  /** Renders the Approver ID / Approver Role rows. Defaults to true. */
+  showApprover?: boolean;
 };
 
 export function PaymentDetailModalLayout({
@@ -33,6 +37,8 @@ export function PaymentDetailModalLayout({
   partyNameLabel,
   partyEmailLabel,
   representativeLabel,
+  showPaymentInfo = true,
+  showApprover = true,
 }: PaymentDetailModalLayoutProps) {
   const status = getPaymentStatusConfig(payment.status);
 
@@ -61,8 +67,12 @@ export function PaymentDetailModalLayout({
             />
             <ModalDetailRow label="Transaction Date:" value={payment.dateLabel} />
             <ModalDetailRow label="Timestamp:" value={payment.timestampLabel} />
-            <ModalDetailRow label="Payment Method:" value={payment.paymentMethod} />
-            <ModalDetailRow label="Payment Channel:" value={payment.paymentChannel} />
+            {showPaymentInfo ? (
+              <>
+                <ModalDetailRow label="Payment Method:" value={payment.paymentMethod} />
+                <ModalDetailRow label="Payment Channel:" value={payment.paymentChannel} />
+              </>
+            ) : null}
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
@@ -99,8 +109,12 @@ export function PaymentDetailModalLayout({
 
             <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
-            <ModalDetailRow label="Approver ID:" value={payment.approverId} />
-            <ModalDetailRow label="Approver Role:" value={payment.approverRole} />
+            {showApprover ? (
+              <>
+                <ModalDetailRow label="Approver ID:" value={payment.approverId} />
+                <ModalDetailRow label="Approver Role:" value={payment.approverRole} />
+              </>
+            ) : null}
           </div>
         </ModalShell.Body>
 

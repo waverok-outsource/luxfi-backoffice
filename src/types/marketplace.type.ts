@@ -1,25 +1,5 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
 
-/** Shared by every review-and-approve flow in Marketplace (Liquidation Offers, Buy Offers, ...). */
-export type OfferStatus = "pending" | "approved" | "rejected";
-
-export type BuyOfferType = {
-  offerId: string;
-  orderId: string;
-  /** References an existing Asset Management inventory item (a LuxFi listing) the customer wants to buy. */
-  assetItemId: string;
-  assetClassId: string;
-  buyerId: string;
-  buyerName: string;
-  listingPrice: number;
-  buyOfferPrice: number;
-  status: OfferStatus;
-  submittedAt: string;
-  /** Set once the offer is approved or rejected; unset (rendered as "-") while pending. */
-  resolvedAt?: string;
-  rejectionReason?: string;
-};
-
 export type AssetMarketMoney = {
   value: number;
   currencyCode: string;
@@ -84,3 +64,90 @@ export type ReviewAssetMarketListingPayloadType = {
 
 // ASSUMPTION: response shape not sampled by backend. See ADR 0018.
 export type ReviewAssetMarketListingResponseType = ApiResponse<AssetMarketListingType>;
+
+// Buy Offers' real backend resource — GET /v1/orders (and /v1/orders/:orderId), a materially
+// different, multi-item shape from the asset-market listings above. Reviewed as a whole order
+// (not per item) via PATCH /v1/orders/:orderId/review. See ADR 0018 and its follow-up.
+export type OrderItemType = {
+  _id: string;
+  userId: string;
+  orderId: string;
+  listingId: string;
+  sellerId: string;
+  itemId: string;
+  assetRefId: string;
+  title: string;
+  image: string;
+  currencyCode: string;
+  itemType: string;
+  price: number;
+  quantity: number;
+  subtotal: number;
+  createdAt: string;
+  updatedAt: string;
+  /** Present on GET /v1/orders/:orderId in practice, though absent from the sampled Postman body. */
+  seller: OrderItemSellerType;
+};
+
+export type OrderItemSellerType = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type OrderBuyerType = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type OrderType = {
+  reference: string;
+  totalCost: number;
+  fee: number;
+  itemCost: number;
+  settled: boolean;
+  paid: boolean;
+  status: string;
+  paymentMethod: string;
+  paymentChannel: string;
+  createdAt: string;
+  items: OrderItemType[];
+  orderId: string;
+  paymentStatus: string;
+  itemCount: number;
+  /** Present live on GET /v1/orders, though absent from the sampled Postman body. */
+  buyer: OrderBuyerType;
+};
+
+export type OrderDetailsType = {
+  logId: string;
+  orderId: string;
+  reference: string;
+  transactionDate: string;
+  paymentMethod: string;
+  paymentChannel: string;
+  saleValue: number;
+  totalCost: number;
+  fee: number;
+  status: string;
+  /** Lowercase machine status — use this for pending-state checks, not `status` (capitalized display text on this endpoint). */
+  statusRaw: string;
+  paid: boolean;
+  settled: boolean;
+  buyer: OrderBuyerType;
+  items: OrderItemType[];
+};
+
+export type OrdersListResponseType = PaginatedApiResponse<OrderType[]>;
+
+export type OrderDetailsResponseType = ApiResponse<OrderDetailsType>;
+
+export type ReviewOrderPayloadType = {
+  status: "approved" | "rejected";
+  /** Reject reason (or any note) — unlike the asset-market review endpoint, this one accepts it. */
+  note?: string;
+};
+
+// ASSUMPTION: response shape not sampled by backend; mirrors the order-details shape. See ADR 0018.
+export type ReviewOrderResponseType = ApiResponse<OrderDetailsType>;

@@ -10,6 +10,7 @@ export type ConfirmDialogContentProps = {
   cancelLabel?: string;
   confirmLabel?: string;
   confirmVariant?: "success" | "danger";
+  pending?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -20,6 +21,7 @@ export function ConfirmDialogContent({
   cancelLabel = "No, Cancel",
   confirmLabel = "Yes, Confirm",
   confirmVariant = "success",
+  pending = false,
   onCancel,
   onConfirm,
 }: ConfirmDialogContentProps) {
@@ -31,10 +33,22 @@ export function ConfirmDialogContent({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button type="button" variant="grey-stroke" className="w-full sm:flex-1" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="grey-stroke"
+          className="w-full sm:flex-1"
+          disabled={pending}
+          onClick={onCancel}
+        >
           {cancelLabel}
         </Button>
-        <Button type="button" variant={confirmVariant} className="w-full sm:flex-1" onClick={onConfirm}>
+        <Button
+          type="button"
+          variant={confirmVariant}
+          className="w-full sm:flex-1"
+          pending={pending}
+          onClick={onConfirm}
+        >
           {confirmLabel}
         </Button>
       </div>

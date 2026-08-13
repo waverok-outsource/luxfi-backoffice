@@ -1,11 +1,6 @@
 "use client";
 
-import * as React from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-
-import { useURLQuery } from "@/hooks/useUrlQuery";
 import { InterestDetailsModal } from "@/module/dashboard/payments-settlements/components/modals/interest-details-modal";
-
 import {
   createActionColumnWithOptions,
   createAmountColumn,
@@ -13,9 +8,7 @@ import {
   createSerialColumn,
   createStatusColumn,
   createTextColumn,
-  PaymentsBaseTable,
-  PaymentsTableToolbar,
-  useFilteredPaymentRows,
+  PaymentsHistoryTable,
 } from "@/module/dashboard/payments-settlements/components/tables/shared";
 import {
   interestSettlementRows,
@@ -30,47 +23,24 @@ const SEARCH_FIELDS: Array<keyof PaymentSettlementRow> = [
 ];
 
 export function InterestSettlementsTable() {
-  const { value } = useURLQuery<{ q?: string }>();
-  const search = value.q ?? "";
-  const [selectedPayment, setSelectedPayment] = React.useState<PaymentSettlementRow | null>(null);
-
-  const rows = useFilteredPaymentRows(interestSettlementRows, search, SEARCH_FIELDS);
-
-  const columns = React.useMemo<ColumnDef<PaymentSettlementRow, unknown>[]>(
-    () => [
-      createSerialColumn(),
-      createIdentifierColumn("Transaction ID", "transactionId"),
-      createIdentifierColumn("Loan ID", "loanId"),
-      createAmountColumn("Interest Value", "transactionValue"),
-      createTextColumn("Currency", "paymentMethod"),
-      createTextColumn("Transaction Date", "date"),
-      createStatusColumn("Status ID"),
-      createActionColumnWithOptions({
-        ariaLabel: "View interest settlement details",
-        onView: (row) => setSelectedPayment(row),
-      }),
-    ],
-    [],
-  );
-
   return (
-    <>
-      <div className="space-y-4">
-        <PaymentsTableToolbar />
-        <PaymentsBaseTable rows={rows} columns={columns} pageSize={10} totalEntries={rows.length} />
-      </div>
-
-      {selectedPayment ? (
-        <InterestDetailsModal
-          open={Boolean(selectedPayment)}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedPayment(null);
-            }
-          }}
-          payment={selectedPayment}
-        />
-      ) : null}
-    </>
+    <PaymentsHistoryTable
+      sourceRows={interestSettlementRows}
+      searchFields={SEARCH_FIELDS}
+      detailsModal={InterestDetailsModal}
+      buildColumns={(onView) => [
+        createSerialColumn(),
+        createIdentifierColumn("Transaction ID", "transactionId"),
+        createIdentifierColumn("Loan ID", "loanId"),
+        createAmountColumn("Interest Value", "transactionValue"),
+        createTextColumn("Currency", "paymentMethod"),
+        createTextColumn("Transaction Date", "date"),
+        createStatusColumn("Status ID"),
+        createActionColumnWithOptions({
+          ariaLabel: "View interest settlement details",
+          onView,
+        }),
+      ]}
+    />
   );
 }

@@ -1,23 +1,19 @@
 "use client";
 
 import { Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import type { LiquidityPoolItem } from "@/types/analytics.type";
 
-type LiquidityDatum = {
-  name: string;
-  value: number;
-  amount: string;
-  isActive: boolean;
-};
+const ACTIVE_COLOR = "#8E7D07";
+const INACTIVE_COLOR = "#676E74";
 
-const data: LiquidityDatum[] = [
-  { name: "USDC", value: 38.2, amount: "$1.2M", isActive: true },
-  { name: "USDT", value: 61.8, amount: "$10.5M", isActive: false },
-];
+export function LiquidityPieChart({ items }: { items: LiquidityPoolItem[] }) {
+  const data = items.map((item, i) => ({
+    name: item.currencyCode,
+    value: item.percentage || 100 / Math.max(items.length, 1),
+    amount: item.displayValue,
+    isActive: i === 0,
+  }));
 
-const activeColor = "#8E7D07";
-const inactiveColor = "#676E74";
-
-export function LiquidityPieChart() {
   return (
     <div>
       <div className="mx-auto my-3 size-[272px] min-h-[272px] min-w-[272px]">
@@ -30,7 +26,7 @@ export function LiquidityPieChart() {
             <Pie
               data={data.map((entry) => ({
                 ...entry,
-                fill: entry.isActive ? activeColor : inactiveColor,
+                fill: entry.isActive ? ACTIVE_COLOR : INACTIVE_COLOR,
               }))}
               dataKey="value"
               nameKey="name"
@@ -42,7 +38,7 @@ export function LiquidityPieChart() {
               strokeWidth={3}
             />
             <Tooltip
-              formatter={(value) => `${value}%`}
+              formatter={(value) => `${Number(value).toFixed(1)}%`}
               contentStyle={{ borderRadius: "12px", border: "1px solid #dadada" }}
             />
           </PieChart>
@@ -55,12 +51,12 @@ export function LiquidityPieChart() {
             <span className="flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5"
-                style={{ backgroundColor: entry.isActive ? activeColor : inactiveColor }}
+                style={{ backgroundColor: entry.isActive ? ACTIVE_COLOR : INACTIVE_COLOR }}
               />
               {entry.name}
             </span>
             <span>
-              {entry.value}% ({entry.amount})
+              {items.find((i) => i.currencyCode === entry.name)?.percentageDisplay ?? "0%"} ({entry.amount})
             </span>
           </p>
         ))}

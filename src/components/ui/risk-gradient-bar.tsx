@@ -86,7 +86,7 @@ export function RiskGradientBar({
     <div
       className={cn(
         "rounded-2xl bg-primary-grey-undertone",
-        isCompact ? "w-full max-w-[483px] p-5" : "p-4",
+        isCompact ? "w-full max-w-120.75 p-5" : "p-4",
       )}
     >
       <div className={cn("relative", isCompact ? "pt-11" : "pt-14")}>
@@ -98,7 +98,7 @@ export function RiskGradientBar({
           <div className="relative">
             <div
               className={cn(
-                "rounded-lg px-3 py-1 text-xs font-semibold shadow-sm min-w-[100px] max-w-[150px]",
+                "rounded-lg px-3 py-1 text-xs font-semibold shadow-sm min-w-25 max-w-37.5",
                 markerTone.backgroundClassName,
                 markerTone.textClassName,
               )}
@@ -107,7 +107,7 @@ export function RiskGradientBar({
             </div>
             <div
               className={cn(
-                "absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-[2px]",
+                "absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-xs",
                 markerTone.backgroundClassName,
               )}
             />

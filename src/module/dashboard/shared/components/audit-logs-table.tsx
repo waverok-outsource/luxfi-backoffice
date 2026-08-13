@@ -16,6 +16,8 @@ import { useAuditLogs } from "@/services/queries/audit.queries";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatDate, getSerialNumberOffset } from "@/util/helper";
 
+export type AuditLogScope = "customer" | "assetMarket" | "loan";
+
 type AuditLogRow = {
   id: string;
   logId: string;
@@ -28,7 +30,7 @@ type AuditLogRow = {
 
 const PAGE_SIZE = 5;
 
-export function AuditLogTab() {
+export function AuditLogsTable({ scope }: { scope: AuditLogScope }) {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
   const [activeLogId, setActiveLogId] = React.useState<string | null>(null);
 
@@ -41,7 +43,7 @@ export function AuditLogTab() {
     ...(query ? { q: query } : {}),
   });
 
-  const { data: auditResponse, isLoading } = useAuditLogs("assetMarket", listQuery);
+  const { data: auditResponse, isLoading } = useAuditLogs(scope, listQuery);
   const logs = auditResponse?.data ?? [];
   const paginationMeta = auditResponse?.pagination;
 

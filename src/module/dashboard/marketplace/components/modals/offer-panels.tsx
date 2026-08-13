@@ -6,8 +6,6 @@ import type * as React from "react";
 import { ModalDetailRow } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
 import { formatDateLabel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
-import { OFFER_MODAL_STATUS_LABELS, OFFER_TABLE_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
-import type { OfferStatus } from "@/types/marketplace.type";
 import { formatCurrency } from "@/util/format-currency";
 
 type ModalStatusBadgeProps = {
@@ -40,10 +38,6 @@ export function ModalStatusBadge({ variant, label }: ModalStatusBadgeProps) {
       {label}
     </Badge>
   );
-}
-
-export function OfferStatusBadge({ status }: { status: OfferStatus }) {
-  return <ModalStatusBadge variant={OFFER_TABLE_STATUS_CONFIG[status].variant} label={OFFER_MODAL_STATUS_LABELS[status]} />;
 }
 
 type OfferSummaryCardProps = {

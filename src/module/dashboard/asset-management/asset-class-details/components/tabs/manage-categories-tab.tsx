@@ -33,7 +33,7 @@ export function ManageCategoriesTab({ assetClass }: ManageCategoriesTabProps) {
 
   const searchQuery = (value.q ?? "").trim();
   const categoriesQuery = convertObjectToQuery({
-    assetClassId: assetClass.classId,
+    assetClassId: assetClass.assetClassId,
     ...(searchQuery ? { q: searchQuery } : {}),
   });
 

@@ -99,7 +99,7 @@ export type CreateAssetClassPayloadType = {
 // "config" wrapper) — matches the real API response shape exactly.
 export type AssetClassType = {
   assetType: AssetClassAssetType;
-  classId: string;
+  assetClassId: string;
   name: string;
   description: string;
   status: AssetClassStatus;

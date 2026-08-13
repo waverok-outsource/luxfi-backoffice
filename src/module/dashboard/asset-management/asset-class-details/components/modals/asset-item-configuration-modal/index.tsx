@@ -132,7 +132,7 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
 
   const { createAsset, updateAsset, deleteAsset, loading } = useAssetManagementFns();
   const { data: categoriesResponse } = useAssetCategories(
-    convertObjectToQuery({ assetClassId: assetClass.classId }),
+    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
   );
   const categories = categoriesResponse?.data ?? [];
 

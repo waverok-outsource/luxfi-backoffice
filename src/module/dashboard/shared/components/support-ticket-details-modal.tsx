@@ -3,11 +3,10 @@
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 
-import { ModalShell } from "@/components/modal";
+import { ModalDetailRow, ModalShell } from "@/components/modal";
 import { Switch } from "@/components/ui/switch";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import type { SupportTicketType } from "@/types/support.type";
 import { formatDate, toTitleCase } from "@/util/helper";
 import {
@@ -15,48 +14,15 @@ import {
   type SupportTicketRequestFormInputValues,
 } from "@/schema/customers.schema";
 
-type SupportTicketRequestModalProps = {
+type SupportTicketDetailsModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ticket: SupportTicketType;
   onSave: (ticketRef: string, nextResolved: boolean) => void;
+  loadingStatus?: boolean;
 };
 
-type DetailRowProps = {
-  label: string;
-  value: React.ReactNode;
-  copyText?: string;
-  valueClassName?: string;
-};
-
-function DetailRow({ label, value, copyText, valueClassName }: DetailRowProps) {
-  const { copy } = useCopyToClipboard();
-
-  return (
-    <div className="grid grid-cols-[1fr_auto] items-start gap-4 text-base leading-[1.2]">
-      <span className="font-medium text-text-grey">{label}</span>
-      <div className="flex items-start justify-end gap-2 text-text-black">
-        <span className={valueClassName ?? "text-right font-semibold"}>{value}</span>
-        {copyText ? (
-          <button
-            type="button"
-            className="mt-0.5 inline-flex size-5 items-center justify-center text-text-grey transition-colors hover:text-text-black"
-            onClick={() => void copy(copyText)}
-            aria-label={`Copy ${label.replace(":", "")}`}
-          >
-            <Copy className="h-[19px] w-[19px]" />
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function Divider() {
-  return <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />;
-}
-
-function getSupportTicketRequestDefaults(
+function getSupportTicketDefaults(
   ticket: SupportTicketType,
 ): SupportTicketRequestFormInputValues {
   return {
@@ -64,17 +30,18 @@ function getSupportTicketRequestDefaults(
   };
 }
 
-export function SupportTicketRequestModal({
+export function SupportTicketDetailsModal({
   open,
   onOpenChange,
   ticket,
   onSave,
-}: SupportTicketRequestModalProps) {
+  loadingStatus,
+}: SupportTicketDetailsModalProps) {
   const formId = React.useId();
 
   const { control, handleSubmit } = useForm<SupportTicketRequestFormInputValues>({
     resolver: zodResolver(supportTicketRequestSchema),
-    defaultValues: getSupportTicketRequestDefaults(ticket),
+    defaultValues: getSupportTicketDefaults(ticket),
     mode: "all",
   });
 
@@ -101,39 +68,39 @@ export function SupportTicketRequestModal({
         <ModalShell.Body className="rounded-xl px-6 py-8">
           <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-[14px]">
-              <DetailRow label="Ticket ID:" value={ticket.ticketId} copyText={ticket.ticketId} />
-              <DetailRow
+              <ModalDetailRow label="Ticket ID:" value={ticket.ticketId} copyText={ticket.ticketId} />
+              <ModalDetailRow
                 label="Customer Email Address:"
                 value={ticket.email}
                 copyText={ticket.email}
               />
-              <DetailRow
+              <ModalDetailRow
                 label="Customer  Phone number:"
                 value={ticket.phoneNumber}
                 copyText={ticket.phoneNumber}
               />
-              <DetailRow label="Channel:" value={toTitleCase(ticket.channel)} />
+              <ModalDetailRow label="Channel:" value={toTitleCase(ticket.channel)} />
             </div>
 
-            <Divider />
+            <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
             <div className="space-y-[14px]">
-              <DetailRow label="Date:" value={formatDate(ticket.requestDate, "do MMMM, yyyy")} />
-              <DetailRow label="Timestamp:" value={formatDate(ticket.requestDate, "h:mm a")} />
+              <ModalDetailRow label="Date:" value={formatDate(ticket.requestDate, "do MMMM, yyyy")} />
+              <ModalDetailRow label="Timestamp:" value={formatDate(ticket.requestDate, "h:mm a")} />
             </div>
 
-            <Divider />
+            <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
             <div className="space-y-[14px]">
-              <DetailRow label="Issue Category" value={ticket.issueCategory} />
-              <DetailRow
+              <ModalDetailRow label="Issue Category" value={ticket.issueCategory} />
+              <ModalDetailRow
                 label="Issue Description:"
                 value={ticket.issueDescription}
                 valueClassName="w-[244px] text-right font-semibold"
               />
             </div>
 
-            <Divider />
+            <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
 
             <div className="flex items-center justify-center gap-3 pt-1">
               <Controller
@@ -171,6 +138,7 @@ export function SupportTicketRequestModal({
             type="submit"
             form={formId}
             className="rounded-[14px] text-base font-semibold"
+            pending={loadingStatus}
           >
             Save & Close
           </ModalShell.Action>

@@ -55,11 +55,11 @@ export function SystemAssetsPortfolio() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {assetClasses.map((assetClass) => (
             <AssetClassCard
-              key={assetClass.classId}
+              key={assetClass.assetClassId}
               assetClass={assetClass}
               onEdit={() => setEditingAssetClass(assetClass)}
               onViewAssets={() =>
-                router.push(`${route.dashboard.assetManagement}/${assetClass.classId}`)
+                router.push(`${route.dashboard.assetManagement}/${assetClass.assetClassId}`)
               }
             />
           ))}

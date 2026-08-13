@@ -9,6 +9,8 @@ import type {
   CreateAssetMarketListingResponseType,
   ReviewAssetMarketListingPayloadType,
   ReviewAssetMarketListingResponseType,
+  ReviewOrderPayloadType,
+  ReviewOrderResponseType,
 } from "@/types/marketplace.type";
 import getErrorMessage from "@/util/get-error-message";
 import keyFactory from "@/util/query-key-factory";
@@ -18,6 +20,7 @@ const useMarketplaceFns = () => {
   const [loading, setLoading] = useState({
     CREATE_LISTING: false,
     REVIEW_LISTING: false,
+    REVIEW_ORDER: false,
   });
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
@@ -64,6 +67,29 @@ const useMarketplaceFns = () => {
         toast.error(getErrorMessage(error));
       } finally {
         loadingFn("REVIEW_LISTING", false);
+      }
+    },
+
+    reviewOrder: async (
+      orderId: string,
+      payload: ReviewOrderPayloadType,
+      callback?: () => void,
+    ) => {
+      loadingFn("REVIEW_ORDER", true);
+
+      try {
+        await apiHandler.post<ReviewOrderResponseType>(
+          `${MarketplaceRoute.orders}/${orderId}/review`,
+          payload,
+        );
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.marketplace.orders.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("REVIEW_ORDER", false);
       }
     },
   };

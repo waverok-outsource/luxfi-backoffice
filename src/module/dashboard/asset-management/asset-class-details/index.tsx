@@ -4,7 +4,13 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableSearchField } from "@/components/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { AssetClassDetailsHeader } from "@/module/dashboard/asset-management/asset-class-details/components/asset-class-details-header";
@@ -32,7 +38,9 @@ type AssetClassDetailsQuery = {
   year?: string;
 };
 
-function isAssetClassDetailsTab(value: string | null | undefined): value is AssetClassDetailsTabValue {
+function isAssetClassDetailsTab(
+  value: string | null | undefined,
+): value is AssetClassDetailsTabValue {
   return assetClassDetailsTabs.some((tab) => tab.value === value);
 }
 
@@ -46,9 +54,11 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
   const activeYear = value.year ?? "all";
 
   const { data: categoriesResponse } = useAssetCategories(
-    convertObjectToQuery({ assetClassId: assetClass.classId }),
+    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
   );
-  const { data: assetsResponse } = useAssets(convertObjectToQuery({ assetClassId: assetClass.classId }));
+  const { data: assetsResponse } = useAssets(
+    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
+  );
 
   const categoryOptions = categoriesResponse?.data ?? [];
   const yearOptions = React.useMemo(
@@ -64,7 +74,13 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
       return;
     }
 
-    setURLQuery({ tab: nextTab, page: undefined, q: undefined, category: undefined, year: undefined });
+    setURLQuery({
+      tab: nextTab,
+      page: undefined,
+      q: undefined,
+      category: undefined,
+      year: undefined,
+    });
   };
 
   return (
@@ -115,7 +131,10 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
                         if (!selected || selected === "all") {
                           return "All Categories";
                         }
-                        return categoryOptions.find((category) => category.reference === selected)?.name ?? "All Categories";
+                        return (
+                          categoryOptions.find((category) => category.reference === selected)
+                            ?.name ?? "All Categories"
+                        );
                       }}
                     </SelectValue>
                   </SelectTrigger>
@@ -137,7 +156,9 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
                 >
                   <SelectTrigger className="w-[150px]" size="sm">
                     <SelectValue>
-                      {(selected: string | null) => (selected && selected !== "all" ? selected : "All Time")}
+                      {(selected: string | null) =>
+                        selected && selected !== "all" ? selected : "All Time"
+                      }
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>

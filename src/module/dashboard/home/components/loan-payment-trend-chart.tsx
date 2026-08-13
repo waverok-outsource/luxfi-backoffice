@@ -10,23 +10,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { LoanGraphPoint } from "@/types/analytics.type";
 
-const data = [
-  { month: "Jan 25", disbursement: 540, repayments: 410 },
-  { month: "Feb 25", disbursement: 430, repayments: 300 },
-  { month: "Mar 25", disbursement: 520, repayments: 230 },
-  { month: "Apr 25", disbursement: 510, repayments: 280 },
-  { month: "May 25", disbursement: 650, repayments: 380 },
-  { month: "Jun 25", disbursement: 460, repayments: 340 },
-  { month: "Jul 25", disbursement: 760, repayments: 120 },
-  { month: "Aug 25", disbursement: 790, repayments: 240 },
-  { month: "Sep 25", disbursement: 470, repayments: 420 },
-  { month: "Oct 25", disbursement: 460, repayments: 180 },
-  { month: "Nov 25", disbursement: 580, repayments: 320 },
-  { month: "Dec 25", disbursement: 660, repayments: 290 },
-];
-
-export function LoanPaymentTrendChart() {
+export function LoanPaymentTrendChart({ data }: { data: LoanGraphPoint[] }) {
   return (
     <div className="h-[350px] min-h-[350px] w-full min-w-0 rounded-xl bg-primary-grey-undertone p-3">
       <ResponsiveContainer
@@ -56,15 +42,14 @@ export function LoanPaymentTrendChart() {
             axisLine={false}
             tick={{ fill: "#676E74", fontSize: 12 }}
             width={42}
-            ticks={[0, 200, 400, 600, 800, 1000]}
           />
           <Tooltip
             contentStyle={{ borderRadius: "12px", border: "1px solid #dadada" }}
             cursor={{ fill: "rgba(142,125,7,0.05)" }}
           />
           <Bar
-            dataKey="repayments"
-            name="Repayments"
+            dataKey="repayment"
+            name="Repayment"
             fill="#C8A159"
             radius={[8, 8, 0, 0]}
             barSize={28}

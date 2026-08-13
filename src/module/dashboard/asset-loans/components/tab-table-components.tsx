@@ -3,9 +3,9 @@
 import type { ReactElement } from "react";
 
 import { AssetLoanRequestsTable } from "@/module/dashboard/asset-loans/components/tables/asset-loan-requests-table";
-import { LoanActivityLogsTable } from "@/module/dashboard/asset-loans/components/tables/loan-activity-logs-table";
 import { LoanDisbursementsTable } from "@/module/dashboard/asset-loans/components/tables/loan-disbursements-table";
 import { LoanRepaymentsTable } from "@/module/dashboard/asset-loans/components/tables/loan-repayments-table";
+import { AuditLogsTable } from "@/module/dashboard/shared/components/audit-logs-table";
 import type { AssetLoanTabValue } from "@/module/dashboard/asset-loans/data";
 
 type AssetLoansTabView = {
@@ -32,7 +32,7 @@ export const ASSET_LOANS_TAB_COMPONENTS: Record<AssetLoanTabValue, AssetLoansTab
   },
   "loan-activity-logs": {
     slots: {
-      content: LoanActivityLogsTable,
+      content: () => <AuditLogsTable scope="loan" />,
     },
   },
 };
