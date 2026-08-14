@@ -4,6 +4,7 @@ export type RiskManagementMetric = {
   trend: string;
   period?: string;
   tone: "positive" | "negative";
+  isLoading?: boolean;
 };
 
 export type RiskExposureShare = {

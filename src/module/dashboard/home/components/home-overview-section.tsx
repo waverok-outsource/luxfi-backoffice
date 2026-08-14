@@ -25,7 +25,14 @@ function metricCard(
   isGoodWhenUp = true,
 ) {
   if (isLoading || !metric) {
-    return { title, value: "…", trend: undefined, period: undefined, tone: "positive" as const };
+    return {
+      title,
+      value: "--",
+      trend: undefined,
+      period: undefined,
+      tone: "positive" as const,
+      isLoading,
+    };
   }
   return {
     title,

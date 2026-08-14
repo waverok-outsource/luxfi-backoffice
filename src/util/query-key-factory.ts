@@ -58,6 +58,14 @@ const keyFactory = {
     },
   },
 
+  growthMarketing: {
+    all: ["growth-marketing"],
+    overview: (query: string) => ["growth-marketing", "overview", query],
+    metrics: (query: string) => ["growth-marketing", "metrics", query],
+    customerDistribution: (query: string) => ["growth-marketing", "customer-distribution", query],
+    userGrowth: (query: string) => ["growth-marketing", "user-growth", query],
+  },
+
   marketplace: {
     all: ["marketplace"],
     listings: {
@@ -125,6 +133,30 @@ const keyFactory = {
   riskManagement: {
     summary: ["risk-management", "summary"],
     analytics: ["risk-management", "analytics"],
+  },
+
+  payments: {
+    all: ["payments"],
+    assetSales: {
+      list: (query: string) => ["payments", "asset-sales", query],
+      details: (id: string) => ["payments", "asset-sales", id],
+    },
+    assetPurchases: {
+      list: (query: string) => ["payments", "asset-purchases", query],
+      details: (id: string) => ["payments", "asset-purchases", id],
+    },
+    customerDeposits: {
+      list: (query: string) => ["payments", "customer-deposits", query],
+      details: (id: string) => ["payments", "customer-deposits", id],
+    },
+    loanDisbursements: {
+      list: (query: string) => ["payments", "loan-disbursements", query],
+      details: (id: string) => ["payments", "loan-disbursements", id],
+    },
+    loansRepayments: {
+      list: (query: string) => ["payments", "loans-repayments", query],
+      details: (id: string) => ["payments", "loans-repayments", id],
+    },
   },
 };
 

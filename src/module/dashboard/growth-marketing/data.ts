@@ -1,3 +1,10 @@
+import type {
+  GrowthMarketingCountryDistribution,
+  GrowthMarketingMetricItem,
+  GrowthMarketingUserGrowthPoint,
+} from "@/types/growth-marketing.type";
+import { toTitleCase } from "@/util/helper";
+
 export type GrowthMetricTone = "positive" | "negative";
 
 export type GrowthMarketingMetric = {
@@ -6,6 +13,7 @@ export type GrowthMarketingMetric = {
   trend: string;
   period?: string;
   tone: GrowthMetricTone;
+  isLoading?: boolean;
 };
 
 export type GrowthMarketingLocationShare = {
@@ -20,85 +28,83 @@ export type GrowthMarketingTrendPoint = {
   unverified: number;
 };
 
-export const featuredMetrics: GrowthMarketingMetric[] = [
-  {
-    title: "Inflow Transaction Count",
-    value: "1,450",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Outflow Transaction Count",
-    value: "610",
-    trend: "99.9%",
-    tone: "negative",
-  },
+const FEATURED_METRIC_DEFS = [
+  { key: "inflowTransactionCount", title: "Inflow Transaction Count" },
+  { key: "outflowTransactionCount", title: "Outflow Transaction Count" },
 ];
 
-export const summaryMetrics: GrowthMarketingMetric[] = [
-  {
-    title: "Customer Leads",
-    value: "1,420",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Total Sales",
-    value: "1,420",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Online Purchases",
-    value: "1,420",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Loan Requests",
-    value: "1,420",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "App Downloads",
-    value: "312",
-    trend: "99.9%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
-  {
-    title: "Website Visitors",
-    value: "610",
-    trend: "99.9%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
+const SUMMARY_METRIC_DEFS = [
+  { key: "customerLeads", title: "Customer Leads" },
+  { key: "totalSales", title: "Total Sales" },
+  { key: "onlinePurchases", title: "Online Purchases" },
+  { key: "loanRequests", title: "Loan Requests" },
+  { key: "appDownloads", title: "App Downloads" },
+  { key: "websiteVisitors", title: "Website Visitors" },
 ];
 
-export const locationShares: GrowthMarketingLocationShare[] = [
-  { country: "Nigeria", percent: 60, color: "#2B6B4D" },
-  { country: "United Kingdom", percent: 40, color: "#3FA16F" },
-  { country: "Ghana", percent: 40, color: "#4FB685" },
-  { country: "France", percent: 40, color: "#68C996" },
-  { country: "South Africa", percent: 33, color: "#7FE0A7" },
-  { country: "UAE", percent: 25, color: "#86E8B3" },
-  { country: "Kenya", percent: 15, color: "#B8F6D0" },
+const LOCATION_COLORS = [
+  "#2B6B4D",
+  "#3FA16F",
+  "#4FB685",
+  "#68C996",
+  "#7FE0A7",
+  "#86E8B3",
+  "#B8F6D0",
 ];
 
-export const userGrowthTrend: GrowthMarketingTrendPoint[] = [
-  { month: "Jan '25", verified: 560, unverified: 410 },
-  { month: "Feb '25", verified: 430, unverified: 300 },
-  { month: "Mar '25", verified: 540, unverified: 225 },
-  { month: "Apr '25", verified: 520, unverified: 280 },
-  { month: "May '25", verified: 660, unverified: 380 },
-  { month: "Jun '25", verified: 460, unverified: 340 },
-  { month: "Jul '25", verified: 780, unverified: 110 },
-  { month: "Aug '25", verified: 810, unverified: 230 },
-  { month: "Sep '25", verified: 460, unverified: 420 },
-  { month: "Oct '25", verified: 450, unverified: 175 },
-  { month: "Nov '25", verified: 590, unverified: 320 },
-  { month: "Dec '25", verified: 670, unverified: 285 },
-];
+function toGrowthMarketingMetric(
+  def: { key: string; title: string },
+  metricsByKey: Map<string, GrowthMarketingMetricItem>,
+  isLoading: boolean,
+): GrowthMarketingMetric {
+  const metric = metricsByKey.get(def.key);
 
-export const totalUsersLabel = "12,456 Total Users";
+  if (!metric) {
+    return { title: def.title, value: "--", trend: "", tone: "positive", isLoading };
+  }
+
+  return {
+    title: metric.label,
+    value: metric.value.toLocaleString(),
+    trend: `${Math.abs(metric.percentageChange)}%`,
+    period: metric.period,
+    tone: metric.percentageChange < 0 ? "negative" : "positive",
+    isLoading,
+  };
+}
+
+export function splitGrowthMarketingMetrics(
+  metrics: GrowthMarketingMetricItem[],
+  isLoading: boolean,
+) {
+  const metricsByKey = new Map(metrics.map((metric) => [metric.key, metric]));
+
+  return {
+    featuredMetrics: FEATURED_METRIC_DEFS.map((def) =>
+      toGrowthMarketingMetric(def, metricsByKey, isLoading),
+    ),
+    summaryMetrics: SUMMARY_METRIC_DEFS.map((def) =>
+      toGrowthMarketingMetric(def, metricsByKey, isLoading),
+    ),
+  };
+}
+
+export function toLocationShares(
+  distribution: GrowthMarketingCountryDistribution[],
+): GrowthMarketingLocationShare[] {
+  return distribution.map((entry, index) => ({
+    country: entry.country === "Unknown" ? entry.country : toTitleCase(entry.country),
+    percent: entry.percentage,
+    color: LOCATION_COLORS[index % LOCATION_COLORS.length],
+  }));
+}
+
+export function toUserGrowthTrend(
+  points: GrowthMarketingUserGrowthPoint[],
+): GrowthMarketingTrendPoint[] {
+  return points.map((point) => ({
+    month: point.label,
+    verified: point.verified,
+    unverified: point.unverified,
+  }));
+}

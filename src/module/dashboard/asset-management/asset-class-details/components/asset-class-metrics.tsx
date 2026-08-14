@@ -11,7 +11,7 @@ type AssetClassMetricsProps = {
 };
 
 export function AssetClassMetrics({ assetClass }: AssetClassMetricsProps) {
-  const { data: assetsResponse } = useAssets(
+  const { data: assetsResponse, isLoading } = useAssets(
     convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
   );
   const items = assetsResponse?.data ?? [];
@@ -39,6 +39,7 @@ export function AssetClassMetrics({ assetClass }: AssetClassMetricsProps) {
           trend="67%"
           period="Last 7 days"
           tone="positive"
+          isLoading={isLoading}
           valueClassName="whitespace-nowrap"
         />
       ))}

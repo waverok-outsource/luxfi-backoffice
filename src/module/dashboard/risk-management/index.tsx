@@ -43,8 +43,8 @@ export function RiskManagementDashboard() {
         },
       ]
     : [
-        { title: "Average Portfolio LTV", value: loading ? "…" : "-", trend: "", tone: "positive" },
-        { title: "Loans (> 70%) LTV", value: loading ? "…" : "-", trend: "", tone: "negative" },
+        { title: "Average Portfolio LTV", value: "--", trend: "", tone: "positive", isLoading: loading },
+        { title: "Loans (> 70%) LTV", value: "--", trend: "", tone: "negative", isLoading: loading },
       ];
 
   const summaryMetrics: RiskManagementMetric[] = summary
@@ -69,9 +69,15 @@ export function RiskManagementDashboard() {
         },
       ]
     : [
-        { title: "Liquidation Triggered", value: loading ? "…" : "-", trend: "", tone: "positive" },
-        { title: "Capital At Risk", value: loading ? "…" : "-", trend: "", tone: "positive" },
-        { title: "Coverage Ratio After Liquidation", value: loading ? "…" : "-", trend: "", tone: "positive" },
+        { title: "Liquidation Triggered", value: "--", trend: "", tone: "positive", isLoading: loading },
+        { title: "Capital At Risk", value: "--", trend: "", tone: "positive", isLoading: loading },
+        {
+          title: "Coverage Ratio After Liquidation",
+          value: "--",
+          trend: "",
+          tone: "positive",
+          isLoading: loading,
+        },
       ];
 
   const riskExposureShares: RiskExposureShare[] = (analytics?.assetExposure ?? []).map(

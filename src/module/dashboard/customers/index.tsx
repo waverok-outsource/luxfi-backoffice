@@ -37,7 +37,7 @@ export function CustomersDashboard() {
   const activeTab = isCustomersTab(value.tab) ? value.tab : DEFAULT_CUSTOMERS_TAB;
   const ActiveTabContent = CUSTOMERS_TAB_COMPONENTS[activeTab].slots.content;
 
-  const { data: customersResponse } = useCustomers("");
+  const { data: customersResponse, isLoading: statsLoading } = useCustomers("");
   const stats = customersResponse?.data.stats;
 
   const handleTabChange = (nextTab: string) => {
@@ -94,17 +94,19 @@ export function CustomersDashboard() {
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <StatCard
           title="Total Registered Customers"
-          value={stats ? stats.customerCount.value.toLocaleString() : "-"}
-          trend={stats ? `${stats.customerCount.growth}%` : "-"}
+          value={stats ? stats.customerCount.value.toLocaleString() : "--"}
+          trend={stats ? `${stats.customerCount.growth}%` : "--"}
           period={stats ? `Last ${stats.customerCount.growthDuration}` : undefined}
           tone={stats?.customerCount.growthPattern === "downward" ? "negative" : "positive"}
+          isLoading={statsLoading}
         />
         <StatCard
           title="Average Customer Growth"
-          value={stats ? String(stats.customerGrowth.value) : "-"}
-          trend={stats ? `${stats.customerGrowth.growth}%` : "-"}
+          value={stats ? String(stats.customerGrowth.value) : "--"}
+          trend={stats ? `${stats.customerGrowth.growth}%` : "--"}
           period={stats ? `Last ${stats.customerGrowth.growthDuration}` : undefined}
           tone={stats?.customerGrowth.growthPattern === "downward" ? "negative" : "positive"}
+          isLoading={statsLoading}
         />
         <CustomerChannelCard
           channels={[

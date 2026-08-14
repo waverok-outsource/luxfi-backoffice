@@ -3,6 +3,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 export type HelpSupportMetric = {
   title: string;
   value: string;
+  isLoading?: boolean;
 };
 
 export function HelpSupportMetrics({ metrics }: { metrics: HelpSupportMetric[] }) {

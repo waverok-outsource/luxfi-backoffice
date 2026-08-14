@@ -13,3 +13,13 @@ export const PAYMENTS_STATUS_CONFIG = {
 export function getPaymentStatusConfig(status: PaymentStatus) {
   return PAYMENTS_STATUS_CONFIG[status];
 }
+
+/**
+ * The API returns capitalized status strings (e.g. "Completed", "Failed").
+ * Falls back to "pending" for any value the backend sends that we don't
+ * recognize, so an unmapped status doesn't crash the badge lookup.
+ */
+export function normalizePaymentStatus(value: string): PaymentStatus {
+  const normalized = value.trim().toLowerCase();
+  return normalized in PAYMENTS_STATUS_CONFIG ? (normalized as PaymentStatus) : "pending";
+}

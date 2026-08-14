@@ -13,13 +13,20 @@ function getPresenceShare(value: number, total: number) {
 }
 
 export function TeamManagementMetrics() {
-  const { data } = useSettingsAnalytics();
+  const { data, isLoading } = useSettingsAnalytics();
   const teamMembers = buildAnalyticsMetricCard<SettingsAnalyticsMetricType>(
     data?.teamMembers,
     "Total Team Members",
+    undefined,
+    isLoading,
   );
-  const roles = buildAnalyticsMetricCard(data?.roles, "Total Roles");
-  const assignedRoles = buildAnalyticsMetricCard(data?.assignedRoles, "Assigned Roles");
+  const roles = buildAnalyticsMetricCard(data?.roles, "Total Roles", undefined, isLoading);
+  const assignedRoles = buildAnalyticsMetricCard(
+    data?.assignedRoles,
+    "Assigned Roles",
+    undefined,
+    isLoading,
+  );
   const totalPresence = (data?.teamMembers.online ?? 0) + (data?.teamMembers.offline ?? 0);
 
   return (
@@ -30,6 +37,7 @@ export function TeamManagementMetrics() {
         trend={teamMembers.trend}
         period={teamMembers.period}
         tone={teamMembers.tone}
+        isLoading={teamMembers.isLoading}
       />
 
       <PresenceMeterCard
@@ -60,6 +68,7 @@ export function TeamManagementMetrics() {
           trend={metric.trend}
           period={metric.period}
           tone={metric.tone}
+          isLoading={metric.isLoading}
         />
       ))}
     </div>

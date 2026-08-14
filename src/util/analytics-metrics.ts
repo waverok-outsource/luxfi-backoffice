@@ -13,6 +13,7 @@ export type AnalyticsStatCardType = {
   trend: string;
   period: string;
   tone: "positive" | "negative";
+  isLoading?: boolean;
 };
 
 export function formatAnalyticsNumber(value: number | undefined) {
@@ -27,6 +28,7 @@ export function buildAnalyticsMetricCard<T extends AnalyticsMetricType>(
   metric: T | undefined,
   title: string,
   valueFormatter: (metric: T | undefined) => string = (value) => formatAnalyticsNumber(value?.value),
+  isLoading = false,
 ): AnalyticsStatCardType {
   return {
     title,
@@ -34,5 +36,6 @@ export function buildAnalyticsMetricCard<T extends AnalyticsMetricType>(
     trend: metric?.growth ?? "--",
     period: metric?.growthDuration ?? "--",
     tone: getAnalyticsMetricTone(metric?.growthPattern),
+    isLoading,
   };
 }

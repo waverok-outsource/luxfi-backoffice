@@ -34,15 +34,24 @@ export function HelpSupportDashboard() {
   const { data: statsData, isLoading: statsLoading } = useSupportStats();
   const stats = statsData?.data;
 
-  const metricValue = (count: number | undefined) => {
-    if (statsLoading) return "…";
-    return count == null ? "-" : String(count);
-  };
+  const metricValue = (count: number | undefined) => (count == null ? "--" : String(count));
 
   const supportMetrics: HelpSupportMetric[] = [
-    { title: "Total Support Tickets", value: metricValue(stats?.totalSupportTickets) },
-    { title: "Total Pending Tickets", value: metricValue(stats?.totalPendingTickets) },
-    { title: "Total Resolved Tickets", value: metricValue(stats?.totalResolvedTickets) },
+    {
+      title: "Total Support Tickets",
+      value: metricValue(stats?.totalSupportTickets),
+      isLoading: statsLoading,
+    },
+    {
+      title: "Total Pending Tickets",
+      value: metricValue(stats?.totalPendingTickets),
+      isLoading: statsLoading,
+    },
+    {
+      title: "Total Resolved Tickets",
+      value: metricValue(stats?.totalResolvedTickets),
+      isLoading: statsLoading,
+    },
   ];
 
   const activeTab = isHelpSupportTab(value.tab) ? value.tab : DEFAULT_HELP_SUPPORT_TAB;

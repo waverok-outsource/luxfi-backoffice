@@ -7,16 +7,24 @@ import { buildAnalyticsMetricCard } from "@/util/analytics-metrics";
 import { formatCurrency } from "@/util/format-currency";
 
 export function PortfolioManagementMetrics() {
-  const { data } = usePortfolioAnalytics();
+  const { data, isLoading } = usePortfolioAnalytics();
 
   const metrics = [
-    buildAnalyticsMetricCard<PortfolioAnalyticsMetricType>(data?.assetCount, "Total Asset Count"),
-    buildAnalyticsMetricCard(data?.assetValue, "Total Asset Value", (metric) =>
-      formatCurrency(metric?.value, metric?.currencyCode),
+    buildAnalyticsMetricCard<PortfolioAnalyticsMetricType>(
+      data?.assetCount,
+      "Total Asset Count",
+      undefined,
+      isLoading,
     ),
-    buildAnalyticsMetricCard(data?.assetCategories, "Total Asset Categories"),
-    buildAnalyticsMetricCard(data?.publishedAsset, "Published Assets"),
-    buildAnalyticsMetricCard(data?.unpublishedAsset, "Unpublished Assets"),
+    buildAnalyticsMetricCard(
+      data?.assetValue,
+      "Total Asset Value",
+      (metric) => formatCurrency(metric?.value, metric?.currencyCode),
+      isLoading,
+    ),
+    buildAnalyticsMetricCard(data?.assetCategories, "Total Asset Categories", undefined, isLoading),
+    buildAnalyticsMetricCard(data?.publishedAsset, "Published Assets", undefined, isLoading),
+    buildAnalyticsMetricCard(data?.unpublishedAsset, "Unpublished Assets", undefined, isLoading),
   ];
 
   return (
@@ -29,6 +37,7 @@ export function PortfolioManagementMetrics() {
           trend={metric.trend}
           period={metric.period}
           tone={metric.tone}
+          isLoading={metric.isLoading}
           valueClassName="whitespace-nowrap"
         />
       ))}
