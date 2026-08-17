@@ -1,4 +1,5 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
+import type { ConnectivitySummary, MetricValue } from "./analytics.type";
 
 // Not a fixed union: the backend's customer account status vocabulary has
 // already diverged from the team-member one ("blacklisted" vs "blacklist"),
@@ -108,3 +109,15 @@ export type CustomerSessionLogType = {
 };
 
 export type CustomerSessionLogsResponseType = PaginatedApiResponse<CustomerSessionLogType[]>;
+
+// GET /v1/analytics/customers
+export type CustomerAnalyticsType = {
+  metrics: {
+    totalRegistered: MetricValue;
+    averageGrowth: MetricValue;
+  };
+  connectivity: ConnectivitySummary;
+  period: { from: string; to: string };
+};
+
+export type CustomerAnalyticsResponseType = ApiResponse<CustomerAnalyticsType>;

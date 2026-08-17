@@ -1,6 +1,7 @@
 const baseUrl = "/v1";
 
 const LoanRoute = {
+  analytics: `${baseUrl}/analytics/loans`,
   customerLoans: (customerId: string) => `${baseUrl}/customers/${customerId}/loans`,
   loans: `${baseUrl}/loans`,
   details: (loanRef: string) => `${baseUrl}/loans/${loanRef}`,

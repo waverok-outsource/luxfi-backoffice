@@ -9,7 +9,9 @@ import {
   type HelpSupportMetric,
 } from "@/module/dashboard/help-support/components/help-support-metrics";
 import { HELP_SUPPORT_TAB_COMPONENTS } from "@/module/dashboard/help-support/components/tab-table-components";
-import { useSupportStats } from "@/services/queries/support.queries";
+import { useSupportCaseAnalytics } from "@/services/queries/support.queries";
+import { buildMetricValueCard } from "@/util/analytics-metrics";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import {
   DEFAULT_HELP_SUPPORT_TAB,
   helpSupportTabs,
@@ -31,27 +33,27 @@ function isHelpSupportTab(value: string | null | undefined): value is HelpSuppor
 export function HelpSupportDashboard() {
   const { value, setURLQuery } = useURLQuery<HelpSupportQuery>();
 
-  const { data: statsData, isLoading: statsLoading } = useSupportStats();
-  const stats = statsData?.data;
+  const analyticsQuery = convertObjectToQuery({
+    ...(value.from ? { from: value.from } : {}),
+    ...(value.to ? { to: value.to } : {}),
+  });
 
-  const metricValue = (count: number | undefined) => (count == null ? "--" : String(count));
+  const { data: analyticsResponse, isLoading: statsLoading } = useSupportCaseAnalytics(
+    analyticsQuery,
+  );
+  const analytics = analyticsResponse?.data;
 
   const supportMetrics: HelpSupportMetric[] = [
-    {
-      title: "Total Support Tickets",
-      value: metricValue(stats?.totalSupportTickets),
-      isLoading: statsLoading,
-    },
-    {
-      title: "Total Pending Tickets",
-      value: metricValue(stats?.totalPendingTickets),
-      isLoading: statsLoading,
-    },
-    {
-      title: "Total Resolved Tickets",
-      value: metricValue(stats?.totalResolvedTickets),
-      isLoading: statsLoading,
-    },
+    buildMetricValueCard(analytics?.metrics.totalTickets, "Total Support Tickets", statsLoading),
+    buildMetricValueCard(analytics?.metrics.pendingTickets, "Total Pending Tickets", statsLoading),
+    buildMetricValueCard(analytics?.metrics.resolvedTickets, "Total Resolved Tickets", statsLoading),
+    buildMetricValueCard(analytics?.passwordResets.total, "Total Password Resets", statsLoading),
+    buildMetricValueCard(analytics?.passwordResets.pending, "Pending Password Resets", statsLoading),
+    buildMetricValueCard(
+      analytics?.passwordResets.reset,
+      "Completed Password Resets",
+      statsLoading,
+    ),
   ];
 
   const activeTab = isHelpSupportTab(value.tab) ? value.tab : DEFAULT_HELP_SUPPORT_TAB;

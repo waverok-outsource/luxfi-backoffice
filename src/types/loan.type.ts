@@ -1,5 +1,6 @@
 import type { AssetPriceType } from "./asset-management.type";
 import type { ApiResponse, PaginatedApiResponse } from "./global";
+import type { MetricValue } from "./analytics.type";
 
 export type LoanStatus = "pending" | "active" | "liquidated" | "rejected" | "completed";
 
@@ -198,3 +199,17 @@ export type ApproveLoanPayloadType = {
 };
 
 export type ReviewLoanResponseType = ApiResponse<LoanType>;
+
+// GET /v1/analytics/loans
+export type LoanAnalyticsType = {
+  metrics: {
+    loanDisbursed: MetricValue;
+    interestAccrued: MetricValue;
+    loanRepayment: MetricValue;
+    activeLoans: MetricValue;
+    nearLiquidations: MetricValue;
+  };
+  period: { from: string; to: string };
+};
+
+export type LoanAnalyticsResponseType = ApiResponse<LoanAnalyticsType>;

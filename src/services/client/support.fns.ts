@@ -1,10 +1,18 @@
 import type {
   PasswordResetRequestsResponseType,
-  SupportStatsResponseType,
+  SupportCaseAnalyticsResponseType,
   SupportTicketsResponseType,
 } from "@/types/support.type";
 import apiHandler from "../api-handler";
 import SupportRoute from "../route/support.route";
+
+export const fetchSupportCaseAnalytics = async (query: string = "") => {
+  const { data } = await apiHandler.get<SupportCaseAnalyticsResponseType>(
+    `${SupportRoute.analyticsCases}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
 
 export const fetchSupportTickets = async (query: string = "") => {
   const { data } = await apiHandler.get<SupportTicketsResponseType>(
@@ -30,8 +38,3 @@ export const fetchPasswordResetRequests = async (query: string = "") => {
   return data;
 };
 
-export const fetchSupportStats = async () => {
-  const { data } = await apiHandler.get<SupportStatsResponseType>(SupportRoute.stats);
-
-  return data;
-};

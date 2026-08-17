@@ -6,51 +6,6 @@ export type PaymentsMetric = {
   tone: "positive" | "negative";
 };
 
-export const leadingMetrics: PaymentsMetric[] = [
-  {
-    title: "Total Inflow",
-    value: "$ 2,705,987.00",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Total Outflow",
-    value: "- $ 1,905,987.00",
-    trend: "99.9%",
-    tone: "negative",
-  },
-];
-
-export const trailingMetrics: PaymentsMetric[] = [
-  {
-    title: "Wallet Deposits",
-    value: "$ 905,987.00",
-    trend: "99.9%",
-    tone: "positive",
-  },
-  {
-    title: "Interest Settlements",
-    value: "$ 25,442.00",
-    trend: "99.9%",
-    tone: "positive",
-  },
-];
-
-export const assetTradeSummary = {
-  sales: {
-    title: "Asset Sales",
-    value: "$ 1,005,987.00",
-    trend: "99.9%",
-    tone: "positive" as const,
-  },
-  purchases: {
-    title: "Asset Purchases",
-    value: "$ 1,005,987.00",
-    trend: "99.9%",
-    tone: "positive" as const,
-  },
-};
-
 export type PaymentsHistoryTabValue =
   | "asset-sales"
   | "asset-purchases"

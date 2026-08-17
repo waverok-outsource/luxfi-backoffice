@@ -9,9 +9,18 @@ import type {
   LoanDisbursementListResponse,
   LoanRepaymentDetailsResponse,
   LoanRepaymentListResponse,
+  PaymentsAnalyticsResponseType,
 } from "@/types/payments.type";
 import apiHandler from "../api-handler";
 import PaymentsRoute from "../route/payments.route";
+
+export const fetchPaymentsAnalytics = async (query: string = "") => {
+  const { data } = await apiHandler.get<PaymentsAnalyticsResponseType>(
+    `${PaymentsRoute.analytics}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
 
 export const fetchAssetSalesHistory = async (query: string = "") => {
   const { data } = await apiHandler.get<AssetSaleHistoryListResponse>(

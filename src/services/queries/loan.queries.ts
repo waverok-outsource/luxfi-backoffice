@@ -2,12 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   fetchCustomerLoans,
+  fetchLoanAnalytics,
   fetchLoanById,
   fetchLoanRejectionReasons,
   fetchLoanSchedule,
   fetchLoans,
 } from "@/services/client/loan.fns";
 import keyFactory from "@/util/query-key-factory";
+
+export const useLoanAnalytics = (query: string = "") =>
+  useQuery({
+    queryKey: keyFactory.loans.analytics(query),
+    queryFn: () => fetchLoanAnalytics(query),
+  });
 
 export const useCustomerLoans = (customerId: string, query: string) =>
   useQuery({

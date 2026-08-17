@@ -7,11 +7,13 @@ import { useURLQuery } from "@/hooks/useUrlQuery";
 import { AssetLoanMetrics } from "@/module/dashboard/asset-loans/components/asset-loan-metrics";
 import { ASSET_LOANS_TAB_COMPONENTS } from "@/module/dashboard/asset-loans/components/tab-table-components";
 import {
-  assetLoansMetrics,
   assetLoansTabs,
   DEFAULT_ASSET_LOANS_TAB,
   type AssetLoanTabValue,
 } from "@/module/dashboard/asset-loans/data";
+import { useLoanAnalytics } from "@/services/queries/loan.queries";
+import { buildMetricValueCard } from "@/util/analytics-metrics";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type AssetLoansQuery = {
   tab?: string;
@@ -27,6 +29,22 @@ function isAssetLoanTab(value: string | null | undefined): value is AssetLoanTab
 
 export function AssetLoansDashboard() {
   const { value, setURLQuery } = useURLQuery<AssetLoansQuery>();
+
+  const analyticsQuery = convertObjectToQuery({
+    ...(value.from ? { from: value.from } : {}),
+    ...(value.to ? { to: value.to } : {}),
+  });
+
+  const { data: analyticsResponse, isLoading } = useLoanAnalytics(analyticsQuery);
+  const metrics = analyticsResponse?.data.metrics;
+
+  const assetLoansMetrics = [
+    buildMetricValueCard(metrics?.loanDisbursed, "Total Loan Disbursed", isLoading),
+    buildMetricValueCard(metrics?.interestAccrued, "Total Interest Accrued", isLoading),
+    buildMetricValueCard(metrics?.loanRepayment, "Total Loan Repaid", isLoading),
+    buildMetricValueCard(metrics?.activeLoans, "Active Loans", isLoading),
+    buildMetricValueCard(metrics?.nearLiquidations, "Near Liquidations", isLoading, false),
+  ];
 
   const activeTab = isAssetLoanTab(value.tab) ? value.tab : DEFAULT_ASSET_LOANS_TAB;
   const ActiveTabContent = ASSET_LOANS_TAB_COMPONENTS[activeTab].slots.content;

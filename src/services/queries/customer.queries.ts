@@ -2,10 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   fetchCustomer,
+  fetchCustomerAnalytics,
   fetchCustomerSessionLogs,
   fetchCustomers,
 } from "@/services/client/customer.fns";
 import keyFactory from "@/util/query-key-factory";
+
+export const useCustomerAnalytics = (query: string = "") =>
+  useQuery({
+    queryKey: keyFactory.customers.analytics(query),
+    queryFn: () => fetchCustomerAnalytics(query),
+  });
 
 export const useCustomers = (query: string) =>
   useQuery({

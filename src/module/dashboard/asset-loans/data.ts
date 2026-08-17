@@ -6,44 +6,6 @@ export type AssetLoansMetric = {
   tone: "positive" | "negative";
 };
 
-export const assetLoansMetrics: AssetLoansMetric[] = [
-  {
-    title: "Total Loan Disbursed",
-    value: "$2,960,000",
-    trend: "67%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
-  {
-    title: "Total Interest Accrued",
-    value: "$2,960,000",
-    trend: "67%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
-  {
-    title: "Total Loan Repaid",
-    value: "$4,820,000",
-    trend: "67%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
-  {
-    title: "Active Loans",
-    value: "312",
-    trend: "67%",
-    period: "Last 7 days",
-    tone: "positive",
-  },
-  {
-    title: "Near Liquidations",
-    value: "27",
-    trend: "-10%",
-    period: "Last 7 days",
-    tone: "negative",
-  },
-];
-
 export type AssetLoanTabValue =
   | "asset-loan-requests"
   | "loan-repayments"

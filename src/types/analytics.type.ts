@@ -13,6 +13,20 @@ export type MetricValue = {
   trend: MetricTrend;
 };
 
+export type ConnectivityItem = {
+  key: string;
+  label: string;
+  value: number;
+  displayValue: string;
+  percentage: number;
+  percentageDisplay: string;
+};
+
+export type ConnectivitySummary = {
+  total: number;
+  items: ConnectivityItem[];
+};
+
 export type LiquidityPoolItem = {
   currencyCode: string;
   balance: number;

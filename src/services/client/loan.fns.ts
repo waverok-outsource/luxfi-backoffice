@@ -1,4 +1,5 @@
 import type {
+  LoanAnalyticsResponseType,
   LoanDetailsResponseType,
   LoanScheduleResponseType,
   LoansResponseType,
@@ -6,6 +7,14 @@ import type {
 } from "@/types/loan.type";
 import apiHandler from "../api-handler";
 import LoanRoute from "../route/loan.route";
+
+export const fetchLoanAnalytics = async (query: string = "") => {
+  const { data } = await apiHandler.get<LoanAnalyticsResponseType>(
+    `${LoanRoute.analytics}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
 
 export const fetchCustomerLoans = async (customerId: string, query: string = "") => {
   const { data } = await apiHandler.get<LoansResponseType>(

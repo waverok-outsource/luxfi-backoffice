@@ -1,4 +1,5 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
+import type { MetricValue } from "./analytics.type";
 
 export type PaymentApprover = {
   id: string | null;
@@ -171,3 +172,18 @@ export type LoanRepaymentDetails = {
 };
 
 export type LoanRepaymentDetailsResponse = ApiResponse<LoanRepaymentDetails>;
+
+// GET /v1/analytics/payments
+export type PaymentsAnalyticsType = {
+  metrics: {
+    inflow: MetricValue;
+    outflow: MetricValue;
+    assetSales: MetricValue;
+    assetPurchases: MetricValue;
+    walletDeposits: MetricValue;
+    interestSettlements: MetricValue;
+  };
+  period: { from: string; to: string };
+};
+
+export type PaymentsAnalyticsResponseType = ApiResponse<PaymentsAnalyticsType>;

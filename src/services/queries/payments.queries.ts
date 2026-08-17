@@ -11,8 +11,15 @@ import {
   fetchLoanDisbursements,
   fetchLoansRepayment,
   fetchLoansRepaymentDetails,
+  fetchPaymentsAnalytics,
 } from "@/services/client/payments.fns";
 import keyFactory from "@/util/query-key-factory";
+
+export const usePaymentsAnalytics = (query: string = "") =>
+  useQuery({
+    queryKey: keyFactory.payments.analytics(query),
+    queryFn: () => fetchPaymentsAnalytics(query),
+  });
 
 export const useAssetSalesHistory = (query: string = "") =>
   useQuery({

@@ -1,10 +1,19 @@
 import type {
+  CustomerAnalyticsResponseType,
   CustomerDetailResponseType,
   CustomerSessionLogsResponseType,
   CustomersResponseType,
 } from "@/types/customer.type";
 import apiHandler from "../api-handler";
 import CustomerRoute from "../route/customer.route";
+
+export const fetchCustomerAnalytics = async (query: string = "") => {
+  const { data } = await apiHandler.get<CustomerAnalyticsResponseType>(
+    `${CustomerRoute.analytics}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
 
 export const fetchCustomers = async (query: string = "") => {
   const { data } = await apiHandler.get<CustomersResponseType>(

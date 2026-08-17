@@ -3,10 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import {
   fetchCustomerSupportTickets,
   fetchPasswordResetRequests,
-  fetchSupportStats,
+  fetchSupportCaseAnalytics,
   fetchSupportTickets,
 } from "@/services/client/support.fns";
 import keyFactory from "@/util/query-key-factory";
+
+export const useSupportCaseAnalytics = (query: string = "") =>
+  useQuery({
+    queryKey: keyFactory.support.analyticsCases(query),
+    queryFn: () => fetchSupportCaseAnalytics(query),
+  });
 
 export const useSupportTickets = (query: string) =>
   useQuery({
@@ -25,10 +31,4 @@ export const usePasswordResetRequests = (query: string) =>
   useQuery({
     queryKey: keyFactory.support.passwordResetRequests.list(query),
     queryFn: () => fetchPasswordResetRequests(query),
-  });
-
-export const useSupportStats = () =>
-  useQuery({
-    queryKey: keyFactory.support.stats(),
-    queryFn: fetchSupportStats,
   });

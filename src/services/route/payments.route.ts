@@ -1,6 +1,7 @@
 const baseUrl = "/v1/payments";
 
 const PaymentsRoute = {
+  analytics: "/v1/analytics/payments",
   assetSalesHistory: `${baseUrl}/asset-sales-history`,
   assetSaleDetails: (id: string) => `${baseUrl}/asset-sales-history/${id}`,
   assetPurchaseHistory: `${baseUrl}/asset-purchase-history`,

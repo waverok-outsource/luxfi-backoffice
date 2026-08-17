@@ -1,23 +1,14 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
-
-export type SettingsAnalyticsGrowthPattern = "upward" | "downward";
-
-export type SettingsAnalyticsMetricType = {
-  value: number;
-  growth: string;
-  growthDuration: string;
-  growthPattern: SettingsAnalyticsGrowthPattern;
-};
-
-export type TeamMembersAnalyticsType = SettingsAnalyticsMetricType & {
-  online: number;
-  offline: number;
-};
+import type { ConnectivitySummary, MetricValue } from "./analytics.type";
 
 export type SettingsAnalyticsType = {
-  teamMembers: TeamMembersAnalyticsType;
-  roles: SettingsAnalyticsMetricType;
-  assignedRoles: SettingsAnalyticsMetricType;
+  metrics: {
+    teamMembers: MetricValue;
+    roles: MetricValue;
+    assignedRoles: MetricValue;
+  };
+  connectivity: ConnectivitySummary;
+  period: { from: string; to: string };
 };
 
 export type SettingsAnalyticsResponseType = ApiResponse<SettingsAnalyticsType>;

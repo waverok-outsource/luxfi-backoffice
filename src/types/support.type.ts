@@ -1,4 +1,5 @@
 import type { ApiResponse, PaginatedApiResponse } from "./global";
+import type { MetricValue } from "./analytics.type";
 
 export type SupportTicketStatus = "pending" | "resolved";
 
@@ -19,13 +20,22 @@ export type SupportTicketType = {
 
 export type SupportTicketsResponseType = PaginatedApiResponse<SupportTicketType[]>;
 
-export type SupportStatsType = {
-  totalSupportTickets: number;
-  totalPendingTickets: number;
-  totalResolvedTickets: number;
+// GET /v1/analytics/support-cases
+export type SupportCaseAnalyticsType = {
+  metrics: {
+    totalTickets: MetricValue;
+    pendingTickets: MetricValue;
+    resolvedTickets: MetricValue;
+  };
+  passwordResets: {
+    total: MetricValue;
+    pending: MetricValue;
+    reset: MetricValue;
+  };
+  period: { from: string; to: string };
 };
 
-export type SupportStatsResponseType = ApiResponse<SupportStatsType>;
+export type SupportCaseAnalyticsResponseType = ApiResponse<SupportCaseAnalyticsType>;
 
 export type ReviewSupportTicketPayloadType = {
   status: SupportTicketStatus;

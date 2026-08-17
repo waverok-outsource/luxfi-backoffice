@@ -4,16 +4,16 @@ import { AnalyticsToolbar } from "@/components/dashboard/analytics-toolbar";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { PAYMENTS_TAB_COMPONENTS } from "@/module/dashboard/payments-settlements/components/tab-table-components";
 import { PaymentsSettlementsMetrics } from "@/module/dashboard/payments-settlements/components/payments-settlements-metrics";
+import { PAYMENTS_TAB_COMPONENTS } from "@/module/dashboard/payments-settlements/components/tab-table-components";
 import {
-  assetTradeSummary,
   DEFAULT_PAYMENTS_HISTORY_TAB,
-  leadingMetrics,
   paymentsHistoryTabs,
-  trailingMetrics,
   type PaymentsHistoryTabValue,
 } from "@/module/dashboard/payments-settlements/data";
+import { usePaymentsAnalytics } from "@/services/queries/payments.queries";
+import { buildMetricValueCard } from "@/util/analytics-metrics";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type PaymentsSettlementsQuery = {
   tab?: string;
@@ -31,6 +31,27 @@ function isPaymentsHistoryTab(
 
 export function PaymentsSettlementsDashboard() {
   const { value, setURLQuery } = useURLQuery<PaymentsSettlementsQuery>();
+
+  const analyticsQuery = convertObjectToQuery({
+    ...(value.from ? { from: value.from } : {}),
+    ...(value.to ? { to: value.to } : {}),
+  });
+
+  const { data: analyticsResponse, isLoading } = usePaymentsAnalytics(analyticsQuery);
+  const metrics = analyticsResponse?.data.metrics;
+
+  const leadingMetrics = [
+    buildMetricValueCard(metrics?.inflow, "Total Inflow", isLoading),
+    buildMetricValueCard(metrics?.outflow, "Total Outflow", isLoading, false),
+  ];
+  const trailingMetrics = [
+    buildMetricValueCard(metrics?.walletDeposits, "Wallet Deposits", isLoading),
+    buildMetricValueCard(metrics?.interestSettlements, "Interest Settlements", isLoading),
+  ];
+  const assetTradeSummary = {
+    sales: buildMetricValueCard(metrics?.assetSales, "Asset Sales", isLoading),
+    purchases: buildMetricValueCard(metrics?.assetPurchases, "Asset Purchases", isLoading),
+  };
 
   const activeTab = isPaymentsHistoryTab(value.tab)
     ? value.tab

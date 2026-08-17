@@ -17,7 +17,9 @@ import {
   DEFAULT_CUSTOMERS_TAB,
   type CustomersTabValue,
 } from "@/module/dashboard/customers/data";
-import { useCustomers } from "@/services/queries/customer.queries";
+import { useCustomerAnalytics } from "@/services/queries/customer.queries";
+import { buildMetricValueCard } from "@/util/analytics-metrics";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type CustomersQuery = {
   tab?: string;
@@ -37,8 +39,30 @@ export function CustomersDashboard() {
   const activeTab = isCustomersTab(value.tab) ? value.tab : DEFAULT_CUSTOMERS_TAB;
   const ActiveTabContent = CUSTOMERS_TAB_COMPONENTS[activeTab].slots.content;
 
-  const { data: customersResponse, isLoading: statsLoading } = useCustomers("");
-  const stats = customersResponse?.data.stats;
+  const analyticsQuery = convertObjectToQuery({
+    ...(value.from ? { from: value.from } : {}),
+    ...(value.to ? { to: value.to } : {}),
+  });
+
+  const { data: analyticsResponse, isLoading: statsLoading } = useCustomerAnalytics(analyticsQuery);
+  const analytics = analyticsResponse?.data;
+  const totalRegistered = buildMetricValueCard(
+    analytics?.metrics.totalRegistered,
+    "Total Registered Customers",
+    statsLoading,
+  );
+  const averageGrowth = buildMetricValueCard(
+    analytics?.metrics.averageGrowth,
+    "Average Customer Growth",
+    statsLoading,
+  );
+  const channelItems = analytics?.connectivity.items ?? [];
+  const channels = channelItems.map((item) => ({
+    label: item.label,
+    count: item.value,
+    percent: item.percentage,
+    tone: item.key === "online" ? ("success" as const) : ("error" as const),
+  }));
 
   const handleTabChange = (nextTab: string) => {
     if (!isCustomersTab(nextTab)) {
@@ -92,38 +116,9 @@ export function CustomersDashboard() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <StatCard
-          title="Total Registered Customers"
-          value={stats ? stats.customerCount.value.toLocaleString() : "--"}
-          trend={stats ? `${stats.customerCount.growth}%` : "--"}
-          period={stats ? `Last ${stats.customerCount.growthDuration}` : undefined}
-          tone={stats?.customerCount.growthPattern === "downward" ? "negative" : "positive"}
-          isLoading={statsLoading}
-        />
-        <StatCard
-          title="Average Customer Growth"
-          value={stats ? String(stats.customerGrowth.value) : "--"}
-          trend={stats ? `${stats.customerGrowth.growth}%` : "--"}
-          period={stats ? `Last ${stats.customerGrowth.growthDuration}` : undefined}
-          tone={stats?.customerGrowth.growthPattern === "downward" ? "negative" : "positive"}
-          isLoading={statsLoading}
-        />
-        <CustomerChannelCard
-          channels={[
-            {
-              label: "Online Customers",
-              count: stats?.connectivity.online.count ?? 0,
-              percent: stats?.connectivity.online.percent ?? 0,
-              tone: "success",
-            },
-            {
-              label: "Offline Customers",
-              count: stats?.connectivity.offline.count ?? 0,
-              percent: stats?.connectivity.offline.percent ?? 0,
-              tone: "error",
-            },
-          ]}
-        />
+        <StatCard {...totalRegistered} />
+        <StatCard {...averageGrowth} />
+        <CustomerChannelCard channels={channels} />
       </div>
 
       <div className="space-y-3">

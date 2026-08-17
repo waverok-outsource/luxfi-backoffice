@@ -3,6 +3,9 @@ import { StatCard } from "@/components/dashboard/stat-card";
 export type HelpSupportMetric = {
   title: string;
   value: string;
+  trend?: string;
+  period?: string;
+  tone?: "positive" | "negative";
   isLoading?: boolean;
 };
 

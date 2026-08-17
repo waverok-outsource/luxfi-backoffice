@@ -6,6 +6,7 @@ const keyFactory = {
 
   customers: {
     all: ["customers"],
+    analytics: (query: string) => ["customers", "analytics", query],
     list: (query: string) => ["customers", query],
     details: (id: string) => ["customers", id],
     sessionLogs: (id: string) => ["customers", id, "session-logs"],
@@ -86,6 +87,7 @@ const keyFactory = {
 
   loans: {
     all: ["loans"],
+    analytics: (query: string) => ["loans", "analytics", query],
     customerList: (customerId: string, query: string) => ["loans", "customer", customerId, query],
     list: (query: string) => ["loans", query],
     details: (loanRef: string) => ["loans", loanRef],
@@ -107,7 +109,7 @@ const keyFactory = {
       all: ["support", "password-reset-requests"],
       list: (query: string) => ["support", "password-reset-requests", query],
     },
-    stats: () => ["support", "stats"],
+    analyticsCases: (query: string) => ["support", "analytics-cases", query],
   },
 
   systemSettings: {
@@ -137,6 +139,7 @@ const keyFactory = {
 
   payments: {
     all: ["payments"],
+    analytics: (query: string) => ["payments", "analytics", query],
     assetSales: {
       list: (query: string) => ["payments", "asset-sales", query],
       details: (id: string) => ["payments", "asset-sales", id],
