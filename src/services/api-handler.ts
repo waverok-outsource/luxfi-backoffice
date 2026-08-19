@@ -19,6 +19,16 @@ export const axiosInstance = createApiClient();
 
 const apiHandler = createApiClient();
 
+let isRedirectingToLogout = false;
+
+function isAuthPage(pathname: string) {
+  return (
+    pathname.includes(route.auth.login) ||
+    pathname.includes(route.auth.logout) ||
+    pathname.includes(route.auth.reset)
+  );
+}
+
 function setAuthorizationHeader(config: InternalAxiosRequestConfig) {
   const accessToken = Storage.getCookie("token");
 
@@ -41,10 +51,15 @@ async function onReqErr(error: AxiosError): Promise<AxiosError> {
 
 async function onResError(error: AxiosError): Promise<AxiosError> {
   const status = error.response?.status;
-  const isAuthError = status === 401 || status === 403;
   const isBrowser = typeof window !== "undefined";
 
-  if (isAuthError && isBrowser && !window.location.pathname.includes(route.auth.login)) {
+  if (
+    status === 401 &&
+    isBrowser &&
+    !isRedirectingToLogout &&
+    !isAuthPage(window.location.pathname)
+  ) {
+    isRedirectingToLogout = true;
     window.location.href = route.auth.logout;
   }
 

@@ -1,17 +1,16 @@
 import Cookies from "js-cookie";
 
-const expireDefault = new Date(new Date().getTime() + 604800 * 1000);
-
 const Storage = {
-  setCookie(key: string, value: string, days: number | Date = expireDefault) {
+  setCookie(key: string, value: string, days: number = 7) {
     if (!value) {
       return;
     }
 
     Cookies.set(key, value, {
       expires: days,
+      path: "/",
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
     });
   },
 
@@ -21,7 +20,7 @@ const Storage = {
   },
 
   removeCookie(key: string) {
-    return Cookies.remove(key);
+    return Cookies.remove(key, { path: "/" });
   },
 };
 
