@@ -1,16 +1,11 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import route from "@/util/route";
+import { RedirectIfAuthenticated } from "@/components/auth/session-guard";
 
-const Layout = async ({ children }: { children: React.ReactNode }) => {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
-
-  if (token) {
-    redirect(route.dashboard.home);
-  }
-
-  return <div className="h-screen w-full overflow-hidden bg-[#fefefe]">{children}</div>;
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <RedirectIfAuthenticated>
+      <div className="h-screen w-full overflow-hidden bg-[#fefefe]">{children}</div>
+    </RedirectIfAuthenticated>
+  );
 };
 
 export default Layout;

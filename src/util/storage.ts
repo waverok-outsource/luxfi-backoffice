@@ -1,26 +1,42 @@
 import Cookies from "js-cookie";
 
+const TOKEN_KEY = "token";
+const SESSION_COOKIE = "auth-session";
+
+function cookieOptions(): Cookies.CookieAttributes {
+  return {
+    expires: 7,
+    path: "/",
+    sameSite: "lax",
+    secure: typeof window !== "undefined" && window.location.protocol === "https:",
+  };
+}
+
 const Storage = {
-  setCookie(key: string, value: string, days: number = 7) {
-    if (!value) {
+  setToken(token: string) {
+    if (!token || typeof window === "undefined") {
       return;
     }
 
-    Cookies.set(key, value, {
-      expires: days,
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    window.localStorage.setItem(TOKEN_KEY, token);
+    Cookies.set(SESSION_COOKIE, "1", cookieOptions());
   },
 
-  getCookie(key: string) {
-    const data = Cookies.get(key);
-    return data ? data : null;
+  getToken() {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return window.localStorage.getItem(TOKEN_KEY);
   },
 
-  removeCookie(key: string) {
-    return Cookies.remove(key, { path: "/" });
+  clearAuth() {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(TOKEN_KEY);
+    }
+
+    Cookies.remove(SESSION_COOKIE, { path: "/" });
+    Cookies.remove(TOKEN_KEY, { path: "/" });
   },
 };
 

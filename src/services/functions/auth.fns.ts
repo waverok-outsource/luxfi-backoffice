@@ -30,7 +30,7 @@ const useAuthFns = () => {
           throw new Error("Login succeeded but token was not returned");
         }
 
-        Storage.setCookie("token", accessToken);
+        Storage.setToken(accessToken);
         toast.success("Login successful!");
         window.location.href = path;
       } catch (error: unknown) {
@@ -44,7 +44,7 @@ const useAuthFns = () => {
       loadingFn("LOGOUT", true);
 
       const callback = () => {
-        Storage.removeCookie("token");
+        Storage.clearAuth();
         window.location.href = route.auth.login;
       };
       callback();
