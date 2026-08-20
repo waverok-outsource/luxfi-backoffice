@@ -132,8 +132,9 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
                           return "All Categories";
                         }
                         return (
-                          categoryOptions.find((category) => category.reference === selected)
-                            ?.name ?? "All Categories"
+                          categoryOptions.find(
+                            (category) => category.assetCategoryId === selected,
+                          )?.name ?? "All Categories"
                         );
                       }}
                     </SelectValue>
@@ -141,7 +142,7 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     {categoryOptions.map((category) => (
-                      <SelectItem key={category.reference} value={category.reference}>
+                      <SelectItem key={category.assetCategoryId} value={category.assetCategoryId}>
                         {category.name}
                       </SelectItem>
                     ))}

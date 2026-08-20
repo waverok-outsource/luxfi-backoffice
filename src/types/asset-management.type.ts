@@ -282,8 +282,8 @@ export type UpdateAssetCategoryPayloadType = {
 };
 
 // ---- GET /v1/asset-categories (list item) / GET /v1/asset-categories/:categoryRef ----
-// No `categoryId`/`assetClass` (nested class object) anymore — `reference` (aliased
-// as `categoryRef`) is the identifier, and `assetType` is echoed back flat instead.
+// `assetCategoryId` is the string identifier used when creating/filtering assets.
+// `reference` (aliased as `categoryRef`) is the Mongo ObjectId used in category CRUD URLs.
 export type AssetCategoryType = {
   name: string;
   status: AssetCategoryStatus;
@@ -293,6 +293,7 @@ export type AssetCategoryType = {
   assetsCount: number;
   overrideParentClassConfigurations: boolean;
   assetClassId: string;
+  assetCategoryId: string;
   /** Only present when overrideParentClassConfigurations is true. */
   configuration?: AssetClassConfigSectionsType;
   categoryRef: string;
