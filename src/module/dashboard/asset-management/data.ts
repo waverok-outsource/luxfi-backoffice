@@ -135,7 +135,7 @@ const DEFAULT_ASSET_CLASS_SECTIONS: Pick<
     canManuallyUnderwrite: false,
     requiresApproval: false,
     usesAutomatedCreditScoring: true,
-    kycTierRequired: "level-2-enhanced-dd",
+    kycTierRequired: "6a67404f3b1d851a3231b86a",
     minCreditScore: 650,
     autoApprovalAmount: 85,
     autoApprovalCurrency: CURRENCY_VALUES[0],

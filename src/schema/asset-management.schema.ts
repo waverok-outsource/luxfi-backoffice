@@ -151,6 +151,7 @@ export const assetClassConfigSchema = z.object({
     canManuallyUnderwrite: z.boolean(),
     requiresApproval: z.boolean(),
     usesAutomatedCreditScoring: z.boolean(),
+    // Stores the selected tier's kycRef from GET /v1/kyc-tiers.
     kycTierRequired: requiredText,
     minCreditScore: nonNegativeNumber,
     autoApprovalAmount: nonNegativeNumber,

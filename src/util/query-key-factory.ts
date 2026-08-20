@@ -10,6 +10,10 @@ const keyFactory = {
     list: (query: string) => ["customers", query],
     details: (id: string) => ["customers", id],
     sessionLogs: (id: string) => ["customers", id, "session-logs"],
+    kycTiers: {
+      all: ["customers", "kyc-tiers"],
+      list: (query: string) => ["customers", "kyc-tiers", query],
+    },
   },
 
   assetManagement: {

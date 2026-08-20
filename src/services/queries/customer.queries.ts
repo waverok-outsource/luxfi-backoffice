@@ -5,6 +5,7 @@ import {
   fetchCustomerAnalytics,
   fetchCustomerSessionLogs,
   fetchCustomers,
+  fetchKycTiers,
 } from "@/services/client/customer.fns";
 import keyFactory from "@/util/query-key-factory";
 
@@ -32,4 +33,10 @@ export const useCustomerSessionLogs = (customerId: string, query: string) =>
     queryKey: [...keyFactory.customers.sessionLogs(customerId), query],
     queryFn: () => fetchCustomerSessionLogs(customerId, query),
     enabled: Boolean(customerId),
+  });
+
+export const useKycTiers = () =>
+  useQuery({
+    queryKey: keyFactory.customers.kycTiers.list("perPage=100"),
+    queryFn: () => fetchKycTiers(),
   });

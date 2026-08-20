@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import type { Control } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import {
 } from "@/components/util/form-controller";
 import { DurationField } from "@/module/dashboard/asset-management/components/duration-field";
 import { CURRENCY_VALUES, type AssetClassConfigFormValues } from "@/schema/asset-management.schema";
+import { useKycTiers } from "@/services/queries/customer.queries";
 
 const CURRENCY_OPTIONS = CURRENCY_VALUES.map((value) => ({ value, label: value }));
 
@@ -23,6 +25,12 @@ type UnderwritingStepProps = {
 };
 
 export function UnderwritingStep({ control }: UnderwritingStepProps) {
+  const { data: kycTiersResponse, isLoading: isLoadingKycTiers } = useKycTiers();
+  const kycTierOptions = React.useMemo(
+    () => [...(kycTiersResponse?.data ?? [])].sort((a, b) => a.tierNumber - b.tierNumber),
+    [kycTiersResponse],
+  );
+
   return (
     <div className="space-y-5">
       <FormSwitchField
@@ -68,13 +76,34 @@ export function UnderwritingStep({ control }: UnderwritingStepProps) {
         <FormField
           control={control}
           name="underwritingControls.kycTierRequired"
-          label="KYC tier required (ID)"
+          label="KYC tier required"
           required
         >
           {({ field }) => (
-            <FormControl>
-              <Input {...field} placeholder="Enter KYC tier ID" />
-            </FormControl>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={isLoadingKycTiers}
+            >
+              <FormSelectTrigger>
+                <SelectValue
+                  placeholder={isLoadingKycTiers ? "Loading KYC tiers..." : "Select Options"}
+                >
+                  {(selected: string | null) => {
+                    if (!selected) return "Select Options";
+                    const match = kycTierOptions.find((option) => option.kycRef === selected);
+                    return match ? match.title : selected;
+                  }}
+                </SelectValue>
+              </FormSelectTrigger>
+              <SelectContent>
+                {kycTierOptions.map((option) => (
+                  <SelectItem key={option.kycRef} value={option.kycRef}>
+                    {option.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </FormField>
       </div>

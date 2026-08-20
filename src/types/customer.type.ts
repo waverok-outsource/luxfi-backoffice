@@ -121,3 +121,19 @@ export type CustomerAnalyticsType = {
 };
 
 export type CustomerAnalyticsResponseType = ApiResponse<CustomerAnalyticsType>;
+
+// ---- GET /v1/kyc-tiers ----
+// Paginated; dropdown callers pass a high perPage (same stopgap as valuation providers).
+export type KycTierType = {
+  kycRef: string;
+  title: string;
+  description: string | null;
+  tierNumber: number;
+  severity: string;
+  riskBand: { min: number; max: number };
+  provider?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type KycTiersResponseType = PaginatedApiResponse<KycTierType[]>;
