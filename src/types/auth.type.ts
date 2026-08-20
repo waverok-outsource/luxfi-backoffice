@@ -34,6 +34,8 @@ export type AuthUserType = {
   permissions: UserPermissionsType;
 };
 
+export type StoredAuthUserType = Omit<AuthUserType, "token">;
+
 export type LoginResponseType = ApiResponse<AuthUserType>;
 
 export type ResetTokenPayloadType = {

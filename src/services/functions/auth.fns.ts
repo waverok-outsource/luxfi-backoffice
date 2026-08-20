@@ -57,13 +57,16 @@ const useAuthFns = () => {
 
       try {
         const res = await apiHandler.post<LoginResponseType>(AuthRoute.login, data);
-        const accessToken = res.data.data?.token;
+        const user = res.data.data;
+        const accessToken = user?.token;
 
-        if (!accessToken) {
+        if (!user || !accessToken) {
           throw new Error("Login succeeded but token was not returned");
         }
 
-        Storage.setToken(accessToken);
+        const { token, ...profile } = user;
+        Storage.setToken(token);
+        Storage.setUser(profile);
         toast.success("Login successful!");
         window.location.href = path;
       } catch (error: unknown) {
