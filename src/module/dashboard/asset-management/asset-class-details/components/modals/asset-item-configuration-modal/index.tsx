@@ -253,7 +253,7 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                       </FormSelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem key={category.reference} value={category.reference}>
+                          <SelectItem key={category.assetCategoryId} value={category.assetCategoryId}>
                             {category.name}
                           </SelectItem>
                         ))}
