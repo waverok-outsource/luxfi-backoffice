@@ -241,59 +241,53 @@ export function SmartContractsPanel() {
     }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TableSearchField
-          placeholder="Search Loan ID or Contract Address"
-          className="max-w-md"
-        />
+ return (
+  <div className="space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <TableSearchField
+        placeholder="Search Loan ID or Contract Address"
+        className="max-w-md"
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-12 rounded-2xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"
-          >
-            Filter Options
-            <ChevronDown className="h-4 w-4 text-text-grey" />
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-12 rounded-2xl border border-primary-grey-stroke bg-primary-white px-4 text-text-grey hover:bg-primary-grey-undertone"
+        >
+          Filter Options
+          <ChevronDown className="h-4 w-4 text-text-grey" />
+        </Button>
       </div>
-
-      {rows.length === 0 ? (
-        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-primary-grey-stroke bg-primary-white px-6 text-center">
-          <h3 className="text-base font-semibold text-text-dark">
-            No smart contracts yet
-          </h3>
-        </div>
-      ) : (
-        <DataTable<SmartContractRow, unknown>
-          columns={columns}
-          data={rows}
-          enableCheckbox
-          pagination={{
-            totalEntries: filtered.length,
-            pageSize: PAGE_SIZE,
-            maxVisiblePages: 3,
-          }}
-        />
-      )}
-
-      {activeContract ? (
-        <SmartContractModal
-          key={activeContract.id}
-          open={modalOpen}
-          onOpenChange={handleModalOpenChange}
-          contract={activeContract}
-          step={step}
-          onStepChange={setStep}
-          onRequestApprove={handleRequestApprove}
-          onConfirmApprove={handleConfirmApprove}
-          onConfirmReject={handleConfirmReject}
-          resultMessage={resultMessage}
-        />
-      ) : null}
     </div>
-  );
+
+    <DataTable<SmartContractRow, unknown>
+      columns={columns}
+      data={rows}
+      emptyStateLabel="No smart contracts yet"
+      enableCheckbox
+      pagination={{
+        totalEntries: filtered.length,
+        pageSize: PAGE_SIZE,
+        maxVisiblePages: 3,
+      }}
+    />
+
+    {activeContract ? (
+      <SmartContractModal
+        key={activeContract.id}
+        open={modalOpen}
+        onOpenChange={handleModalOpenChange}
+        contract={activeContract}
+        step={step}
+        onStepChange={setStep}
+        onRequestApprove={handleRequestApprove}
+        onConfirmApprove={handleConfirmApprove}
+        onConfirmReject={handleConfirmReject}
+        resultMessage={resultMessage}
+      />
+    ) : null}
+  </div>
+);
+
 }

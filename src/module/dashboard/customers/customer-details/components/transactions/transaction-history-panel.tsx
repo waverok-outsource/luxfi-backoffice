@@ -233,24 +233,17 @@ export function TransactionHistoryPanel() {
     <div className="space-y-4">
       <TableSearchToolbar placeholder="Search Transaction ID" />
 
-      {pagedRows.length === 0 ? (
-        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-primary-grey-stroke bg-primary-white px-6 text-center">
-          <h3 className="text-base font-semibold text-text-dark">
-            No transactions yet
-          </h3>
-        </div>
-      ) : (
-        <DataTable<TransactionRow, unknown>
-          columns={columns}
-          data={pagedRows}
-          enableCheckbox
-          pagination={{
-            totalEntries: filtered.length,
-            pageSize: PAGE_SIZE,
-            maxVisiblePages: 3,
-          }}
-        />
-      )}
+     <DataTable<TransactionRow, unknown>
+  columns={columns}
+  data={pagedRows}
+  emptyStateLabel="No results"
+  enableCheckbox
+  pagination={{
+    totalEntries: filtered.length,
+    pageSize: PAGE_SIZE,
+    maxVisiblePages: 3,
+  }}
+/>
 
       {selectedTransaction ? (
         <TransactionDetailsModal
