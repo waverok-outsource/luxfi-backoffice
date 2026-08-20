@@ -2,6 +2,8 @@ const route = {
   auth: {
     login: "/auth/login",
     logout: "/logout",
+    forgotPassword: "/auth/forgot-password",
+    verifyResetPin: "/auth/forgot-password/verify",
     reset: "/auth/reset-password",
   },
   dashboard: {

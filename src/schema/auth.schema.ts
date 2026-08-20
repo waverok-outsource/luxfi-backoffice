@@ -7,6 +7,18 @@ export const loginSchema = z.object({
 
 export type LoginType = z.infer<typeof loginSchema>;
 
+export const forgotPasswordSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
+export type ForgotPasswordType = z.infer<typeof forgotPasswordSchema>;
+
+export const verifyResetPinSchema = z.object({
+  pin: z.string().regex(/^\d{6}$/, "Enter the 6-digit PIN"),
+});
+
+export type VerifyResetPinType = z.infer<typeof verifyResetPinSchema>;
+
 export const resetSchema = z
   .object({
     password: z

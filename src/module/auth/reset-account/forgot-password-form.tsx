@@ -2,31 +2,40 @@
 
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField, FormControl } from "@/components/util/form-controller";
 import { AuthFormLayout } from "@/module/auth/shared/auth-form-layout";
-import { loginSchema, LoginType } from "@/schema/auth.schema";
+import { forgotPasswordSchema, ForgotPasswordType } from "@/schema/auth.schema";
 import useAuthFns from "@/services/functions/auth.fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import route from "@/util/route";
 
-export default function LoginForm() {
-  const { login, loading } = useAuthFns();
+export default function ForgotPasswordForm() {
+  const router = useRouter();
+  const { forgotPassword, loading } = useAuthFns();
   const {
     control,
     handleSubmit,
     formState: { isValid },
-  } = useForm<LoginType>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+  } = useForm<ForgotPasswordType>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
     mode: "all",
   });
 
-  const onSubmit = async (data: LoginType) => login(data);
+  const onSubmit = async (data: ForgotPasswordType) => {
+    await forgotPassword(data, () => {
+      router.push(route.auth.verifyResetPin);
+    });
+  };
 
   return (
-    <AuthFormLayout title="Log in" description="Log in details to access CRM back-office portal">
+    <AuthFormLayout
+      title="Forgot Password"
+      description="Enter the email associated with your back-office account"
+    >
       <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
         <FormField control={control} name="email" label="Email address" required>
           {({ field }) => (
@@ -35,30 +44,21 @@ export default function LoginForm() {
             </FormControl>
           )}
         </FormField>
-        <FormField control={control} name="password" label="Password" required>
-          {({ field }) => (
-            <div className="relative">
-              <FormControl>
-                <Input {...field} type="password" placeholder="Enter password here" />
-              </FormControl>
-            </div>
-          )}
-        </FormField>
 
         <Button
           type="submit"
           className="w-full"
-          disabled={!isValid || loading.LOGIN}
-          pending={loading.LOGIN}
+          disabled={!isValid || loading.FORGOT_PASSWORD}
+          pending={loading.FORGOT_PASSWORD}
         >
-          Log in
+          Send Reset PIN
         </Button>
 
         <Link
-          href={route.auth.forgotPassword}
-          className="text-base font-medium underline underline-offset-2"
+          href={route.auth.login}
+          className="block text-base font-medium underline underline-offset-2"
         >
-          Forgot Password?
+          Back to log in
         </Link>
       </form>
     </AuthFormLayout>

@@ -35,3 +35,12 @@ export type AuthUserType = {
 };
 
 export type LoginResponseType = ApiResponse<AuthUserType>;
+
+export type ResetTokenPayloadType = {
+  resetToken?: string;
+  token?: string;
+};
+
+export type ForgotPasswordResponseType = ApiResponse<unknown>;
+export type VerifyResetPinResponseType = ApiResponse<ResetTokenPayloadType | string>;
+export type SetPasswordResponseType = ApiResponse<unknown>;
