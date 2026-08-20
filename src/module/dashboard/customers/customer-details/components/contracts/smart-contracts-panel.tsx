@@ -264,7 +264,7 @@ export function SmartContractsPanel() {
     <DataTable<SmartContractRow, unknown>
       columns={columns}
       data={rows}
-      emptyStateLabel="No smart contracts yet"
+      emptyStateLabel="No results"
       enableCheckbox
       pagination={{
         totalEntries: filtered.length,
