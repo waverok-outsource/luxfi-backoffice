@@ -31,6 +31,12 @@ export type CustomerAssetType = {
   pawnValuationPrice: AssetPriceType | null;
   assetExamination: AssetExaminationType | null;
   name: string;
+  // New fields from the confirmed GET /v1/customers/:id/assets DTO (2026-08-26).
+  // Additive only — the customer-details portfolio panel reads the existing fields above.
+  updatedAt?: string;
+  isVerified?: boolean;
+  verificationStatus?: string;
+  assetClass?: { assetClassId: string; name: string; assetType?: string } | null;
 };
 
 // The Postman sample showed a nested data.assets wrapper, but live testing

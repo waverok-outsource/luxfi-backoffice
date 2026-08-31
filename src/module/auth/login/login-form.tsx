@@ -19,7 +19,7 @@ export default function LoginForm() {
     formState: { isValid },
   } = useForm<LoginType>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "admin@pawnshopbyblu.com", password: "motihaha$yeAG@baby" },
     mode: "all",
   });
 

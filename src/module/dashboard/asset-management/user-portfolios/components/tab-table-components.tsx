@@ -8,7 +8,7 @@ import type { UserPortfolioDetailsTabValue } from "@/module/dashboard/asset-mana
 
 type UserPortfolioDetailsTabView = {
   slots: {
-    content: (portfolioId: string) => ReactElement;
+    content: (args: { customerId: string; assetType: string; portfolioId: string }) => ReactElement;
   };
 };
 
@@ -18,12 +18,14 @@ export const USER_PORTFOLIO_DETAILS_TAB_COMPONENTS: Record<
 > = {
   "listed-assets": {
     slots: {
-      content: () => <ListedAssetsTab />,
+      content: ({ customerId, assetType }) => (
+        <ListedAssetsTab customerId={customerId} assetType={assetType} />
+      ),
     },
   },
   "activity-log": {
     slots: {
-      content: (portfolioId) => <ActivityLogTab portfolioId={portfolioId} />,
+      content: ({ portfolioId }) => <ActivityLogTab portfolioId={portfolioId} />,
     },
   },
 };

@@ -248,16 +248,31 @@ export type AssetUploadUrlResultType = {
 
 export type AssetUploadUrlResponseType = ApiResponse<{ uploads: AssetUploadUrlResultType[] }>;
 
-export type UserAssetPortfolioType = {
+// ---- GET /v1/assets/customer-ownership-aggregates (list item) / detail aggregate ----
+// One row per customer × assetType — a customer can appear multiple times (once per assetType).
+export type CustomerOwnershipAggregateType = {
   portfolioId: string;
+  customerId: string;
   customerName: string;
   assetType: AssetClassAssetType;
   portfolioValue: number;
+  currencyCode: string;
   portfolioVolume: number;
   verifiedPercent: number;
   unverifiedPercent: number;
-  createdAt: string;
+  dateCreated: string;
 };
+
+export type CustomerOwnershipAggregatesResponseType = PaginatedApiResponse<CustomerOwnershipAggregateType[]>;
+
+// ---- GET /v1/customers/:customerId/assets/aggregate?assetType= ----
+// The list item shape plus the value split behind the verified/unverified percentages.
+export type CustomerPortfolioAggregateType = CustomerOwnershipAggregateType & {
+  verifiedValue: number;
+  unverifiedValue: number;
+};
+
+export type CustomerPortfolioAggregateResponseType = ApiResponse<CustomerPortfolioAggregateType>;
 
 export type AssetCategoryStatus = "published" | "unpublished";
 
@@ -308,18 +323,48 @@ export type CreateAssetCategoryResponseType = ApiResponse<AssetCategoryType>;
 
 export type UpdateAssetCategoryResponseType = ApiResponse<AssetCategoryType>;
 
-export type AssetVerificationLogAction = "Asset Approved" | "Asset Rejected";
-
+// ---- GET /v1/assets/verification-logs (list item) ----
 export type AssetVerificationLogEntry = {
   logId: string;
+  customerId: string;
+  user: string;
+  role: string;
+  /** "Asset Approved" | "Asset Rejected" — kept as string to be resilient to new actions. */
+  action: string;
   assetId: string;
-  action: AssetVerificationLogAction;
-  actionTimestampLabel: string;
-  actionDateLabel: string;
-  initiatorId: string;
-  initiatorName: string;
-  initiatorRole: string;
+  assetName: string;
+  /** Already display-formatted by the API, e.g. "10:57 PM". */
+  actionTimestamp: string;
+  /** Already display-formatted by the API, e.g. "26/08/2026". */
+  actionDate: string;
+  createdAt: string;
 };
+
+export type AssetVerificationLogsResponseType = PaginatedApiResponse<AssetVerificationLogEntry[]>;
+
+// ---- GET /v1/assets/verification-logs/:logId ----
+// The list item shape plus the detail-only fields behind the summary row.
+export type AssetVerificationLogDetailsType = AssetVerificationLogEntry & {
+  comment: string | null;
+  previousStatus: string;
+  status: string;
+  actorId: string;
+  meta: {
+    source: string;
+    assetExamination: {
+      dateSubmitted: string;
+      dateExamined: string;
+      examinationOfficerRemark: string;
+      examinationOfficerIdentity: string;
+      hasPhysicalDefects: boolean;
+      hasCertificationPapers: boolean;
+      isBoxPackaged: boolean;
+    } | null;
+    pawnValuationPrice: { value: number; currencyCode: string } | null;
+  } | null;
+};
+
+export type AssetVerificationLogDetailsResponseType = ApiResponse<AssetVerificationLogDetailsType>;
 
 // ---- GET /v1/asset-valuation-providers ----
 // NOTE: paginated even though callers need the full list for a dropdown — see

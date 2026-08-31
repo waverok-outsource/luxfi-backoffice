@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { ModalDetailRow } from "@/components/modal/modal-detail-row";
 import { ModalShell } from "@/components/modal/modal-shell";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type ActivityLogDetailRow = {
   label: string;
@@ -18,6 +19,8 @@ type ActivityLogDetailsModalProps = {
   description: string;
   /** Each group renders as a block of rows separated from the next by a short divider. */
   rowGroups: ActivityLogDetailRow[][];
+  /** Renders a skeleton body in place of rowGroups while data is still loading. */
+  loading?: boolean;
 };
 
 /**
@@ -31,6 +34,7 @@ export function ActivityLogDetailsModal({
   title,
   description,
   rowGroups,
+  loading = false,
 }: ActivityLogDetailsModalProps) {
   return (
     <ModalShell.Root
@@ -50,21 +54,40 @@ export function ActivityLogDetailsModal({
 
         <ModalShell.Body className="rounded-xl px-6 py-8">
           <div className="space-y-[14px]">
-            {rowGroups.map((rows, groupIndex) => (
-              <React.Fragment key={groupIndex}>
-                {groupIndex > 0 ? (
-                  <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
-                ) : null}
-                {rows.map((row) => (
-                  <ModalDetailRow
-                    key={row.label}
-                    label={row.label}
-                    value={row.value}
-                    copyText={row.copyText}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
+            {loading ? (
+              Array.from({ length: 3 }, (_, groupIndex) => (
+                <React.Fragment key={groupIndex}>
+                  {groupIndex > 0 ? (
+                    <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
+                  ) : null}
+                  {Array.from({ length: 3 }, (_, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      className="grid grid-cols-[1fr_auto] items-center gap-4 py-0.5"
+                    >
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-40" />
+                    </div>
+                  ))}
+                </React.Fragment>
+              ))
+            ) : (
+              rowGroups.map((rows, groupIndex) => (
+                <React.Fragment key={groupIndex}>
+                  {groupIndex > 0 ? (
+                    <div className="mx-auto h-px w-[297px] bg-primary-grey-stroke/80" />
+                  ) : null}
+                  {rows.map((row) => (
+                    <ModalDetailRow
+                      key={row.label}
+                      label={row.label}
+                      value={row.value}
+                      copyText={row.copyText}
+                    />
+                  ))}
+                </React.Fragment>
+              ))
+            )}
           </div>
         </ModalShell.Body>
 

@@ -6,7 +6,10 @@ import {
   fetchAssetClassTypes,
   fetchAssetQuickSearch,
   fetchAssets,
+  fetchCustomerOwnershipAggregates,
   fetchValuationProviders,
+  fetchVerificationLogDetails,
+  fetchVerificationLogs,
 } from "@/services/client/asset-management.fns";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
 import keyFactory from "@/util/query-key-factory";
@@ -54,4 +57,23 @@ export const useValuationProviders = () =>
   useQuery({
     queryKey: keyFactory.assetManagement.valuationProviders.list("perPage=100"),
     queryFn: () => fetchValuationProviders(),
+  });
+
+export const useVerificationLogs = (query: string) =>
+  useQuery({
+    queryKey: keyFactory.assetManagement.verificationLogs.list(query),
+    queryFn: () => fetchVerificationLogs(query),
+  });
+
+export const useVerificationLogDetails = (logId: string) =>
+  useQuery({
+    queryKey: keyFactory.assetManagement.verificationLogs.details(logId),
+    queryFn: () => fetchVerificationLogDetails(logId),
+    enabled: Boolean(logId),
+  });
+
+export const useCustomerOwnershipAggregates = (query: string) =>
+  useQuery({
+    queryKey: keyFactory.assetManagement.customerOwnershipAggregates.list(query),
+    queryFn: () => fetchCustomerOwnershipAggregates(query),
   });

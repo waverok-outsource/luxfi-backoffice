@@ -6,13 +6,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, createActionColumnWithOptions, createIdentifierColumn, createTextColumn } from "@/components/table";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { VerificationLogDetailsModal } from "@/module/dashboard/asset-management/components/modals/verification-log-details-modal";
-import { mockAssetVerificationLogs } from "@/module/dashboard/asset-management/data";
-import type { AssetVerificationLogEntry } from "@/types/asset-management.type";
+import { useVerificationLogs } from "@/services/queries/asset-management.queries";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 
 type VerificationLogRow = Record<string, unknown> & {
   id: string;
-  initiatorName: string;
-  initiatorRole: string;
+  user: string;
+  role: string;
   action: string;
   assetId: string;
   actionTimestamp: string;
@@ -21,57 +21,41 @@ type VerificationLogRow = Record<string, unknown> & {
 
 const PAGE_SIZE = 10;
 
-function matchesQuery(log: AssetVerificationLogEntry, query: string) {
-  const normalizedQuery = query.trim().toLowerCase();
-  return (
-    !normalizedQuery ||
-    log.logId.toLowerCase().includes(normalizedQuery) ||
-    log.assetId.toLowerCase().includes(normalizedQuery) ||
-    log.initiatorName.toLowerCase().includes(normalizedQuery)
-  );
-}
-
 export function VerificationLogsTab() {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
-  const [activeLog, setActiveLog] = React.useState<AssetVerificationLogEntry | null>(null);
+  const [activeLogId, setActiveLogId] = React.useState<string | null>(null);
 
-  const filtered = React.useMemo(
-    () => mockAssetVerificationLogs.filter((log) => matchesQuery(log, value.q ?? "")),
-    [value.q],
-  );
+  const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
+  const query = convertObjectToQuery({
+    page: String(currentPage),
+    limit: String(PAGE_SIZE),
+    ...((value.q ?? "").trim() ? { q: value.q!.trim() } : {}),
+  });
 
-  const parsedPage = Number(value.page);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? Math.min(Math.floor(parsedPage), totalPages) : 1;
+  const { data: response, isLoading } = useVerificationLogs(query);
+  const logs = response?.data ?? [];
 
-  const rows: VerificationLogRow[] = React.useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE).map((log) => ({
-      id: log.logId,
-      initiatorName: log.initiatorName,
-      initiatorRole: log.initiatorRole,
-      action: log.action,
-      assetId: log.assetId,
-      actionTimestamp: log.actionTimestampLabel,
-      actionDate: log.actionDateLabel,
-    }));
-  }, [currentPage, filtered]);
+  const rows: VerificationLogRow[] = logs.map((log) => ({
+    id: log.logId,
+    user: log.user,
+    role: log.role,
+    action: log.action,
+    assetId: log.assetId,
+    actionTimestamp: log.actionTimestamp,
+    actionDate: log.actionDate,
+  }));
 
   const columns: ColumnDef<VerificationLogRow, unknown>[] = [
     createIdentifierColumn<VerificationLogRow>("Log ID", "id"),
-    createTextColumn<VerificationLogRow>("User", "initiatorName"),
-    createTextColumn<VerificationLogRow>("Role", "initiatorRole"),
+    createTextColumn<VerificationLogRow>("User", "user"),
+    createTextColumn<VerificationLogRow>("Role", "role"),
     createTextColumn<VerificationLogRow>("Action", "action"),
     createIdentifierColumn<VerificationLogRow>("Asset ID", "assetId"),
     createTextColumn<VerificationLogRow>("Action Timestamp", "actionTimestamp"),
     createTextColumn<VerificationLogRow>("Action Date", "actionDate"),
     createActionColumnWithOptions<VerificationLogRow>({
       ariaLabel: "View verification log",
-      onView: (row) => {
-        const log = mockAssetVerificationLogs.find((candidate) => candidate.logId === row.id);
-        if (log) setActiveLog(log);
-      },
+      onView: (row) => setActiveLogId(row.id),
     }),
   ];
 
@@ -80,17 +64,18 @@ export function VerificationLogsTab() {
       <DataTable
         columns={columns}
         data={rows}
+        loading={isLoading}
         emptyStateLabel="No verification logs found."
-        pagination={{ totalEntries: filtered.length, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
+        pagination={{ totalEntries: response?.pagination.total ?? 0, pageSize: PAGE_SIZE, maxVisiblePages: 3 }}
       />
 
-      {activeLog ? (
+      {activeLogId ? (
         <VerificationLogDetailsModal
-          open={Boolean(activeLog)}
+          open={Boolean(activeLogId)}
           onOpenChange={(open) => {
-            if (!open) setActiveLog(null);
+            if (!open) setActiveLogId(null);
           }}
-          log={activeLog}
+          logId={activeLogId}
         />
       ) : null}
     </>

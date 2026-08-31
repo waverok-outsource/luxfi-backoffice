@@ -44,6 +44,15 @@ const keyFactory = {
       all: ["asset-management", "valuation-providers"],
       list: (query: string) => ["asset-management", "valuation-providers", query],
     },
+    verificationLogs: {
+      all: ["asset-management", "verification-logs"],
+      list: (query: string) => ["asset-management", "verification-logs", query],
+      details: (logId: string) => ["asset-management", "verification-logs", logId],
+    },
+    customerOwnershipAggregates: {
+      all: ["asset-management", "customer-ownership-aggregates"],
+      list: (query: string) => ["asset-management", "customer-ownership-aggregates", query],
+    },
   },
 
   portfolioManagement: {
@@ -87,6 +96,12 @@ const keyFactory = {
   customerAssets: {
     all: ["customer-assets"],
     list: (customerId: string, query: string) => ["customer-assets", customerId, query],
+    aggregate: (customerId: string, assetType: string) => [
+      "customer-assets",
+      customerId,
+      "aggregate",
+      assetType,
+    ],
   },
 
   loans: {

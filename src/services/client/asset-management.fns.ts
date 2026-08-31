@@ -4,7 +4,10 @@ import {
   AssetClassTypesResponseType,
   AssetQuickSearchResponseType,
   AssetsResponseType,
+  AssetVerificationLogDetailsResponseType,
+  AssetVerificationLogsResponseType,
   CreateAssetClassResponseType,
+  CustomerOwnershipAggregatesResponseType,
   ValuationProvidersResponseType,
 } from "@/types/asset-management.type";
 import apiHandler from "../api-handler";
@@ -62,6 +65,30 @@ export const fetchAssetQuickSearch = async (query: string = "") => {
 export const fetchValuationProviders = async (query: string = "perPage=100") => {
   const { data } = await apiHandler.get<ValuationProvidersResponseType>(
     `${AssetManagementRoute.valuationProviders}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
+
+export const fetchVerificationLogs = async (query: string = "") => {
+  const { data } = await apiHandler.get<AssetVerificationLogsResponseType>(
+    `${AssetManagementRoute.verificationLogs}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
+
+export const fetchVerificationLogDetails = async (logId: string) => {
+  const { data } = await apiHandler.get<AssetVerificationLogDetailsResponseType>(
+    AssetManagementRoute.verificationLog(logId),
+  );
+
+  return data;
+};
+
+export const fetchCustomerOwnershipAggregates = async (query: string = "") => {
+  const { data } = await apiHandler.get<CustomerOwnershipAggregatesResponseType>(
+    `${AssetManagementRoute.customerOwnershipAggregates}${query ? `?${query}` : ""}`,
   );
 
   return data;
