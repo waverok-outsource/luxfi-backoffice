@@ -4,6 +4,9 @@ const requiredText = z.string().trim().min(1, "Required");
 const nonEmptyStringArray = z.array(z.string()).min(1, "Select at least one option");
 const percentNumber = z.coerce.number().min(0).max(100);
 const nonNegativeNumber = z.coerce.number().min(0, "Must be 0 or greater");
+export const currencyAmountSchema = z.coerce
+  .number({ error: "Enter a valid amount" })
+  .min(0, "Must be 0 or greater");
 const positiveInt = z.coerce.number().int().min(0, "Must be 0 or greater");
 
 const oneOf = <TAllowed extends readonly string[]>(allowed: TAllowed) =>
@@ -192,11 +195,17 @@ export const COLOUR_VARIANT_VALUES = [
 const assetItemBaseSchema = z.object({
   name: requiredText,
   modelNumber: z.string().default(""),
-  price: z.object({
-    value: nonNegativeNumber,
-    currencyCode: oneOf(CURRENCY_VALUES),
-  }),
-  retailPrice: nonNegativeNumber.optional(),
+  price: z
+    .object({
+      value: currencyAmountSchema.optional(),
+      currencyCode: oneOf(CURRENCY_VALUES),
+    })
+    .superRefine((price, ctx) => {
+      if (price.value === undefined) {
+        ctx.addIssue({ code: "custom", path: ["value"], message: "Asset market value is required" });
+      }
+    }),
+  retailPrice: currencyAmountSchema.optional(),
   productionYear: z.string().default(""),
   ownershipType: z.string().default(""),
   colourVariants: z.array(z.string()).default([]),

@@ -1,3 +1,8 @@
+export function parseCurrencyToNumber(value: string): number | undefined {
+  const numeric = Number(value.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : undefined;
+}
+
 export function formatCurrency(value: number | undefined, currencyCode?: string) {
   if (typeof value !== "number") {
     return "--";

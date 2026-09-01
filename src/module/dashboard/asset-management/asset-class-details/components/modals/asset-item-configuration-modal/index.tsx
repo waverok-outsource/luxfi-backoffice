@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   FormControl,
+  FormCurrencyInput,
   FormDatePicker,
   FormField,
   FormSelectTrigger,
@@ -47,6 +48,7 @@ import type {
 } from "@/types/asset-management.type";
 import { mapAssetClassToConfigFormValues, resolveAssetConfig } from "@/util/resolve-asset-config";
 import { toTitleCase } from "@/util/helper";
+import { parseCurrencyToNumber } from "@/util/format-currency";
 
 type AssetItemConfigurationModalProps =
   | {
@@ -95,7 +97,7 @@ function buildDefaultValues(
   return {
     name: assetItem?.name ?? "",
     modelNumber: "",
-    price: assetItem?.price ?? { value: 0, currencyCode: CURRENCY_VALUES[0] },
+    price: assetItem?.price ?? { value: undefined, currencyCode: CURRENCY_VALUES[0] },
     retailPrice: undefined,
     productionYear: assetItem?.productionYear ?? "",
     ownershipType: "",
@@ -115,7 +117,8 @@ function buildAssetBasePayload(values: AddAssetItemFormValues) {
   return {
     name: values.name.trim(),
     modelNumber: values.modelNumber || undefined,
-    price: values.price,
+    // price.value is guaranteed defined here — enforced by the price schema's superRefine
+    price: { value: values.price.value ?? 0, currencyCode: values.price.currencyCode },
     retailPrice: values.retailPrice,
     productionYear: values.productionYear,
     ownershipType: values.ownershipType || undefined,
@@ -185,6 +188,16 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
 
   const handleQuickAddSelect = (result: AssetQuickSearchResultType) => {
     setValue("name", result.name, { shouldDirty: true, shouldValidate: true });
+
+    const marketPrice = parseCurrencyToNumber(result.market_price);
+    if (marketPrice !== undefined) {
+      setValue("price.value", marketPrice, { shouldDirty: true, shouldValidate: true });
+    }
+
+    const retailPrice = parseCurrencyToNumber(result.retail_price);
+    if (retailPrice !== undefined) {
+      setValue("retailPrice", retailPrice, { shouldDirty: true, shouldValidate: true });
+    }
   };
 
   const buildPayload = (values: AddAssetItemFormValues) => ({
@@ -296,28 +309,23 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                     required
                   >
                     {({ field }) => (
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="0.00" startAdornment="$" />
-                      </FormControl>
+                      <FormCurrencyInput
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="0.00"
+                        startAdornment="$"
+                      />
                     )}
                   </FormField>
 
                   <FormField control={control} name="retailPrice" label="Asset Retail Value">
                     {({ field }) => (
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          placeholder="0.00"
-                          startAdornment="$"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === "" ? undefined : Number(e.target.value),
-                            )
-                          }
-                        />
-                      </FormControl>
+                      <FormCurrencyInput
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="0.00"
+                        startAdornment="$"
+                      />
                     )}
                   </FormField>
 

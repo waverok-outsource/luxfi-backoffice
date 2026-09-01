@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
+import { CurrencyInputField } from "@/components/ui/currency-input";
 
 import { SelectTrigger } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
@@ -159,6 +160,19 @@ export function FormTextarea(props: React.ComponentProps<typeof Textarea>) {
 
   return (
     <Textarea
+      id={id}
+      aria-invalid={invalid || undefined}
+      aria-describedby={describedBy}
+      {...props}
+    />
+  );
+}
+
+export function FormCurrencyInput(props: React.ComponentProps<typeof CurrencyInputField>) {
+  const { id, invalid, describedBy } = useFormField();
+
+  return (
+    <CurrencyInputField
       id={id}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
