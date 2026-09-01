@@ -20,7 +20,6 @@ import convertObjectToQuery from "@/util/convertObjectToQuery";
 type AssetItemTableRow = Record<string, unknown> & {
   id: string;
   assetName: string;
-  assetCategory: string;
   dial: string;
   itemColor: string;
   year: string;
@@ -50,7 +49,6 @@ export function ManageAssetsTab({ assetClass }: ManageAssetsTabProps) {
   const rows: AssetItemTableRow[] = items.map((item) => ({
     id: item.assetId,
     assetName: item.name,
-    assetCategory: item.assetCategoryName,
     dial: item.dialColour,
     itemColor: item.case.colour,
     year: item.productionYear,
@@ -61,7 +59,6 @@ export function ManageAssetsTab({ assetClass }: ManageAssetsTabProps) {
   const columns: ColumnDef<AssetItemTableRow, unknown>[] = [
     createIdentifierColumn<AssetItemTableRow>("Asset ID", "id"),
     createTextColumn<AssetItemTableRow>("Asset Name", "assetName", "max-w-[180px]"),
-    createTextColumn<AssetItemTableRow>("Asset Category", "assetCategory"),
     createTextColumn<AssetItemTableRow>("Dial", "dial"),
     createTextColumn<AssetItemTableRow>("Item Color", "itemColor"),
     createTextColumn<AssetItemTableRow>("Year", "year"),

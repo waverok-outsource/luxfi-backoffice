@@ -188,7 +188,6 @@ export function AssetVerificationForm({
                 <div className="space-y-2 border-t border-primary-grey-stroke pt-4">
                   <VerificationDetailRow label="Asset Name:" value={asset.assetName} />
                   <VerificationDetailRow label="Asset ID:" value={asset.assetId} />
-                  <VerificationDetailRow label="Asset Category:" value={asset.assetCategoryName} />
                   <VerificationDetailRow label="Asset Class:" value={asset.assetClassName} />
                 </div>
 

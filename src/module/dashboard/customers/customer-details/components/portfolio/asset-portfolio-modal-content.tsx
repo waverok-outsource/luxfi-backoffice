@@ -39,7 +39,7 @@ import {
   type AssetPortfolioInfoFormInputValues,
   type AssetPortfolioRejectFormInputValues,
 } from "@/schema/customers.schema";
-import { toTitleCase } from "@/util/helper";
+import { resolveAssetClassLabel } from "@/util/helper";
 
 const assetThumbThemes = [
   "from-[#F4E2C8] via-[#D3B58E] to-[#9F6A3B]",
@@ -227,7 +227,7 @@ function AssetDetailsCard({ asset }: { asset: CustomerAssetType }) {
         <div className="border-t border-primary-grey-stroke pt-4">
           <div className="space-y-2">
             <LoanCaseDetailRow label="Asset Name:" value={asset.name} />
-            <LoanCaseDetailRow label="Brand (Category):" value={toTitleCase(asset.assetCategoryName)} />
+            <LoanCaseDetailRow label="Asset Class:" value={resolveAssetClassLabel(asset)} />
           </div>
 
           <div className="mt-4 grid gap-3 border-t border-primary-grey-stroke pt-4 md:grid-cols-2">

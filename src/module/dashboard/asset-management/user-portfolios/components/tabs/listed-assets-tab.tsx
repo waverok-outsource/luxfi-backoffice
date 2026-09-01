@@ -23,13 +23,13 @@ import type {
 } from "@/types/asset-verification.type";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatCurrency } from "@/util/format-currency";
-import { formatDate, toTitleCase } from "@/util/helper";
+import { formatDate, resolveAssetClassLabel } from "@/util/helper";
 
 type ListedAssetRow = Record<string, unknown> & {
   id: string;
   assetId: string;
   assetName: string;
-  assetCategory: string;
+  assetClass: string;
   dateAdded: string;
   marketValue: string;
   status: AssetVerificationStatus;
@@ -54,14 +54,12 @@ function toVerificationStatus(status: string | undefined): AssetVerificationStat
 
 function mapCustomerAssetToVerificationRecord(asset: CustomerAssetType): AssetVerificationRecord {
   const examination = asset.assetExamination;
-  const assetClass = asset.assetClass;
 
   return {
     id: asset.assetId,
     assetId: asset.assetId,
     assetName: asset.name,
-    assetCategoryName: toTitleCase(asset.assetCategoryName),
-    assetClassName: assetClass?.name ?? "",
+    assetClassName: resolveAssetClassLabel(asset),
     year: asset.productionYear,
     dialColour: asset.dialColour,
     weight: asset.weight ? `${asset.weight.value}${asset.weight.unit}` : "",
@@ -115,7 +113,7 @@ export function ListedAssetsTab({ customerId, assetType }: ListedAssetsTabProps)
     id: asset.assetId,
     assetId: asset.assetId,
     assetName: asset.name,
-    assetCategory: toTitleCase(asset.assetCategoryName),
+    assetClass: resolveAssetClassLabel(asset),
     dateAdded: formatDate(asset.createdAt, "dd/MM/yyyy"),
     marketValue: formatCurrency(asset.price.value, asset.price.currencyCode),
     status: toVerificationStatus(asset.verificationStatus ?? asset.status),
@@ -164,7 +162,7 @@ export function ListedAssetsTab({ customerId, assetType }: ListedAssetsTabProps)
   const columns: ColumnDef<ListedAssetRow, unknown>[] = [
     createIdentifierColumn<ListedAssetRow>("Asset ID", "assetId"),
     createTextColumn<ListedAssetRow>("Asset Name", "assetName", "max-w-[180px]"),
-    createTextColumn<ListedAssetRow>("Asset Category", "assetCategory"),
+    createTextColumn<ListedAssetRow>("Asset Class", "assetClass"),
     createTextColumn<ListedAssetRow>("Date Added", "dateAdded"),
     createTextColumn<ListedAssetRow>("Market Value", "marketValue"),
     createStatusColumn<ListedAssetRow, AssetVerificationStatus>("Status ID", STATUS_CONFIG),

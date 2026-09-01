@@ -27,6 +27,10 @@ export function formatSessionLogLocation(location: { city?: string; country?: st
     .join(", ");
 }
 
+export function resolveAssetClassLabel(asset: { assetClass?: { name: string } | null }) {
+  return toTitleCase(asset.assetClass?.name ?? "");
+}
+
 export function getKycTierLabel(customer: { kycTierNumber?: number; kycTier?: string }) {
   if (customer.kycTierNumber != null) return `Tier Level ${customer.kycTierNumber}`;
   if (customer.kycTier) return toTitleCase(customer.kycTier);

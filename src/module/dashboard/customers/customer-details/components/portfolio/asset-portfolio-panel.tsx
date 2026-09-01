@@ -22,14 +22,14 @@ import type {
 } from "@/types/customer-asset.type";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { formatCurrency } from "@/util/format-currency";
-import { formatDate, toTitleCase } from "@/util/helper";
+import { formatDate, resolveAssetClassLabel } from "@/util/helper";
 
 const PAGE_SIZE = 5;
 
 type TableRow = {
   id: string;
   assetId: string;
-  assetCategory: string;
+  assetClass: string;
   assetName: string;
   marketValue: string;
   pawnValue: string;
@@ -88,7 +88,7 @@ export function AssetPortfolioPanel({ customerId }: { customerId: string }) {
       assets.map((asset) => ({
         id: asset.assetId,
         assetId: asset.assetId,
-        assetCategory: toTitleCase(asset.assetCategoryName),
+        assetClass: resolveAssetClassLabel(asset),
         assetName: asset.name,
         marketValue: formatCurrency(asset.price.value, asset.price.currencyCode),
         pawnValue: asset.pawnValuationPrice
@@ -105,8 +105,8 @@ export function AssetPortfolioPanel({ customerId }: { customerId: string }) {
       createSerialColumn<TableRow>(),
       createIdentifierColumn<TableRow>("Asset ID", "assetId"),
       {
-        accessorKey: "assetCategory",
-        header: "Asset Category",
+        accessorKey: "assetClass",
+        header: "Asset Class",
       },
       {
         accessorKey: "assetName",

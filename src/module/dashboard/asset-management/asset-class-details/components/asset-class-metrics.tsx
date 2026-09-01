@@ -17,20 +17,18 @@ export function AssetClassMetrics({ assetClass }: AssetClassMetricsProps) {
   const items = assetsResponse?.data ?? [];
 
   const totalValue = items.reduce((sum, item) => sum + item.price.value, 0);
-  const categoryCount = new Set(items.map((item) => item.assetCategoryName)).size;
   const publishedCount = items.filter((item) => item.onSale).length;
   const unpublishedCount = items.length - publishedCount;
 
   const metrics = [
     { title: "Total Asset Count", value: String(items.length) },
     { title: "Total Asset Value", value: formatCurrency(totalValue, "USD") },
-    { title: "Total Asset Categories", value: String(categoryCount) },
     { title: "Published Assets", value: String(publishedCount) },
     { title: "Unpublished Assets", value: String(unpublishedCount) },
   ];
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric) => (
         <StatCard
           key={metric.title}

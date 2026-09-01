@@ -184,28 +184,37 @@ export type AddAssetClassFormValues = z.infer<typeof addAssetClassSchema>;
 // payload's "kg" for a watch weight looks like placeholder data. See ADR 0003.
 export const CASE_UNIT_VALUES = ["mm", "cm"] as const;
 export const WEIGHT_UNIT_VALUES = ["g", "kg"] as const;
+export const OWNERSHIP_TYPE_VALUES = ["Brand New", "Pre-owned", "Used"] as const;
+export const COLOUR_VARIANT_VALUES = [
+  "Gold", "Rose Gold", "Silver", "White", "Black", "Green", "Red", "Blue", "Grey",
+] as const;
 
 const assetItemBaseSchema = z.object({
   name: requiredText,
-  assetCategoryId: requiredText,
+  modelNumber: z.string().default(""),
   price: z.object({
     value: nonNegativeNumber,
     currencyCode: oneOf(CURRENCY_VALUES),
   }),
-  productionYear: requiredText,
+  retailPrice: nonNegativeNumber.optional(),
+  productionYear: z.string().default(""),
+  ownershipType: z.string().default(""),
+  colourVariants: z.array(z.string()).default([]),
   hasPapers: z.boolean(),
   isBoxed: z.boolean(),
-  case: z.object({
-    colour: requiredText,
-    size: nonNegativeNumber,
-    unit: oneOf(CASE_UNIT_VALUES),
-  }),
   weight: z.object({
     value: nonNegativeNumber,
     unit: oneOf(WEIGHT_UNIT_VALUES),
   }),
-  dialColour: requiredText,
   overrideParentClassConfigurations: z.boolean(),
+  // Not shown in UI but kept for API compatibility
+  assetCategoryId: z.string().default(""),
+  dialColour: z.string().default(""),
+  case: z.object({
+    colour: z.string().default(""),
+    size: nonNegativeNumber.default(0),
+    unit: z.string().default("mm"),
+  }).default({ colour: "", size: 0, unit: "mm" }),
 });
 
 export const addAssetItemSchema = assetItemBaseSchema.merge(assetClassConfigSchema);

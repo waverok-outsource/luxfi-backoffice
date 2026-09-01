@@ -6,7 +6,6 @@ export type AssetVerificationRecord = {
   id: string;
   assetId: string;
   assetName: string;
-  assetCategoryName: string;
   assetClassName: string;
 
   year: string;

@@ -3,15 +3,25 @@
 import * as React from "react";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CheckCircle2 } from "lucide-react";
 
 import {
   ModalShell,
   SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME,
   SuccessModalContent,
 } from "@/components/modal";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { FormControl, FormField, FormSelectTrigger, FormSwitchField } from "@/components/util/form-controller";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  FormControl,
+  FormDatePicker,
+  FormField,
+  FormSelectTrigger,
+  FormSwitchField,
+} from "@/components/util/form-controller";
 import { AssetClassConfigWizard } from "@/module/dashboard/asset-management/components/asset-class-config-wizard";
 import { ASSET_CLASS_STEP_ORDER } from "@/module/dashboard/asset-management/components/asset-class-step-meta";
 import {
@@ -21,13 +31,13 @@ import {
 import { QuickAddSearchField } from "@/module/dashboard/asset-management/asset-class-details/components/modals/asset-item-configuration-modal/quick-add-search-field";
 import {
   addAssetItemSchema,
-  CASE_UNIT_VALUES,
+  COLOUR_VARIANT_VALUES,
   CURRENCY_VALUES,
+  OWNERSHIP_TYPE_VALUES,
   WEIGHT_UNIT_VALUES,
   type AddAssetItemFormValues,
   type AssetClassStepKey,
 } from "@/schema/asset-management.schema";
-import { useAssetCategories } from "@/services/queries/asset-management.queries";
 import useAssetManagementFns from "@/services/functions/asset-management.fns";
 import type {
   AssetClassType,
@@ -35,8 +45,8 @@ import type {
   AssetQuickSearchResultType,
   CreateAssetClassPayloadType,
 } from "@/types/asset-management.type";
-import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { mapAssetClassToConfigFormValues, resolveAssetConfig } from "@/util/resolve-asset-config";
+import { toTitleCase } from "@/util/helper";
 
 type AssetItemConfigurationModalProps =
   | {
@@ -56,8 +66,22 @@ type AssetItemConfigurationModalProps =
 
 type ModalStage = "FORM" | "CONFIRM_UPDATE" | "CONFIRM_DELETE" | "SUCCESS";
 
-const CURRENT_YEAR = 2026;
-const YEAR_OPTIONS = Array.from({ length: 15 }, (_, index) => String(CURRENT_YEAR - index));
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  tangible: "Tangible Asset",
+  digital: "Digital Asset",
+};
+
+function AssetTypeBadge({ label }: { label: string }) {
+  return (
+    <Badge
+      variant="neutral"
+      className="gap-1.5 border border-primary-black bg-alertSoft-warning text-text-amber"
+    >
+      <CheckCircle2 className="h-3 w-3" />
+      {label}
+    </Badge>
+  );
+}
 
 function buildDefaultValues(
   assetClass: AssetClassType,
@@ -70,15 +94,19 @@ function buildDefaultValues(
 
   return {
     name: assetItem?.name ?? "",
-    assetCategoryId: assetItem?.assetCategoryId ?? "",
+    modelNumber: "",
     price: assetItem?.price ?? { value: 0, currencyCode: CURRENCY_VALUES[0] },
+    retailPrice: undefined,
     productionYear: assetItem?.productionYear ?? "",
+    ownershipType: "",
+    colourVariants: [],
     hasPapers: assetItem?.hasPapers ?? false,
     isBoxed: assetItem?.isBoxed ?? false,
-    case: assetItem?.case ?? { colour: "", size: 0, unit: CASE_UNIT_VALUES[0] },
     weight: assetItem?.weight ?? { value: 0, unit: WEIGHT_UNIT_VALUES[0] },
-    dialColour: assetItem?.dialColour ?? "",
     overrideParentClassConfigurations: assetItem?.overrideParentClassConfigurations ?? false,
+    assetCategoryId: assetItem?.assetCategoryId ?? "",
+    dialColour: assetItem?.dialColour ?? "",
+    case: assetItem?.case ?? { colour: "", size: 0, unit: "mm" },
     ...resolvedConfig,
   };
 }
@@ -86,21 +114,22 @@ function buildDefaultValues(
 function buildAssetBasePayload(values: AddAssetItemFormValues) {
   return {
     name: values.name.trim(),
-    assetCategoryId: values.assetCategoryId,
+    modelNumber: values.modelNumber || undefined,
     price: values.price,
+    retailPrice: values.retailPrice,
     productionYear: values.productionYear,
+    ownershipType: values.ownershipType || undefined,
+    colourVariants: values.colourVariants.length > 0 ? values.colourVariants : undefined,
     hasPapers: values.hasPapers,
     isBoxed: values.isBoxed,
-    case: values.case,
     weight: values.weight,
+    // API compatibility fields — not collected in UI
+    assetCategoryId: values.assetCategoryId,
     dialColour: values.dialColour,
+    case: values.case,
   };
 }
 
-// Mirrors buildCategoryConfigurationPayload in the category modal — the
-// nested `configuration` payload is shaped like the asset class's own POST
-// body. NOT part of the sample POST /v1/assets body we were given; sent by
-// assumption per docs/STATUS.md.
 function buildAssetConfigurationPayload(
   assetClass: AssetClassType,
   itemName: string,
@@ -131,10 +160,6 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
   const formId = React.useId();
 
   const { createAsset, updateAsset, deleteAsset, loading } = useAssetManagementFns();
-  const { data: categoriesResponse } = useAssetCategories(
-    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
-  );
-  const categories = categoriesResponse?.data ?? [];
 
   const {
     urls: imageUrls,
@@ -144,28 +169,21 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
     existingUploads,
   } = useAssetItemImages(assetItem?.uploads ?? []);
 
-  // Every step is pre-populated from the resolved parent config, so unlike the
-  // class wizard there's no progressive Next/Back gating here — every step is
-  // already valid and reachable as soon as the override toggle is on.
   const allStepsCompleted = React.useMemo(() => new Set(ASSET_CLASS_STEP_ORDER), []);
 
   const { control, setValue, handleSubmit } = useForm<AddAssetItemFormValues>({
-    // zodResolver's inferred type traces the schema's pre-coercion input shape
-    // (e.g. numeric fields as `unknown`), which structurally conflicts with the
-    // post-coercion `AddAssetItemFormValues` used everywhere else in this form
-    // (and required by AssetClassConfigWizard's Control<T>). The cast just tells
-    // TS to trust the resolver's actual runtime contract instead of that mismatch.
     resolver: zodResolver(addAssetItemSchema) as unknown as Resolver<AddAssetItemFormValues>,
     defaultValues: buildDefaultValues(assetClass, assetItem),
     mode: "all",
   });
 
-  const isOverrideEnabled = useWatch({ control, name: "overrideParentClassConfigurations" });
+  const isOverrideEnabled = useWatch({
+    control,
+    name: "overrideParentClassConfigurations",
+  });
+  const colourVariants = useWatch({ control, name: "colourVariants" });
 
   const handleQuickAddSelect = (result: AssetQuickSearchResultType) => {
-    // The quick-search response only carries id/slug/name/prices/url — no
-    // brand/year/case/weight/dial-colour to autofill the rest of the form
-    // with. See docs/STATUS.md.
     setValue("name", result.name, { shouldDirty: true, shouldValidate: true });
   };
 
@@ -173,29 +191,21 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
     ...buildAssetBasePayload(values),
     overrideParentClassConfigurations: values.overrideParentClassConfigurations,
     ...(values.overrideParentClassConfigurations
-      ? { configuration: buildAssetConfigurationPayload(assetClass, values.name, values) }
+      ? {
+          configuration: buildAssetConfigurationPayload(assetClass, values.name, values),
+        }
       : {}),
   });
 
   const performUpdate = (values: AddAssetItemFormValues) => {
-    if (!isEditMode) {
-      return;
-    }
-
-    updateAsset(
-      assetItem.assetId,
-      buildPayload(values),
-      pendingFiles,
-      existingUploads,
-      () => setStage("SUCCESS"),
+    if (!isEditMode) return;
+    updateAsset(assetItem.assetId, buildPayload(values), pendingFiles, existingUploads, () =>
+      setStage("SUCCESS"),
     );
   };
 
   const performDelete = () => {
-    if (!isEditMode) {
-      return;
-    }
-
+    if (!isEditMode) return;
     deleteAsset(assetItem.assetId, () => onOpenChange(false));
   };
 
@@ -205,7 +215,6 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
       setStage("CONFIRM_UPDATE");
       return;
     }
-
     createAsset(buildPayload(values), pendingFiles, () => setStage("SUCCESS"));
   };
 
@@ -214,188 +223,203 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
 
   const stageConfig: Record<
     ModalStage,
-    { contentClassName: string; closeOnBackdropClick: boolean; content: React.ReactNode }
+    {
+      contentClassName: string;
+      closeOnBackdropClick: boolean;
+      content: React.ReactNode;
+    }
   > = {
     FORM: {
       closeOnBackdropClick: true,
       contentClassName: "max-w-[1024px] p-4 sm:p-6",
       content: (
-        <div className="space-y-5">
+        // `space-y-*` puts a margin-top on every non-first child, including
+        // the sticky Header/Footer — that margin stacks on top of the
+        // padding those already carry for their sticky bleed, producing a
+        // large blank gap right before the pinned footer (and interacting
+        // oddly with the header's own negative-margin bleed). Sticky
+        // Header/Footer stay outside any space-y/gap container; the normal
+        // flowing content gets its own nested space-y-5 instead, with pt-5
+        // standing in for the mt-5 the search field would otherwise have
+        // gotten as the (no-longer-)second child.
+        <div className="flex flex-col">
           <ModalShell.Header
             title={modalTitle}
             description="Manage and configure Asset Item"
             showBackButton
             onBack={() => onOpenChange(false)}
+            sticky
           />
 
-          <QuickAddSearchField onSelect={handleQuickAddSelect} />
+          <div className="space-y-5 pt-5">
+            <QuickAddSearchField onSelect={handleQuickAddSelect} />
 
-          <ModalShell.Body>
             <form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <h3 className="font-semibold">Item Description</h3>
+              <ModalShell.Body className="space-y-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="font-semibold">Item Description</h3>
+                  <AssetTypeBadge
+                    label={
+                      ASSET_TYPE_LABELS[assetClass.assetType] ?? toTitleCase(assetClass.assetType)
+                    }
+                  />
+                  <AssetTypeBadge label={assetClass.name} />
+                </div>
 
-              <ImageUploadGrid urls={imageUrls} onAddFiles={addImageFiles} onRemoveAt={removeImageAt} />
-
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-                <FormField control={control} name="name" label="Name of Item" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter text here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="assetCategoryId" label="Asset Category" required>
-                  {({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormSelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </FormSelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.assetCategoryId} value={category.assetCategoryId}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="productionYear" label="Production Year" required>
-                  {({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormSelectTrigger>
-                        <SelectValue placeholder="Select Options" />
-                      </FormSelectTrigger>
-                      <SelectContent>
-                        {YEAR_OPTIONS.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="dialColour" label="Dial Colour" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter text here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="case.colour" label="Case Colour" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter text here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="case.size" label="Case Size" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter number here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="case.unit" label="Case Size Unit" required>
-                  {({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormSelectTrigger>
-                        <SelectValue placeholder="Select Unit" />
-                      </FormSelectTrigger>
-                      <SelectContent>
-                        {CASE_UNIT_VALUES.map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="weight.value" label="Weight" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter number here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="weight.unit" label="Weight Unit" required>
-                  {({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormSelectTrigger>
-                        <SelectValue placeholder="Select Unit" />
-                      </FormSelectTrigger>
-                      <SelectContent>
-                        {WEIGHT_UNIT_VALUES.map((unit) => (
-                          <SelectItem key={unit} value={unit}>
-                            {unit}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="price.value" label="Price" required>
-                  {({ field }) => (
-                    <FormControl>
-                      <Input {...field} placeholder="Enter number here" />
-                    </FormControl>
-                  )}
-                </FormField>
-
-                <FormField control={control} name="price.currencyCode" label="Currency" required>
-                  {({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormSelectTrigger>
-                        <SelectValue placeholder="Select Currency" />
-                      </FormSelectTrigger>
-                      <SelectContent>
-                        {CURRENCY_VALUES.map((currency) => (
-                          <SelectItem key={currency} value={currency}>
-                            {currency}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </FormField>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 border-t border-primary-grey-stroke pt-4 sm:grid-cols-2">
-                <FormSwitchField
-                  control={control}
-                  name="hasPapers"
-                  label="Has Papers"
-                  description="Item is sold with its original papers/documentation"
-                  size="sm"
+                <ImageUploadGrid
+                  urls={imageUrls}
+                  onAddFiles={addImageFiles}
+                  onRemoveAt={removeImageAt}
                 />
 
-                <FormSwitchField
-                  control={control}
-                  name="isBoxed"
-                  label="Is Boxed"
-                  description="Item is sold with its original box"
-                  size="sm"
-                />
-              </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <FormField control={control} name="name" label="Asset Name" required>
+                    {({ field }) => (
+                      <FormControl>
+                        <Input {...field} placeholder="Enter text here" />
+                      </FormControl>
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="modelNumber" label="Model Number">
+                    {({ field }) => (
+                      <FormControl>
+                        <Input {...field} placeholder="Enter text here" />
+                      </FormControl>
+                    )}
+                  </FormField>
+
+                  <FormField
+                    control={control}
+                    name="price.value"
+                    label="Asset Market Value"
+                    required
+                  >
+                    {({ field }) => (
+                      <FormControl>
+                        <Input {...field} type="number" placeholder="0.00" startAdornment="$" />
+                      </FormControl>
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="retailPrice" label="Asset Retail Value">
+                    {({ field }) => (
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          placeholder="0.00"
+                          startAdornment="$"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === "" ? undefined : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="productionYear" label="Year of Release">
+                    {({ field }) => (
+                      <FormDatePicker
+                        date={field.value ? new Date(field.value) : undefined}
+                        onDateChange={(date) =>
+                          field.onChange(date ? format(date, "yyyy-MM-dd") : "")
+                        }
+                        placeholder="DD/MM/YYYY"
+                        displayFormat="dd/MM/yyyy"
+                      />
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="ownershipType" label="Ownership Type">
+                    {({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormSelectTrigger>
+                          <SelectValue placeholder="Select Options" />
+                        </FormSelectTrigger>
+                        <SelectContent>
+                          {OWNERSHIP_TYPE_VALUES.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="weight.unit" label="Asset Weight Class">
+                    {({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormSelectTrigger>
+                          <SelectValue />
+                        </FormSelectTrigger>
+                        <SelectContent>
+                          {WEIGHT_UNIT_VALUES.map((unit) => (
+                            <SelectItem key={unit} value={unit}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </FormField>
+
+                  <FormField control={control} name="weight.value" label="Asset Weight Value">
+                    {({ field }) => (
+                      <FormControl>
+                        <Input {...field} type="number" placeholder="0" />
+                      </FormControl>
+                    )}
+                  </FormField>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-text-black">Asset Colour Variant(s)</p>
+                  <ToggleGroup
+                    selection="multiple"
+                    look="pill"
+                    value={colourVariants ?? []}
+                    onValueChange={(next) =>
+                      setValue("colourVariants", next, { shouldDirty: true })
+                    }
+                  >
+                    {COLOUR_VARIANT_VALUES.map((colour) => (
+                      <ToggleGroupItem key={colour} value={colour}>
+                        {colour}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 border-t border-primary-grey-stroke pt-4 sm:grid-cols-2">
+                  <FormSwitchField
+                    control={control}
+                    name="isBoxed"
+                    label="Box Available"
+                    description="Item is sold with its original box"
+                    size="sm"
+                  />
+
+                  <FormSwitchField
+                    control={control}
+                    name="hasPapers"
+                    label="Certification Papers Available"
+                    description="Item is sold with its original papers/documentation"
+                    size="sm"
+                  />
+                </div>
+              </ModalShell.Body>
 
               <FormSwitchField
                 control={control}
                 name="overrideParentClassConfigurations"
                 label="Overwrite Parent Class Configurations"
-                description="This will allow you manually customize configurations for this asset Item only"
+                description="Customize configurations for this asset Item"
                 size="sm"
-                className="border-t border-primary-grey-stroke pt-4"
               />
 
               {isOverrideEnabled ? (
@@ -408,9 +432,9 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                 />
               ) : null}
             </form>
-          </ModalShell.Body>
+          </div>
 
-          <ModalShell.Footer>
+          <ModalShell.Footer sticky>
             {isEditMode ? (
               <ModalShell.Action
                 type="button"
@@ -420,13 +444,17 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                 Delete
               </ModalShell.Action>
             ) : (
-              <ModalShell.Action type="button" variant="grey-stroke" onClick={() => onOpenChange(false)}>
+              <ModalShell.Action
+                type="button"
+                variant="grey-stroke"
+                onClick={() => onOpenChange(false)}
+              >
                 Close
               </ModalShell.Action>
             )}
 
             <ModalShell.Action type="submit" form={formId} pending={isSaving}>
-              {isEditMode ? "Update" : "Add Asset"}
+              {isEditMode ? "Update" : "Create Asset"}
             </ModalShell.Action>
           </ModalShell.Footer>
         </div>

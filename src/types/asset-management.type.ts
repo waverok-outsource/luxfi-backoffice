@@ -157,17 +157,22 @@ export type AssetWeightType = { value: number; unit: string };
 // support a config override. See docs/STATUS.md — Asset Management API gaps.
 export type CreateAssetPayloadType = {
   name: string;
-  assetCategoryId: string;
+  modelNumber?: string;
   price: AssetPriceType;
+  retailPrice?: number;
   productionYear: string;
+  ownershipType?: string;
+  colourVariants?: string[];
   hasPapers: boolean;
   isBoxed: boolean;
-  case: AssetCaseType;
   weight: AssetWeightType;
-  dialColour: string;
   uploads: string[];
   overrideParentClassConfigurations: boolean;
   configuration?: Omit<CreateAssetClassPayloadType, "description">;
+  // Kept for API compatibility
+  assetCategoryId: string;
+  dialColour: string;
+  case: AssetCaseType;
 };
 
 // ---- GET /v1/assets (list item) ----

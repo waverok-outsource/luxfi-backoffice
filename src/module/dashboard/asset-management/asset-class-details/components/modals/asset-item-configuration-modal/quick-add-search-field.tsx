@@ -63,7 +63,7 @@ export function QuickAddSearchField({ onSelect }: QuickAddSearchFieldProps) {
         sideOffset={8}
         initialFocus={false}
         finalFocus={inputRef}
-        className="max-h-80 w-[420px] max-w-[90vw] overflow-y-auto p-2"
+        className="max-h-80 w-105 max-w-[90vw] overflow-y-auto p-2"
       >
         {results.length ? (
           <ul className="flex flex-col gap-1">

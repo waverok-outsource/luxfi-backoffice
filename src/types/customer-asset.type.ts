@@ -19,7 +19,6 @@ export type CustomerAssetType = {
   price: AssetPriceType;
   assetType: string;
   createdAt: string;
-  assetCategoryName: string; // lowercase from API — capitalize at render time
   productionYear: string;
   defectComment: string | null; // ASSUMPTION: also used for rejection reason — see ADR 0020
   uploads: string[];
