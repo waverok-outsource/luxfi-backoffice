@@ -82,6 +82,7 @@ const keyFactory = {
 
   marketplace: {
     all: ["marketplace"],
+    analytics: (query: string) => ["marketplace", "analytics", query],
     listings: {
       all: ["marketplace", "listings"],
       list: (query: string) => ["marketplace", "listings", query],

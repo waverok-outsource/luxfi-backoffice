@@ -39,10 +39,11 @@ export const useAssetCategories = (query: string) =>
     queryFn: () => fetchAssetCategories(query),
   });
 
-export const useAssets = (query: string) =>
+export const useAssets = (query: string, enabled: boolean = true) =>
   useQuery({
     queryKey: keyFactory.assetManagement.assets.list(query),
     queryFn: () => fetchAssets(query),
+    enabled,
   });
 
 export const useAssetQuickSearch = (query: string, valuatorName: string, page: number) =>

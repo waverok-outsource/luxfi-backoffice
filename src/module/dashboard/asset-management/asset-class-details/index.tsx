@@ -22,7 +22,6 @@ import {
   type AssetClassDetailsTabValue,
 } from "@/module/dashboard/asset-management/asset-class-details/data";
 import {
-  useAssetCategories,
   useAssetClassDetails,
   useAssets,
 } from "@/services/queries/asset-management.queries";
@@ -50,17 +49,12 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
 
   const activeTab = isAssetClassDetailsTab(value.tab) ? value.tab : DEFAULT_ASSET_CLASS_DETAILS_TAB;
   const activeTabConfig = ASSET_CLASS_DETAILS_TAB_COMPONENTS[activeTab];
-  const activeCategory = value.category ?? "all";
   const activeYear = value.year ?? "all";
 
-  const { data: categoriesResponse } = useAssetCategories(
-    convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
-  );
   const { data: assetsResponse } = useAssets(
     convertObjectToQuery({ assetClassId: assetClass.assetClassId }),
   );
 
-  const categoryOptions = categoriesResponse?.data ?? [];
   const yearOptions = React.useMemo(
     () =>
       Array.from(new Set((assetsResponse?.data ?? []).map((item) => item.productionYear)))
@@ -116,62 +110,28 @@ function AssetClassDetailsContent({ assetClass }: { assetClass: AssetClassType }
 
           <div className="flex flex-wrap items-center gap-2">
             {activeTab === "manage-assets" ? (
-              <>
-                <Select
-                  value={activeCategory}
-                  onValueChange={(nextCategory) =>
-                    setURLQuery({
-                      category: nextCategory && nextCategory !== "all" ? nextCategory : undefined,
-                    })
-                  }
-                >
-                  <SelectTrigger className="w-[170px]" size="sm">
-                    <SelectValue>
-                      {(selected: string | null) => {
-                        if (!selected || selected === "all") {
-                          return "All Categories";
-                        }
-                        return (
-                          categoryOptions.find(
-                            (category) => category.assetCategoryId === selected,
-                          )?.name ?? "All Categories"
-                        );
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categoryOptions.map((category) => (
-                      <SelectItem key={category.assetCategoryId} value={category.assetCategoryId}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={activeYear}
-                  onValueChange={(nextYear) =>
-                    setURLQuery({ year: nextYear && nextYear !== "all" ? nextYear : undefined })
-                  }
-                >
-                  <SelectTrigger className="w-[150px]" size="sm">
-                    <SelectValue>
-                      {(selected: string | null) =>
-                        selected && selected !== "all" ? selected : "All Time"
-                      }
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Time</SelectItem>
-                    {yearOptions.map((year) => (
-                      <SelectItem key={year} value={year}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
+              <Select
+                value={activeYear}
+                onValueChange={(nextYear) =>
+                  setURLQuery({ year: nextYear && nextYear !== "all" ? nextYear : undefined })
+                }
+              >
+                <SelectTrigger className="w-[150px]" size="sm">
+                  <SelectValue>
+                    {(selected: string | null) =>
+                      selected && selected !== "all" ? selected : "All Time"
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  {yearOptions.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : null}
 
             {activeTabConfig.slots.action ? activeTabConfig.slots.action(assetClass) : null}

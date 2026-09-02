@@ -1,15 +1,15 @@
 import { PairedMetricCard } from "@/components/dashboard/paired-metric-card";
-import { marketplaceMetricPairs } from "@/module/dashboard/marketplace/data";
+import type { AnalyticsStatCardType } from "@/util/analytics-metrics";
 
-export function MarketplaceMetrics() {
+type MarketplaceMetricsProps = {
+  pairs: [AnalyticsStatCardType, AnalyticsStatCardType][];
+};
+
+export function MarketplaceMetrics({ pairs }: MarketplaceMetricsProps) {
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {marketplaceMetricPairs.map((pair) => (
-        <PairedMetricCard
-          key={pair.left.title}
-          left={{ ...pair.left, period: "Last 7 days" }}
-          right={{ ...pair.right, period: "Last 7 days" }}
-        />
+      {pairs.map(([left, right]) => (
+        <PairedMetricCard key={left.title} left={left} right={right} />
       ))}
     </div>
   );

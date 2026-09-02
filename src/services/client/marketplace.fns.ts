@@ -1,10 +1,19 @@
 import type {
   AssetMarketListingsResponseType,
+  MarketplaceAnalyticsResponseType,
   OrderDetailsResponseType,
   OrdersListResponseType,
 } from "@/types/marketplace.type";
 import apiHandler from "../api-handler";
 import MarketplaceRoute from "../route/marketplace.route";
+
+export const fetchMarketplaceAnalytics = async (query: string = "") => {
+  const { data } = await apiHandler.get<MarketplaceAnalyticsResponseType>(
+    `${MarketplaceRoute.analytics}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
 
 export const fetchAssetMarketListings = async (query: string = "") => {
   const { data } = await apiHandler.get<AssetMarketListingsResponseType>(

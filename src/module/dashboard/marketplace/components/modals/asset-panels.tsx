@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
+  FormSwitchField,
+  FormTextarea,
 } from "@/components/util/form-controller";
 import type { AddToMarketplaceFormValues } from "@/schema/marketplace.schema";
 import type { AssetItemType } from "@/types/asset-management.type";
@@ -224,10 +226,42 @@ export function AssetValuationPanel<TFieldValues extends FieldValues = AddToMark
       >
         {({ field }) => (
           <FormControl>
-            <Input {...field} disabled={disabled} placeholder="0" />
+            <Input {...field} disabled={disabled} placeholder="Enter quantity" />
           </FormControl>
         )}
       </FormField>
+
+      <FormField
+        control={control}
+        name={"additionalInformation" as Path<TFieldValues>}
+        label="Additional Information (Optional)"
+      >
+        {({ field }) => (
+          <FormControl>
+            <FormTextarea
+              {...field}
+              disabled={disabled}
+              placeholder="Enter details here"
+              className="min-h-16 rounded-2xl"
+            />
+          </FormControl>
+        )}
+      </FormField>
+
+      <FormSwitchField
+        control={control}
+        name={"boxPackaged" as Path<TFieldValues>}
+        label="Box-Packaged"
+        disabled={disabled}
+        tone="mono"
+      />
+      <FormSwitchField
+        control={control}
+        name={"certificationPapersAvailable" as Path<TFieldValues>}
+        label="Certification Papers Available"
+        disabled={disabled}
+        tone="mono"
+      />
     </ValuationPanelShell>
   );
 }

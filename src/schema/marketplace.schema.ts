@@ -8,6 +8,9 @@ const numericText = requiredText.refine(
 export const addToMarketplaceSchema = z.object({
   unitListingPrice: numericText,
   quantity: numericText,
+  boxPackaged: z.boolean(),
+  certificationPapersAvailable: z.boolean(),
+  additionalInformation: z.string().optional(),
 });
 
 export type AddToMarketplaceFormValues = z.infer<typeof addToMarketplaceSchema>;

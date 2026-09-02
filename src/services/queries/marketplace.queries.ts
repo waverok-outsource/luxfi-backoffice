@@ -1,7 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchAssetMarketListings, fetchOrderById, fetchOrders } from "@/services/client/marketplace.fns";
+import {
+  fetchAssetMarketListings,
+  fetchMarketplaceAnalytics,
+  fetchOrderById,
+  fetchOrders,
+} from "@/services/client/marketplace.fns";
 import keyFactory from "@/util/query-key-factory";
+
+export const useMarketplaceAnalytics = (query: string = "") =>
+  useQuery({
+    queryKey: keyFactory.marketplace.analytics(query),
+    queryFn: () => fetchMarketplaceAnalytics(query),
+  });
 
 export const useAssetMarketListings = (query: string) =>
   useQuery({

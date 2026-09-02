@@ -1,5 +1,3 @@
-import { mockAssetClasses, mockAssetItemsByClassId } from "@/module/dashboard/asset-management/data";
-import type { AssetItemType } from "@/types/asset-management.type";
 import type { AssetMarketListingStatus } from "@/types/marketplace.type";
 
 export type MarketplaceTabValue =
@@ -42,37 +40,6 @@ export const ASSET_MARKET_MODAL_STATUS_LABELS: Record<AssetMarketListingStatus, 
   approved: "Approved",
   rejected: "Rejected",
 };
-
-// Marketplace listings used to reference existing Asset Management inventory via
-// assetItemId; still needed by the create-listing flow's AssetSearchField (which
-// searches Asset Management inventory).
-export function getAllAssetItems(): AssetItemType[] {
-  return Object.values(mockAssetItemsByClassId).flat();
-}
-
-export function resolveAssetClassName(assetClassId: string): string {
-  return mockAssetClasses.find((assetClass) => assetClass.assetClassId === assetClassId)?.name ?? "-";
-}
-
-export type MarketplaceMetricPair = {
-  left: { title: string; value: string; trend: string; tone: "positive" | "negative" };
-  right: { title: string; value: string; trend: string; tone: "positive" | "negative" };
-};
-
-export const marketplaceMetricPairs: MarketplaceMetricPair[] = [
-  {
-    left: { title: "Total Sales Volume", value: "$2,960,000", trend: "99.9%", tone: "positive" },
-    right: { title: "Total Purchase Volume", value: "$2,960,000", trend: "99.9%", tone: "positive" },
-  },
-  {
-    left: { title: "Liquidation Offers", value: "456,908", trend: "99.9%", tone: "negative" },
-    right: { title: "Buy Offers", value: "100,000", trend: "99.9%", tone: "positive" },
-  },
-  {
-    left: { title: "Active Listings Volume", value: "6,908", trend: "99.9%", tone: "positive" },
-    right: { title: "Active Listings Value", value: "$2,960,000", trend: "99.9%", tone: "positive" },
-  },
-];
 
 export const REJECTION_REASON_OPTIONS = [
   { label: "Price Below Market Value", value: "Price Below Market Value" },

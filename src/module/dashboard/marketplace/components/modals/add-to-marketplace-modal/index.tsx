@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ModalShell, SUCCESS_MODAL_DEFAULT_CONTENT_CLASSNAME, SuccessModalContent } from "@/components/modal";
 import { AssetSearchField } from "@/module/dashboard/marketplace/components/modals/add-to-marketplace-modal/asset-search-field";
 import { AssetDetailsPanel, AssetValuationPanel } from "@/module/dashboard/marketplace/components/modals/asset-panels";
-import { resolveAssetClassName } from "@/module/dashboard/marketplace/data";
 import useMarketplaceFns from "@/services/functions/marketplace.fns";
 import { addToMarketplaceSchema, type AddToMarketplaceFormValues } from "@/schema/marketplace.schema";
 import type { AssetItemType } from "@/types/asset-management.type";
@@ -22,12 +21,25 @@ type ModalStage = "FORM" | "SUCCESS";
 const DEFAULT_VALUES: AddToMarketplaceFormValues = {
   unitListingPrice: "",
   quantity: "",
+  boxPackaged: false,
+  certificationPapersAvailable: false,
+  additionalInformation: "",
 };
+
+function getDefaultValuesForAsset(assetItem: AssetItemType): AddToMarketplaceFormValues {
+  return {
+    unitListingPrice: String(assetItem.price.value),
+    quantity: "",
+    boxPackaged: assetItem.isBoxed,
+    certificationPapersAvailable: assetItem.hasPapers,
+    additionalInformation: "",
+  };
+}
 
 export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceModalProps) {
   const [stage, setStage] = React.useState<ModalStage>("FORM");
   const [selectedAssetItem, setSelectedAssetItem] = React.useState<AssetItemType | null>(null);
-  const { createListing } = useMarketplaceFns();
+  const { createListing, loading } = useMarketplaceFns();
   const formId = React.useId();
 
   const { control, handleSubmit, reset } = useForm<AddToMarketplaceFormValues>({
@@ -49,11 +61,19 @@ export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceMo
           currencyCode: selectedAssetItem.price.currencyCode,
         },
         assetId: selectedAssetItem.assetId,
+        notes: values.additionalInformation?.trim() || undefined,
+        isBoxed: values.boxPackaged,
+        hasPapers: values.certificationPapersAvailable,
       },
       () => {
         setStage("SUCCESS");
       },
     );
+  };
+
+  const handleSelectAsset = (assetItem: AssetItemType) => {
+    setSelectedAssetItem(assetItem);
+    reset(getDefaultValuesForAsset(assetItem));
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -77,7 +97,7 @@ export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceMo
             onBack={() => handleOpenChange(false)}
           />
 
-          <AssetSearchField onSelect={setSelectedAssetItem} />
+          <AssetSearchField onSelect={handleSelectAsset} />
 
           <ModalShell.Body>
             <form
@@ -97,7 +117,7 @@ export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceMo
                         assetType: selectedAssetItem.assetType ?? "",
                         assetId: selectedAssetItem.assetId,
                         assetName: selectedAssetItem.name,
-                        assetClass: resolveAssetClassName(selectedAssetItem.assetClassId),
+                        assetClass: selectedAssetItem.assetClass.name,
                         hasPapers: selectedAssetItem.hasPapers,
                         isBoxed: selectedAssetItem.isBoxed,
                       }
@@ -114,7 +134,12 @@ export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceMo
           </ModalShell.Body>
 
           <ModalShell.Footer>
-            <ModalShell.Action type="submit" form={formId} disabled={!selectedAssetItem}>
+            <ModalShell.Action
+              type="submit"
+              form={formId}
+              disabled={!selectedAssetItem || loading.CREATE_LISTING}
+              pending={loading.CREATE_LISTING}
+            >
               Submit for Listing
             </ModalShell.Action>
           </ModalShell.Footer>

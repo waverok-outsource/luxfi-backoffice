@@ -1,4 +1,5 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
+import type { MetricValue } from "./analytics.type";
 
 export type AssetMarketMoney = {
   value: number;
@@ -52,6 +53,11 @@ export type CreateAssetMarketListingPayloadType = {
   quantity: number;
   price: { currencyCode: string; value: number };
   assetId: string;
+  // ASSUMPTION: not confirmed against a real backend sample — sent optimistically
+  // alongside the confirmed fields above. See ADR 0018.
+  notes?: string;
+  hasPapers?: boolean;
+  isBoxed?: boolean;
 };
 
 // ASSUMPTION: response shape not sampled by backend; mirrors every other
@@ -151,3 +157,17 @@ export type ReviewOrderPayloadType = {
 
 // ASSUMPTION: response shape not sampled by backend; mirrors the order-details shape. See ADR 0018.
 export type ReviewOrderResponseType = ApiResponse<OrderDetailsType>;
+
+export type MarketplaceAnalyticsType = {
+  metrics: {
+    totalSalesVolume: MetricValue;
+    totalPurchaseVolume: MetricValue;
+    liquidationOffers: MetricValue;
+    buyOffers: MetricValue;
+    activeListingsVolume: MetricValue;
+    activeListingsValue: MetricValue;
+  };
+  period: { from: string; to: string };
+};
+
+export type MarketplaceAnalyticsResponseType = ApiResponse<MarketplaceAnalyticsType>;
