@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AssetDetailsPanel, AssetValuationPanel, InfoBox } from "@/module/dashboard/marketplace/components/modals/asset-panels";
 import { ASSET_MARKET_LISTING_STATUS_CONFIG } from "@/module/dashboard/marketplace/data";
 import { addToMarketplaceSchema, type AddToMarketplaceFormValues } from "@/schema/marketplace.schema";
+import useMarketplaceFns from "@/services/functions/marketplace.fns";
 import type { AssetMarketListingType } from "@/types/marketplace.type";
 import { formatCurrency } from "@/util/format-currency";
 
@@ -50,12 +51,20 @@ export function AssetListingDetailsModal({
 }: AssetListingDetailsModalProps) {
   const [stage, setStage] = React.useState<ModalStage>("FORM");
   const statusConfig = ASSET_MARKET_LISTING_STATUS_CONFIG[listing.listingStatus];
+  const isRemoved = listing.listingStatus === "removed";
+  const { unlistListing, loading } = useMarketplaceFns();
 
   const { control } = useForm<AddToMarketplaceFormValues>({
     resolver: zodResolver(addToMarketplaceSchema),
     defaultValues: getDefaultValuesForListing(listing),
     mode: "all",
   });
+
+  const performUnlist = () => {
+    unlistListing(listing.listingId, { status: "approved" }, () => {
+      setStage("SUCCESS_UNLIST");
+    });
+  };
 
   const stageConfig: Record<
     ModalStage,
@@ -116,10 +125,11 @@ export function AssetListingDetailsModal({
             <ModalShell.Action
               type="button"
               className="bg-alertSoft-error text-alert-error hover:bg-alertSoft-error/80"
+              disabled={isRemoved}
               onClick={() => setStage("CONFIRM_UNLIST")}
             >
               <Trash2 className="h-4 w-4" />
-              Unlist Asset
+              {isRemoved ? "Unlisted" : "Unlist Asset"}
             </ModalShell.Action>
             <ModalShell.Action type="button" onClick={() => setStage("SUCCESS_SAVE")}>
               Update Listing
@@ -136,8 +146,9 @@ export function AssetListingDetailsModal({
           title="Unlist Asset?"
           description="This asset will be removed from the live marketplace but kept in your listings."
           confirmVariant="success"
+          pending={loading.UNLIST_LISTING}
           onCancel={() => setStage("FORM")}
-          onConfirm={() => setStage("SUCCESS_UNLIST")}
+          onConfirm={performUnlist}
         />
       ),
     },

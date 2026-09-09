@@ -46,11 +46,14 @@ function buildTradeSteps(submittedAt: string): TradeStep[] {
 }
 
 // How far along the timeline each listing status reads as — approved/rejected listings have
-// already passed review, so only the pending state shows unfinished steps.
+// already passed review, so only the pending state shows unfinished steps. "removed" is not a
+// reachable status for a P2P trade request (only LuxFi's own listings can be unlisted); included
+// only for Record<AssetMarketListingStatus, ...> exhaustiveness.
 const COMPLETED_STEPS_BY_STATUS: Record<AssetMarketListingStatus, number> = {
   pending: 3,
   approved: 5,
   rejected: 3,
+  removed: 5,
 };
 
 export function TradeStatusHistoryPanel({

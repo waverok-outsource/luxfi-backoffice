@@ -6,7 +6,7 @@ export type AssetMarketMoney = {
   currencyCode: string;
 };
 
-export type AssetMarketListingStatus = "pending" | "approved" | "rejected";
+export type AssetMarketListingStatus = "pending" | "approved" | "rejected" | "removed";
 
 export type AssetMarketAssetDetails = {
   dialColour: string;
@@ -70,6 +70,16 @@ export type ReviewAssetMarketListingPayloadType = {
 
 // ASSUMPTION: response shape not sampled by backend. See ADR 0018.
 export type ReviewAssetMarketListingResponseType = ApiResponse<AssetMarketListingType>;
+
+// POST /v1/asset-market/:listingId/unlist — contract confirmed by the backend team with a live
+// sample: request body is `{ status: "approved" }` regardless of the listing's current status
+// (the `/unlist` action, not the body, is what drives the transition), response is the listing
+// with `listingStatus: "removed"`.
+export type UnlistAssetMarketListingPayloadType = {
+  status: "approved";
+};
+
+export type UnlistAssetMarketListingResponseType = ApiResponse<AssetMarketListingType>;
 
 // Buy Offers' real backend resource — GET /v1/orders (and /v1/orders/:orderId), a materially
 // different, multi-item shape from the asset-market listings above. Reviewed as a whole order

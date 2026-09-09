@@ -9,7 +9,7 @@ import { formatDateLabel } from "@/module/dashboard/marketplace/components/modal
 import { formatCurrency } from "@/util/format-currency";
 
 type ModalStatusBadgeProps = {
-  variant: "success" | "warning" | "error";
+  variant: "success" | "warning" | "error" | "neutral";
   label: string;
 };
 

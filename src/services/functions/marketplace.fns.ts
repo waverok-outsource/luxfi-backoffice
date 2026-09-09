@@ -11,6 +11,8 @@ import type {
   ReviewAssetMarketListingResponseType,
   ReviewOrderPayloadType,
   ReviewOrderResponseType,
+  UnlistAssetMarketListingPayloadType,
+  UnlistAssetMarketListingResponseType,
 } from "@/types/marketplace.type";
 import getErrorMessage from "@/util/get-error-message";
 import keyFactory from "@/util/query-key-factory";
@@ -21,6 +23,7 @@ const useMarketplaceFns = () => {
     CREATE_LISTING: false,
     REVIEW_LISTING: false,
     REVIEW_ORDER: false,
+    UNLIST_LISTING: false,
   });
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
@@ -67,6 +70,29 @@ const useMarketplaceFns = () => {
         toast.error(getErrorMessage(error));
       } finally {
         loadingFn("REVIEW_LISTING", false);
+      }
+    },
+
+    unlistListing: async (
+      listingId: string,
+      payload: UnlistAssetMarketListingPayloadType,
+      callback?: () => void,
+    ) => {
+      loadingFn("UNLIST_LISTING", true);
+
+      try {
+        await apiHandler.post<UnlistAssetMarketListingResponseType>(
+          `${MarketplaceRoute.assetMarket}/${listingId}/unlist`,
+          payload,
+        );
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.marketplace.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("UNLIST_LISTING", false);
       }
     },
 

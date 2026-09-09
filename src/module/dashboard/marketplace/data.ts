@@ -28,17 +28,19 @@ export const DEFAULT_MARKETPLACE_TAB: MarketplaceTabValue = "luxfi-listing";
 // Liquidation Offers, P2P Trade Requests) — they all use the same review outcome now.
 export const ASSET_MARKET_LISTING_STATUS_CONFIG: Record<
   AssetMarketListingStatus,
-  { label: string; variant: "warning" | "success" | "error" }
+  { label: string; variant: "warning" | "success" | "error" | "neutral" }
 > = {
   pending: { label: "Pending", variant: "warning" },
   approved: { label: "Active", variant: "success" },
   rejected: { label: "Rejected", variant: "error" },
+  removed: { label: "Removed", variant: "neutral" },
 };
 
 export const ASSET_MARKET_MODAL_STATUS_LABELS: Record<AssetMarketListingStatus, string> = {
   pending: "Pending Approval",
   approved: "Approved",
   rejected: "Rejected",
+  removed: "Removed",
 };
 
 export const REJECTION_REASON_OPTIONS = [

@@ -1,6 +1,6 @@
 # LuxFi Backoffice — Status
 
-> Last updated: 2026-08-13
+> Last updated: 2026-09-09
 
 ## Current State
 
@@ -11,6 +11,8 @@ The API integration architecture follows a consistent 3-layer pattern (routes �
 **2026-08-11:** `luxfi.postman_collection.json` was added to the repo, confirming real request/response contracts for large swaths of previously "Unknown" backend dependencies — most notably the Customer Module's KYC, Customer Assets, and embedded loan/support tabs (which ADR 0006 hadn't even documented — that ADR only covered 3 of the customer detail page's 7 tabs), and the Admin CRM Loan resource (requests, approve/reject, activity logs — though not repayments/disbursements/metrics, which still have no dedicated endpoint). This unblocks a sequenced set of API-integration passes; see "Recommended Next Tasks" below. First phase (Support Tickets, [ADR 0019](adr/0019-support-tickets-api-integration.md)) was designed, built by DeepSeek, and live-tested against production — the build is correct, but testing surfaced two **backend** defects that block real usage; see [bug report 0001](bug-reports/0001-support-tickets-backend-issues.md).
 
 **2026-08-13:** Asset Loans module — the "Loan Activity Logs" tab is now wired to the live API (`GET /v1/audits?resource=loan`, the Postman collection's "Loan Audits" request), reusing the shared `AuditLogsTable` (new `"loan"` scope) from [ADR 0018](adr/0018-marketplace-api-integration.md). The mock table, modal, and mock rows were deleted. `tsc`/`eslint`/`next build` all clean; a live smoke test against the real backend is still pending (see the Asset Loans checklist below). Also wired the Help & Support metric cards to `GET /v1/support/stats` — the shape was captured live (counts only, no trends), the hardcoded cards and fake trend badges were removed, and the sample was added back to the Postman collection.
+
+**2026-09-09:** Marketplace's LuxFi Listing "Unlist Asset" action — flagged in [ADR 0018](adr/0018-marketplace-api-integration.md) as kept-but-disabled with no backend endpoint — is now wired to a confirmed contract: `POST /v1/asset-market/:listingId/unlist` with body `{ status: "approved" }`, returning the listing with `listingStatus: "removed"`. `AssetMarketListingStatus` gained the `"removed"` member (status config, modal labels, and the P2P trade-status-history exhaustiveness map all updated); the Asset Listing Details modal's confirm dialog now calls the real endpoint (with a pending spinner) instead of faking success, and the trigger disables once a listing is already removed. `tsc`/`eslint`/`next build` all clean; live smoke test against the real backend still pending.
 
 ## Architecture (summary)
 
@@ -91,7 +93,8 @@ The home page metrics, activity feed, risk alerts, and inventory summary are all
 
 - [ ] Buy Offers tab — still mocked. Needs its own design once `/v1/orders` gets a review/approve-reject endpoint (deferred, not just unimplemented — see ADR 0018 Alternatives Considered)
 - [ ] Marketplace aggregate metrics (Total Sales Volume, Purchase Volume, etc.) — no endpoint provided; three `PairedMetricCard` rows stay hardcoded
-- [ ] Asset Listing Details modal's Delete / Save Changes / Unlist Asset buttons are visible but disabled — no edit/delete/unlist endpoint exists for a listing
+- [x] Unlist Asset — wired 2026-09-09 to `POST /v1/asset-market/:listingId/unlist`; see the dated note above.
+- [ ] Asset Listing Details modal's Delete / Save Changes buttons are still visible but disabled — no edit/delete endpoint exists for a listing
 - [ ] Rejection reason is collected in the UI but not sent — `PATCH /v1/asset-market/:id/review` only accepts `{ status }`
 - [ ] Liquidation Offers and P2P Trade Requests render `-` for fields the backend doesn't provide: Order ID (no listing carries one), and for P2P specifically, Buyer Name/ID and "Seller Accepted Offer" (P2P listings have no buyer field at all in the current API — it returns the same single-seller shape as every other listing)
 
