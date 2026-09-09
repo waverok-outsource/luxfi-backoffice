@@ -49,7 +49,7 @@ export function CustomerListingsTab() {
     assetId: listing.assetDetails.assetId,
     customerName: listing.seller.name,
     assetName: listing.assetDetails.assetName,
-    assetClass: listing.assetDetails.assetClass,
+    assetClass: listing.assetDetails.assetClass || "-",
     marketPrice: listing.marketPrice.value,
     listingPrice: listing.listingPrice.value,
     listingDate: formatTableDateLabel(listing.listingDate),

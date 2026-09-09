@@ -81,7 +81,7 @@ const useMarketplaceFns = () => {
       loadingFn("UNLIST_LISTING", true);
 
       try {
-        await apiHandler.post<UnlistAssetMarketListingResponseType>(
+        await apiHandler.patch<UnlistAssetMarketListingResponseType>(
           `${MarketplaceRoute.assetMarket}/${listingId}/unlist`,
           payload,
         );

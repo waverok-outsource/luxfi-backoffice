@@ -83,8 +83,8 @@ export function AssetDetailsPanel({ assetDetails, images, className, extraRows }
           <div className="space-y-2 border-t border-primary-grey-stroke pt-4">
             <DetailField label="Asset Name:" value={assetDetails.assetName} />
             <DetailField label="Asset ID:" value={assetDetails.assetId} />
-            <DetailField label="Asset Category:" value={assetDetails.category} />
-            <DetailField label="Asset Class:" value={assetDetails.assetClass} />
+            <DetailField label="Asset Category:" value={assetDetails.category || "-"} />
+            <DetailField label="Asset Class:" value={assetDetails.assetClass || "-"} />
           </div>
 
           <div className="grid grid-cols-2 gap-y-2 border-t border-primary-grey-stroke pt-4">

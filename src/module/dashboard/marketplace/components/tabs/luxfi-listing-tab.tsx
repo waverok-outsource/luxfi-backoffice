@@ -57,7 +57,7 @@ export function LuxfiListingTab() {
     id: listing.listingId,
     assetId: listing.assetDetails.assetId,
     assetName: listing.assetDetails.assetName,
-    assetClass: listing.assetDetails.assetClass,
+    assetClass: listing.assetDetails.assetClass || "-",
     stockQty: listing.qtyAvailable,
     marketPrice: listing.marketPrice.value,
     listingPrice: listing.listingPrice.value,

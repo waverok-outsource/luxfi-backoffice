@@ -17,7 +17,9 @@ export type AssetMarketAssetDetails = {
   assetType: string;
   assetId: string;
   assetName: string;
-  assetClass: string;
+  // Confirmed live (2026-09-09) that the backend omits this key entirely when the underlying
+  // asset has no class assigned — not always present, unlike the other string fields here.
+  assetClass?: string;
   hasPapers: boolean;
   isBoxed: boolean;
 };
@@ -71,7 +73,7 @@ export type ReviewAssetMarketListingPayloadType = {
 // ASSUMPTION: response shape not sampled by backend. See ADR 0018.
 export type ReviewAssetMarketListingResponseType = ApiResponse<AssetMarketListingType>;
 
-// POST /v1/asset-market/:listingId/unlist — contract confirmed by the backend team with a live
+// PATCH /v1/asset-market/:listingId/unlist — contract confirmed by the backend team with a live
 // sample: request body is `{ status: "approved" }` regardless of the listing's current status
 // (the `/unlist` action, not the body, is what drives the transition), response is the listing
 // with `listingStatus: "removed"`.
