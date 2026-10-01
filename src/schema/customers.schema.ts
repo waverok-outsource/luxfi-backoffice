@@ -36,7 +36,6 @@ export const assetLoanReviewSchema = loanCaseApprovalSchema.extend({
   preOwned: z.boolean().nullable(),
   anyPhysicalDefects: z.boolean().nullable(),
   remarks: z.string(),
-  proofFileName: z.string().optional(),
   submittedDate: z.date().optional(),
   examinationDate: z.date().optional(),
   officerEmail: z.string().optional(),

@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import { format as formatDateFns } from "date-fns";
-import { Trash2, Upload } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useParams, useRouter } from "next/navigation";
 
 import { ModalShell, SuccessModalContent } from "@/components/modal";
@@ -20,6 +19,7 @@ import {
   FormSwitchField,
   FormTextarea,
 } from "@/components/util/form-controller";
+import { LoanMediaAssetsSection } from "@/module/dashboard/asset-loans/components/loan-media-assets-section";
 import { officerOptions } from "@/module/dashboard/asset-loans/components/officer-options";
 import {
   CollateralDetailsCard,
@@ -48,12 +48,8 @@ function AssetLoanDetailsHeader({ loanId, onBack }: { loanId: string; onBack: ()
 
 function AssetVerificationCard({
   control,
-  setValue,
-  proofFileName,
 }: {
   control: ReturnType<typeof useForm<AssetLoanReviewFormInputValues>>["control"];
-  setValue: ReturnType<typeof useForm<AssetLoanReviewFormInputValues>>["setValue"];
-  proofFileName: string | undefined;
 }) {
   return (
     <LoanCaseSection title="Asset Verification">
@@ -81,35 +77,6 @@ function AssetVerificationCard({
             </FormControl>
           )}
         </FormField>
-
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-text-grey">Upload Image or video proof</p>
-          {proofFileName ? (
-            <div className="flex items-center justify-between rounded-2xl border border-primary-grey-stroke px-4 py-3">
-              <span className="truncate text-sm text-primary-gold-brand">{proofFileName}</span>
-              <button
-                type="button"
-                onClick={() => setValue("proofFileName", undefined)}
-                aria-label="Remove file"
-              >
-                <Trash2 className="h-4 w-4 text-alert-error" />
-              </button>
-            </div>
-          ) : (
-            <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-primary-grey-stroke px-4 py-3">
-              <span className="text-sm text-text-grey">No file added</span>
-              <input
-                type="file"
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={(event) =>
-                  setValue("proofFileName", event.target.files?.[0]?.name, { shouldValidate: true })
-                }
-              />
-              <Upload className="h-4 w-4 text-text-grey" />
-            </label>
-          )}
-        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField control={control} name="submittedDate" label="Date Submitted">
@@ -188,7 +155,7 @@ export function AssetLoanDetailsDashboard() {
   const { data: rejectionReasonsResponse } = useLoanRejectionReasons();
   const rejectionReasons = rejectionReasonsResponse?.data ?? [];
 
-  const { approveLoan, rejectLoan, loading } = useLoanFns();
+  const { approveLoan, rejectLoan, updateLoanMedia, loading } = useLoanFns();
 
   const [step, setStep] = React.useState<PageStep>(null);
   const [resultMessage, setResultMessage] = React.useState<{ title: string; description: string } | null>(null);
@@ -201,7 +168,6 @@ export function AssetLoanDetailsDashboard() {
   const {
     control,
     handleSubmit,
-    setValue,
     formState: { isValid },
   } = useForm<AssetLoanReviewFormInputValues>({
     resolver: zodResolver(assetLoanReviewSchema),
@@ -216,8 +182,6 @@ export function AssetLoanDetailsDashboard() {
     },
     mode: "all",
   });
-
-  const proofFileName = useWatch({ control, name: "proofFileName" });
 
   if (isLoading) {
     return (
@@ -243,6 +207,19 @@ export function AssetLoanDetailsDashboard() {
 
   const showPendingActions = loan.status === "pending";
   const showRepaymentBar = loan.status !== "pending" && loan.status !== "rejected";
+  const verificationMedia = loan.verificationMedia ?? [];
+
+  const handleAddMedia = (files: File[]) => {
+    updateLoanMedia(loan.loanRef, verificationMedia, files);
+  };
+
+  const handleRemoveMedia = (index: number) => {
+    updateLoanMedia(
+      loan.loanRef,
+      verificationMedia.filter((_, mediaIndex) => mediaIndex !== index),
+      [],
+    );
+  };
 
   const handleApproveRequest = handleSubmit((values) => {
     setPendingApprovePayload({
@@ -330,8 +307,16 @@ export function AssetLoanDetailsDashboard() {
         <div className="space-y-4">
           <CollateralDetailsCard loan={loan} />
 
+          <LoanMediaAssetsSection
+            media={verificationMedia}
+            editable={showPendingActions}
+            pending={loading.UPDATE_LOAN_MEDIA}
+            onAddFiles={handleAddMedia}
+            onRemove={handleRemoveMedia}
+          />
+
           {showPendingActions ? (
-            <AssetVerificationCard control={control} setValue={setValue} proofFileName={proofFileName} />
+            <AssetVerificationCard control={control} />
           ) : showRepaymentBar ? (
             <LoanCaseSection title="Loan Repayment">
               <LoanCaseCard className="rounded-xl border-0 bg-primary-grey-undertone p-5">

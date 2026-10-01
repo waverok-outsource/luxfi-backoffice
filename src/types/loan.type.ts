@@ -107,6 +107,16 @@ export type LoanPaymentRecordType = {
   updatedAt: string;
 };
 
+export type LoanMediaKind = "image" | "video";
+
+// Image/video proof attached by an admin while reviewing a loan request.
+export type LoanMediaType = {
+  url: string;
+  type: LoanMediaKind;
+  fileName: string;
+  uploadedAt?: string;
+};
+
 export type LoanType = {
   loanId: string;
   loanRef: string;
@@ -142,6 +152,8 @@ export type LoanType = {
   disbursements?: LoanDisbursementRecordType[];
   /** Confirmed present on GET /v1/loans/:loanRef (single loan); not sampled on the list endpoint. */
   payments?: LoanPaymentRecordType[];
+  /** ASSUMPTION: not yet confirmed on a real payload — see UpdateLoanMediaPayloadType. */
+  verificationMedia?: LoanMediaType[];
 };
 
 export type LoansResponseType = PaginatedApiResponse<LoanType[]>;
@@ -197,6 +209,10 @@ export type ApproveLoanPayloadType = {
   liquidationThreshold: { value: number; currencyCode: string };
   dateDisburse: string; // "YYYY-MM-DD"
 };
+
+// ASSUMPTION: PATCH /v1/loans/:loanRef/media replaces the loan's full media list (so the same
+// call handles add and remove) and returns the updated loan. Backend contract not yet confirmed.
+export type UpdateLoanMediaPayloadType = { media: LoanMediaType[] };
 
 export type ReviewLoanResponseType = ApiResponse<LoanType>;
 
