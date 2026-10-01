@@ -9,6 +9,7 @@ const LoanRoute = {
   rejectionReasons: `${baseUrl}/loans/rejection-reasons`,
   reject: (loanRef: string) => `${baseUrl}/loans/${loanRef}/reject`,
   approve: (loanRef: string) => `${baseUrl}/loans/${loanRef}/approve`,
+  media: (loanRef: string) => `${baseUrl}/loans/${loanRef}/media`,
 };
 
 export default LoanRoute;

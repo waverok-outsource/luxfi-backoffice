@@ -4,8 +4,8 @@ import { toast } from "sonner";
 
 import apiHandler from "@/services/api-handler";
 import AssetManagementRoute from "@/services/route/asset-management.route";
+import { uploadFiles } from "@/services/functions/upload-files";
 import type {
-  AssetUploadUrlResponseType,
   CreateAssetCategoryPayloadType,
   CreateAssetCategoryResponseType,
   CreateAssetClassPayloadType,
@@ -32,43 +32,6 @@ const useAssetManagementFns = () => {
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
     setLoading((prev) => ({ ...prev, [state]: value }));
-  };
-
-  // Requests presigned S3 upload URLs for the given files, PUTs each file's
-  // bytes directly to its URL, and returns the resulting public fileUrls in
-  // the same order as `files`. Uses plain `fetch` (not `apiHandler`) for the
-  // PUT step since the presigned URL already carries its own auth/signature
-  // in the query string — adding apiHandler's baseURL or Authorization header
-  // would misroute or invalidate the request.
-  //
-  // ASSUMPTION: the response `uploads[]` array is ordered to match the
-  // request `files[]` array — there's no explicit correlation key in the
-  // sample response. See docs/STATUS.md.
-  const uploadAssetImages = async (files: File[]): Promise<string[]> => {
-    if (!files.length) {
-      return [];
-    }
-
-    const { data } = await apiHandler.post<AssetUploadUrlResponseType>(
-      AssetManagementRoute.assetsUploadUrl,
-      { files: files.map((file) => ({ fileName: file.name, contentType: file.type })) },
-    );
-
-    await Promise.all(
-      data.data.uploads.map((upload, index) =>
-        fetch(upload.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": files[index].type },
-          body: files[index],
-        }).then((response) => {
-          if (!response.ok) {
-            throw new Error(`Failed to upload ${files[index].name}`);
-          }
-        }),
-      ),
-    );
-
-    return data.data.uploads.map((upload) => upload.fileUrl);
   };
 
   const fns = {
@@ -161,7 +124,7 @@ const useAssetManagementFns = () => {
       loadingFn("CREATE_ASSET", true);
 
       try {
-        const uploads = await uploadAssetImages(files);
+        const uploads = await uploadFiles(files);
 
         await apiHandler.post<CreateAssetResponseType>(AssetManagementRoute.assets, {
           ...payload,
@@ -190,7 +153,7 @@ const useAssetManagementFns = () => {
       loadingFn("UPDATE_ASSET", true);
 
       try {
-        const newUploads = await uploadAssetImages(files);
+        const newUploads = await uploadFiles(files);
 
         await apiHandler.patch<CreateAssetResponseType>(
           `${AssetManagementRoute.assets}/${assetId}`,
