@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ModalShell } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import {
@@ -358,24 +359,102 @@ export function RejectStepContent({
 
 // ── Approve Confirm Step ───────────────────────────────────────────────────
 
+export type RevisedLoanTerms = {
+  currencyCode: string;
+  requestedAmount: number;
+  approvedAmount: number;
+  requestedInterest: number;
+  approvedInterest: number;
+  requestedRepayment: number;
+  approvedRepayment: number;
+};
+
+function RevisedTermsSummary({
+  terms,
+  acknowledged,
+  onAcknowledgedChange,
+}: {
+  terms: RevisedLoanTerms;
+  acknowledged: boolean;
+  onAcknowledgedChange: (value: boolean) => void;
+}) {
+  const rows = [
+    { label: "Principal Loan Amount", from: terms.requestedAmount, to: terms.approvedAmount },
+    { label: "Interest", from: terms.requestedInterest, to: terms.approvedInterest },
+    { label: "Repayment Amount", from: terms.requestedRepayment, to: terms.approvedRepayment },
+  ];
+
+  return (
+    <div className="w-full space-y-4 text-left">
+      <LoanCaseCard className="rounded-2xl border-0 bg-primary-grey-undertone p-4">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-2 text-sm">
+          <span />
+          <span className="text-xs font-semibold text-text-grey">Requested</span>
+          <span className="text-xs font-semibold text-text-grey">Approved</span>
+          {rows.map((row) => (
+            <React.Fragment key={row.label}>
+              <span className="text-text-grey">{row.label}</span>
+              <span className="text-text-grey line-through">
+                {formatCurrency(row.from, terms.currencyCode)}
+              </span>
+              <span className="font-semibold text-text-black">
+                {formatCurrency(row.to, terms.currencyCode)}
+              </span>
+            </React.Fragment>
+          ))}
+        </div>
+      </LoanCaseCard>
+
+      <LoanCaseNotice variant="warning">
+        The approved amount is lower than requested. The borrower will be prompted to re-accept the
+        Terms &amp; Conditions for the new amount before the loan is disbursed.
+      </LoanCaseNotice>
+
+      <label className="flex cursor-pointer items-start gap-3 text-sm text-text-black">
+        <Checkbox
+          checked={acknowledged}
+          onCheckedChange={(value) => onAcknowledgedChange(Boolean(value))}
+          className="mt-0.5"
+        />
+        <span>
+          I confirm the revised loan terms and that the borrower must re-accept the Terms &amp;
+          Conditions for {formatCurrency(terms.approvedAmount, terms.currencyCode)}.
+        </span>
+      </label>
+    </div>
+  );
+}
+
 export function ApproveConfirmStepContent({
   pending = false,
+  revisedTerms,
   onStepChange,
   onConfirm,
 }: {
   pending?: boolean;
+  revisedTerms?: RevisedLoanTerms | null;
   onStepChange: (step: AssetLoanStep) => void;
   onConfirm: () => void;
 }) {
+  const [acknowledged, setAcknowledged] = React.useState(false);
+
   return (
     <div className="flex min-h-[250px] flex-col items-center justify-center gap-6 text-center">
       <div className="space-y-2">
         <h2 className="text-4xl font-bold leading-tight">Approve Loan Disbursement?</h2>
         <p className="text-sm text-text-grey">
-          You are about to approve this loan disbursement. Beneficiary will receive allocated loan
-          amount in their wallet once processed.
+          {revisedTerms
+            ? "You are about to approve this loan at a reduced amount. Funds will be disbursed once the borrower accepts the revised terms."
+            : "You are about to approve this loan disbursement. Beneficiary will receive allocated loan amount in their wallet once processed."}
         </p>
       </div>
+      {revisedTerms ? (
+        <RevisedTermsSummary
+          terms={revisedTerms}
+          acknowledged={acknowledged}
+          onAcknowledgedChange={setAcknowledged}
+        />
+      ) : null}
       <div className="flex items-center justify-center gap-4 pt-2">
         <Button
           type="button"
@@ -391,6 +470,7 @@ export function ApproveConfirmStepContent({
           variant="success"
           className="h-12 min-w-[180px] rounded-2xl"
           pending={pending}
+          disabled={Boolean(revisedTerms) && !acknowledged}
           onClick={onConfirm}
         >
           Yes, Confirm
