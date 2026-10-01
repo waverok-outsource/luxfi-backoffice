@@ -208,6 +208,9 @@ export type RejectLoanPayloadType = { rejectionReason: string };
 export type ApproveLoanPayloadType = {
   liquidationThreshold: { value: number; currencyCode: string };
   dateDisburse: string; // "YYYY-MM-DD"
+  // Sent only when the admin reduces the requested principal; the borrower must then
+  // re-accept the T&C for the new amount. Backend contract not yet confirmed.
+  approvedAmount?: { value: number; currencyCode: string };
 };
 
 // ASSUMPTION: PATCH /v1/loans/:loanRef/media replaces the loan's full media list (so the same

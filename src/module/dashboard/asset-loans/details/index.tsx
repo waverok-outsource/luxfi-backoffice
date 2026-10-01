@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import {
   FormControl,
+  FormCurrencyInput,
   FormDatePicker,
   FormField,
   FormSelectTrigger,
@@ -28,15 +29,18 @@ import {
 import {
   ApproveConfirmStepContent,
   LiquidatedBanner,
+  type RevisedLoanTerms,
   LoanDetailsCard,
   RejectStepContent,
   RepaymentWarning,
 } from "@/module/dashboard/customers/customer-details/components/loans/asset-loan-modal-content";
 import { LoanCaseCard, LoanCaseNotice, LoanCaseSection } from "@/module/dashboard/customers/customer-details/components/shared/loan-case-ui";
 import {
-  assetLoanReviewSchema,
+  createAssetLoanReviewSchema,
   type AssetLoanReviewFormInputValues,
 } from "@/schema/customers.schema";
+import type { LoanType } from "@/types/loan.type";
+import { formatCurrency } from "@/util/format-currency";
 import useLoanFns from "@/services/functions/loan.fns";
 import { useLoanById, useLoanRejectionReasons } from "@/services/queries/loan.queries";
 
@@ -144,6 +148,56 @@ function AssetVerificationCard({
   );
 }
 
+function ApprovedLoanAmountField({
+  control,
+  loan,
+}: {
+  control: ReturnType<typeof useForm<AssetLoanReviewFormInputValues>>["control"];
+  loan: LoanType;
+}) {
+  const { currencyCode, value: requestedAmount } = loan.loanValue;
+
+  return (
+    <LoanCaseCard className="space-y-2">
+      <FormField control={control} name="approvedAmount" label="Approved Loan Amount" required>
+        {({ field }) => (
+          <FormCurrencyInput
+            name={field.name}
+            value={field.value}
+            onValueChange={(value) => field.onChange(value ?? "")}
+            onBlur={field.onBlur}
+            placeholder="0.00"
+            startAdornment="$"
+          />
+        )}
+      </FormField>
+      <p className="text-xs text-text-grey">
+        Requested: {formatCurrency(requestedAmount, currencyCode)} · Collateral value:{" "}
+        {formatCurrency(loan.collateralValue.value, loan.collateralValue.currencyCode)}. Reduce the
+        amount based on the verified asset; the borrower will need to re-accept the T&amp;C.
+      </p>
+    </LoanCaseCard>
+  );
+}
+
+// Assumes interest scales linearly with principal (same rate and term).
+function getRevisedLoanTerms(loan: LoanType, approvedAmount: number): RevisedLoanTerms | null {
+  const requestedAmount = loan.loanValue.value;
+  if (!(approvedAmount > 0) || approvedAmount >= requestedAmount) return null;
+
+  const approvedInterest = (loan.totalInterest * approvedAmount) / requestedAmount;
+
+  return {
+    currencyCode: loan.loanValue.currencyCode,
+    requestedAmount,
+    approvedAmount,
+    requestedInterest: loan.totalInterest,
+    approvedInterest,
+    requestedRepayment: loan.totalRepayable,
+    approvedRepayment: approvedAmount + approvedInterest,
+  };
+}
+
 export function AssetLoanDetailsDashboard() {
   const router = useRouter();
   const params = useParams<{ id?: string }>();
@@ -163,15 +217,25 @@ export function AssetLoanDetailsDashboard() {
     loanRef: string;
     liquidationThreshold: { value: number; currencyCode: string };
     dateDisburse: string;
+    approvedAmount?: { value: number; currencyCode: string };
   } | null>(null);
+  const [revisedTerms, setRevisedTerms] = React.useState<RevisedLoanTerms | null>(null);
+
+  const requestedAmount = loan?.loanValue.value;
+  const reviewSchema = React.useMemo(
+    () => createAssetLoanReviewSchema(requestedAmount ?? Number.POSITIVE_INFINITY),
+    [requestedAmount],
+  );
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { isValid },
   } = useForm<AssetLoanReviewFormInputValues>({
-    resolver: zodResolver(assetLoanReviewSchema),
+    resolver: zodResolver(reviewSchema),
     defaultValues: {
+      approvedAmount: "",
       thresholdAmount: "",
       disbursementDate: undefined,
       certificationPapersAvailable: null,
@@ -182,6 +246,13 @@ export function AssetLoanDetailsDashboard() {
     },
     mode: "all",
   });
+
+  // Prefill the approved amount with the requested principal once the loan loads.
+  React.useEffect(() => {
+    if (requestedAmount != null) {
+      setValue("approvedAmount", String(requestedAmount), { shouldValidate: true });
+    }
+  }, [requestedAmount, setValue]);
 
   if (isLoading) {
     return (
@@ -222,6 +293,8 @@ export function AssetLoanDetailsDashboard() {
   };
 
   const handleApproveRequest = handleSubmit((values) => {
+    const revised = getRevisedLoanTerms(loan, Number(values.approvedAmount));
+    setRevisedTerms(revised);
     setPendingApprovePayload({
       loanRef: loan.loanRef,
       liquidationThreshold: {
@@ -229,6 +302,9 @@ export function AssetLoanDetailsDashboard() {
         currencyCode: loan.loanValue.currencyCode,
       },
       dateDisburse: formatDateFns(values.disbursementDate!, "yyyy-MM-dd"),
+      ...(revised
+        ? { approvedAmount: { value: revised.approvedAmount, currencyCode: revised.currencyCode } }
+        : {}),
     });
     setStep("APPROVE_CONFIRM");
   });
@@ -241,13 +317,26 @@ export function AssetLoanDetailsDashboard() {
       {
         liquidationThreshold: pendingApprovePayload.liquidationThreshold,
         dateDisburse: pendingApprovePayload.dateDisburse,
+        ...(pendingApprovePayload.approvedAmount
+          ? { approvedAmount: pendingApprovePayload.approvedAmount }
+          : {}),
       },
       () => {
+        const wasRevised = Boolean(pendingApprovePayload.approvedAmount);
         setPendingApprovePayload(null);
-        setResultMessage({
-          title: "Loan Disbursement Approved",
-          description: "Beneficiary will receive allocated loan amount in their wallet once processed.",
-        });
+        setRevisedTerms(null);
+        setResultMessage(
+          wasRevised
+            ? {
+                title: "Loan Approved at Revised Amount",
+                description:
+                  "The borrower has been prompted to re-accept the Terms & Conditions for the new amount. Funds will be disbursed once accepted.",
+              }
+            : {
+                title: "Loan Disbursement Approved",
+                description: "Beneficiary will receive allocated loan amount in their wallet once processed.",
+              },
+        );
         setStep("RESULT");
       },
     );
@@ -280,6 +369,8 @@ export function AssetLoanDetailsDashboard() {
           ) : (
             <RepaymentWarning />
           )}
+
+          {showPendingActions ? <ApprovedLoanAmountField control={control} loan={loan} /> : null}
 
           {showPendingActions ? (
             <div className="flex flex-wrap items-center gap-3">
@@ -335,7 +426,9 @@ export function AssetLoanDetailsDashboard() {
         shellClassName="max-w-[650px]"
       >
         <ApproveConfirmStepContent
+          key={step === "APPROVE_CONFIRM" ? "open" : "closed"}
           pending={loading.APPROVE_LOAN}
+          revisedTerms={revisedTerms}
           onStepChange={() => setStep(null)}
           onConfirm={handleConfirmApprove}
         />

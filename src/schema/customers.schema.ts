@@ -41,8 +41,19 @@ export const assetLoanReviewSchema = loanCaseApprovalSchema.extend({
   officerEmail: z.string().optional(),
 });
 
+// Approved amount may only be reduced from the requested principal, never increased.
+export const createAssetLoanReviewSchema = (maxApprovedAmount: number) =>
+  assetLoanReviewSchema.extend({
+    approvedAmount: requiredText("Approved loan amount is required")
+      .refine((value) => Number(value) > 0, "Enter a valid approved loan amount")
+      .refine(
+        (value) => Number(value) <= maxApprovedAmount,
+        "Approved amount cannot exceed the requested loan amount",
+      ),
+  });
+
 export type AssetLoanReviewFormValues = z.infer<typeof assetLoanReviewSchema>;
-export type AssetLoanReviewFormInputValues = z.input<typeof assetLoanReviewSchema>;
+export type AssetLoanReviewFormInputValues = z.input<ReturnType<typeof createAssetLoanReviewSchema>>;
 
 export const loanCaseRejectSchema = z.object({
   reason: requiredText("Reason for rejection is required"),
