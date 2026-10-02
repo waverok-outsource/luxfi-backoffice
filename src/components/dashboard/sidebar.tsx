@@ -20,6 +20,7 @@ const labelToPath: Record<string, string> = {
   "Payments & Settlements": route.dashboard.paymentsSettlements,
   "Growth & Marketing": route.dashboard.growthMarketing,
   "Help & Support": route.dashboard.helpSupport,
+  Approvals: route.dashboard.approvals,
   "System Settings": route.dashboard.systemSettings,
 };
 

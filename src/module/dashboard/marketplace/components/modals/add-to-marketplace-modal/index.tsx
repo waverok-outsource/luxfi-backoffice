@@ -109,10 +109,10 @@ export function AddToMarketplaceModal({ open, onOpenChange }: AddToMarketplaceMo
                 assetDetails={
                   selectedAssetItem
                     ? {
-                        dialColour: selectedAssetItem.dialColour,
+                        dialColour: selectedAssetItem.dialColour ?? "",
                         productionYear: selectedAssetItem.productionYear,
-                        weight: selectedAssetItem.weight,
-                        case: selectedAssetItem.case,
+                        weight: selectedAssetItem.weight ?? null,
+                        case: selectedAssetItem.case ?? null,
                         category: selectedAssetItem.assetCategoryName,
                         assetType: selectedAssetItem.assetType ?? "",
                         assetId: selectedAssetItem.assetId,

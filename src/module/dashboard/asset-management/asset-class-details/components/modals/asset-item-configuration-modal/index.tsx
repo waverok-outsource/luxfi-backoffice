@@ -5,6 +5,7 @@ import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   ModalShell,
@@ -32,6 +33,8 @@ import {
 import { QuickAddSearchField } from "@/module/dashboard/asset-management/asset-class-details/components/modals/asset-item-configuration-modal/quick-add-search-field";
 import {
   addAssetItemSchema,
+  createAssetItemSchema,
+  readProductionYear,
   COLOUR_VARIANT_VALUES,
   CURRENCY_VALUES,
   OWNERSHIP_TYPE_VALUES,
@@ -40,12 +43,15 @@ import {
   type AssetClassStepKey,
 } from "@/schema/asset-management.schema";
 import useAssetManagementFns from "@/services/functions/asset-management.fns";
+import { useAssetBrands } from "@/services/queries/asset-management.queries";
 import type {
   AssetClassType,
   AssetItemType,
   AssetQuickSearchResultType,
   CreateAssetClassPayloadType,
+  CreateAssetV3PayloadType,
 } from "@/types/asset-management.type";
+import convertObjectToQuery from "@/util/convertObjectToQuery";
 import { mapAssetClassToConfigFormValues, resolveAssetConfig } from "@/util/resolve-asset-config";
 import { toTitleCase } from "@/util/helper";
 import { parseCurrencyToNumber } from "@/util/format-currency";
@@ -106,6 +112,7 @@ function buildDefaultValues(
     isBoxed: assetItem?.isBoxed ?? false,
     weight: assetItem?.weight ?? { value: 0, unit: WEIGHT_UNIT_VALUES[0] },
     overrideParentClassConfigurations: assetItem?.overrideParentClassConfigurations ?? false,
+    brandId: "",
     assetCategoryId: assetItem?.assetCategoryId ?? "",
     dialColour: assetItem?.dialColour ?? "",
     case: assetItem?.case ?? { colour: "", size: 0, unit: "mm" },
@@ -130,6 +137,33 @@ function buildAssetBasePayload(values: AddAssetItemFormValues) {
     assetCategoryId: values.assetCategoryId,
     dialColour: values.dialColour,
     case: values.case,
+  };
+}
+
+function buildCreateAssetV3Payload(
+  values: AddAssetItemFormValues,
+  assetClass: AssetClassType,
+): Omit<CreateAssetV3PayloadType, "uploads"> {
+  const dialColour = values.dialColour.trim();
+  const caseColour = values.case.colour.trim();
+  const weightValue = Number(values.weight.value);
+
+  return {
+    name: values.name.trim(),
+    brandId: values.brandId.trim(),
+    price: { value: values.price.value ?? 0, currencyCode: values.price.currencyCode },
+    productionYear: readProductionYear(values.productionYear) ?? new Date().getFullYear(),
+    hasPapers: values.hasPapers,
+    isBoxed: values.isBoxed,
+    ...(weightValue > 0 ? { weight: { value: weightValue, unit: values.weight.unit } } : {}),
+    ...(caseColour && values.case.size > 0
+      ? { case: { colour: caseColour, size: values.case.size, unit: values.case.unit } }
+      : {}),
+    ...(dialColour ? { dialColour } : {}),
+    overrideParentClassConfigurations: values.overrideParentClassConfigurations,
+    ...(values.overrideParentClassConfigurations
+      ? { configuration: buildAssetConfigurationPayload(assetClass, values.name, values) }
+      : {}),
   };
 }
 
@@ -163,6 +197,16 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
   const formId = React.useId();
 
   const { createAsset, updateAsset, deleteAsset, loading } = useAssetManagementFns();
+  const brandsQuery = convertObjectToQuery({
+    assetClassId: assetClass.assetClassId,
+    page: "1",
+    limit: "100",
+  });
+  const { data: brandsResponse, isLoading: isBrandsLoading } = useAssetBrands(
+    brandsQuery,
+    open && !isEditMode,
+  );
+  const brandOptions = brandsResponse?.data ?? [];
 
   const {
     urls: imageUrls,
@@ -175,7 +219,9 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
   const allStepsCompleted = React.useMemo(() => new Set(ASSET_CLASS_STEP_ORDER), []);
 
   const { control, setValue, handleSubmit } = useForm<AddAssetItemFormValues>({
-    resolver: zodResolver(addAssetItemSchema) as unknown as Resolver<AddAssetItemFormValues>,
+    resolver: zodResolver(
+      isEditMode ? addAssetItemSchema : createAssetItemSchema,
+    ) as unknown as Resolver<AddAssetItemFormValues>,
     defaultValues: buildDefaultValues(assetClass, assetItem),
     mode: "all",
   });
@@ -228,7 +274,14 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
       setStage("CONFIRM_UPDATE");
       return;
     }
-    createAsset(buildPayload(values), pendingFiles, () => setStage("SUCCESS"));
+    if (pendingFiles.length === 0) {
+      toast.error("Add at least one asset image");
+      return;
+    }
+
+    createAsset(buildCreateAssetV3Payload(values, assetClass), pendingFiles, () =>
+      setStage("SUCCESS"),
+    );
   };
 
   const isSaving = isEditMode ? loading.UPDATE_ASSET : loading.CREATE_ASSET;
@@ -286,6 +339,39 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {!isEditMode ? (
+                    <FormField control={control} name="brandId" label="Asset Brand" required>
+                      {({ field }) => (
+                        <div className="space-y-2">
+                          <Select
+                            value={field.value || undefined}
+                            onValueChange={field.onChange}
+                            disabled={isBrandsLoading || brandOptions.length === 0}
+                          >
+                            <FormSelectTrigger>
+                              <SelectValue
+                                placeholder={isBrandsLoading ? "Loading brands..." : "Select brand"}
+                              />
+                            </FormSelectTrigger>
+                            <SelectContent>
+                              {brandOptions.map((brand) => (
+                                <SelectItem key={brand.brandId} value={brand.brandId}>
+                                  {toTitleCase(brand.name)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          {!isBrandsLoading && brandOptions.length === 0 ? (
+                            <p className="text-sm text-text-grey">
+                              No brands available for this asset class.
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
+                    </FormField>
+                  ) : null}
+
                   <FormField control={control} name="name" label="Asset Name" required>
                     {({ field }) => (
                       <FormControl>
@@ -329,7 +415,12 @@ export function AssetItemConfigurationModal(props: AssetItemConfigurationModalPr
                     )}
                   </FormField>
 
-                  <FormField control={control} name="productionYear" label="Year of Release">
+                  <FormField
+                    control={control}
+                    name="productionYear"
+                    label="Year of Release"
+                    required={!isEditMode}
+                  >
                     {({ field }) => (
                       <FormDatePicker
                         date={field.value ? new Date(field.value) : undefined}

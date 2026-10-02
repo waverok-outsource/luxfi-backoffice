@@ -49,8 +49,8 @@ export function ManageAssetsTab({ assetClass }: ManageAssetsTabProps) {
   const rows: AssetItemTableRow[] = items.map((item) => ({
     id: item.assetId,
     assetName: item.name,
-    dial: item.dialColour,
-    itemColor: item.case.colour,
+    dial: item.dialColour || "-",
+    itemColor: item.case?.colour || "-",
     year: item.productionYear,
     // The real GET response has no "listing status" field — derived from `onSale`.
     status: item.onSale ? "listed" : "unlisted",

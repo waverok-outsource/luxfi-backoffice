@@ -46,6 +46,7 @@ export function AssetSearchPopover<TResult>({
   return (
     <Popover open={isOpen} onOpenChange={(open) => (!open ? onQueryChange("") : undefined)}>
       <PopoverTrigger
+        nativeButton={false}
         render={
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-text-grey" />
