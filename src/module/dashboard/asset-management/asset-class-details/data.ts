@@ -1,6 +1,6 @@
 import type { AssetCategoryStatus, AssetItemListingStatus } from "@/types/asset-management.type";
 
-export type AssetClassDetailsTabValue = "manage-assets";
+export type AssetClassDetailsTabValue = "manage-assets" | "manage-categories";
 
 type TabConfig = {
   value: AssetClassDetailsTabValue;
@@ -9,6 +9,7 @@ type TabConfig = {
 
 export const assetClassDetailsTabs: TabConfig[] = [
   { value: "manage-assets", label: "Manage Assets" },
+  { value: "manage-categories", label: "Manage Categories" },
 ];
 
 export const DEFAULT_ASSET_CLASS_DETAILS_TAB: AssetClassDetailsTabValue = "manage-assets";

@@ -1,4 +1,5 @@
 import {
+  AssetBrandsResponseType,
   AssetCategoriesResponseType,
   AssetClassesResponseType,
   AssetClassTypesResponseType,
@@ -6,6 +7,7 @@ import {
   AssetsResponseType,
   AssetVerificationLogDetailsResponseType,
   AssetVerificationLogsResponseType,
+  CreateAssetCategoryResponseType,
   CreateAssetClassResponseType,
   CustomerOwnershipAggregatesResponseType,
   ValuationProvidersResponseType,
@@ -38,6 +40,22 @@ export const fetchAssetClassDetails = async (classId: string) => {
 export const fetchAssetCategories = async (query: string = "") => {
   const { data } = await apiHandler.get<AssetCategoriesResponseType>(
     `${AssetManagementRoute.categories}${query ? `?${query}` : ""}`,
+  );
+
+  return data;
+};
+
+export const fetchAssetCategoryDetails = async (categoryId: string) => {
+  const { data } = await apiHandler.get<CreateAssetCategoryResponseType>(
+    `${AssetManagementRoute.categories}/${categoryId}`,
+  );
+
+  return data;
+};
+
+export const fetchAssetBrands = async (query: string = "") => {
+  const { data } = await apiHandler.get<AssetBrandsResponseType>(
+    `${AssetManagementRoute.brands}${query ? `?${query}` : ""}`,
   );
 
   return data;

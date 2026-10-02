@@ -216,6 +216,7 @@ const assetItemBaseSchema = z.object({
     unit: oneOf(WEIGHT_UNIT_VALUES),
   }),
   overrideParentClassConfigurations: z.boolean(),
+  brandId: z.string().default(""),
   // Not shown in UI but kept for API compatibility
   assetCategoryId: z.string().default(""),
   dialColour: z.string().default(""),
@@ -227,6 +228,36 @@ const assetItemBaseSchema = z.object({
 });
 
 export const addAssetItemSchema = assetItemBaseSchema.merge(assetClassConfigSchema);
+
+const currentProductionYear = new Date().getFullYear();
+
+export function readProductionYear(value: string) {
+  const match = /^(\d{4})/.exec(value.trim());
+  return match ? Number(match[1]) : undefined;
+}
+
+export const createAssetItemSchema = addAssetItemSchema.superRefine((values, ctx) => {
+  if (!values.brandId.trim()) {
+    ctx.addIssue({ code: "custom", path: ["brandId"], message: "Select a brand" });
+  }
+
+  if (values.price.value !== undefined && values.price.value < 1) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["price", "value"],
+      message: "Asset market value must be at least 1",
+    });
+  }
+
+  const year = readProductionYear(values.productionYear);
+  if (year === undefined || year < 2000 || year > currentProductionYear) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["productionYear"],
+      message: `Year must be between 2000 and ${currentProductionYear}`,
+    });
+  }
+});
 
 export type AddAssetItemFormValues = z.infer<typeof addAssetItemSchema>;
 
@@ -244,6 +275,15 @@ const assetCategoryBaseSchema = z.object({
 export const addAssetCategorySchema = assetCategoryBaseSchema.merge(assetClassConfigSchema);
 
 export type AddAssetCategoryFormValues = z.infer<typeof addAssetCategorySchema>;
+
+const ASSET_BRAND_STATUS_VALUES = ["published", "draft", "unpublished"] as const;
+
+export const addAssetBrandSchema = z.object({
+  brandName: requiredText,
+  status: oneOf(ASSET_BRAND_STATUS_VALUES),
+});
+
+export type AddAssetBrandFormValues = z.infer<typeof addAssetBrandSchema>;
 
 export const ASSET_CLASS_STEP_ORDER = [
   "VALUATION_LOGIC",
