@@ -6,12 +6,17 @@ import apiHandler from "@/services/api-handler";
 import AssetManagementRoute from "@/services/route/asset-management.route";
 import { uploadFiles } from "@/services/functions/upload-files";
 import type {
+  CreateAssetBrandPayloadType,
+  CreateAssetBrandResponseType,
   CreateAssetCategoryPayloadType,
   CreateAssetCategoryResponseType,
   CreateAssetClassPayloadType,
   CreateAssetClassResponseType,
   CreateAssetPayloadType,
   CreateAssetResponseType,
+  CreateAssetV3PayloadType,
+  UpdateAssetBrandPayloadType,
+  UpdateAssetBrandResponseType,
   UpdateAssetCategoryPayloadType,
   UpdateAssetCategoryResponseType,
 } from "@/types/asset-management.type";
@@ -25,6 +30,8 @@ const useAssetManagementFns = () => {
     UPDATE_ASSET_CLASS: false,
     CREATE_ASSET_CATEGORY: false,
     UPDATE_ASSET_CATEGORY: false,
+    CREATE_ASSET_BRAND: false,
+    UPDATE_ASSET_BRAND: false,
     CREATE_ASSET: false,
     UPDATE_ASSET: false,
     DELETE_ASSET: false,
@@ -116,8 +123,47 @@ const useAssetManagementFns = () => {
       }
     },
 
+    createAssetBrand: async (payload: CreateAssetBrandPayloadType, callback?: () => void) => {
+      loadingFn("CREATE_ASSET_BRAND", true);
+
+      try {
+        await apiHandler.post<CreateAssetBrandResponseType>(AssetManagementRoute.brands, payload);
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.assetManagement.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("CREATE_ASSET_BRAND", false);
+      }
+    },
+
+    updateAssetBrand: async (
+      brandId: string,
+      payload: UpdateAssetBrandPayloadType,
+      callback?: () => void,
+    ) => {
+      loadingFn("UPDATE_ASSET_BRAND", true);
+
+      try {
+        await apiHandler.patch<UpdateAssetBrandResponseType>(
+          `${AssetManagementRoute.brands}/${brandId}`,
+          payload,
+        );
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.assetManagement.all });
+
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("UPDATE_ASSET_BRAND", false);
+      }
+    },
+
     createAsset: async (
-      payload: Omit<CreateAssetPayloadType, "uploads">,
+      payload: Omit<CreateAssetV3PayloadType, "uploads">,
       files: File[],
       callback?: () => void,
     ) => {
@@ -126,7 +172,7 @@ const useAssetManagementFns = () => {
       try {
         const uploads = await uploadFiles(files);
 
-        await apiHandler.post<CreateAssetResponseType>(AssetManagementRoute.assets, {
+        await apiHandler.post<CreateAssetResponseType>(AssetManagementRoute.assetsV3, {
           ...payload,
           uploads,
         });

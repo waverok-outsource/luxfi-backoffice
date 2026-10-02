@@ -1,4 +1,4 @@
-import { AlertTriangle, Headset, Megaphone, ShoppingCart } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Headset, Megaphone, ShoppingCart } from "lucide-react";
 import type { ElementType, SVGProps } from "react";
 import AssetLoanIcon from "@/components/icon/sidebar/asset";
 import AssetManagementIcon from "@/components/icon/sidebar/asset-management";
@@ -25,5 +25,6 @@ export const sideMenu: SidebarMenuItem[] = [
   { label: "Payments & Settlements", icon: PaymentIcon },
   { label: "Growth & Marketing", icon: Megaphone },
   { label: "Help & Support", icon: Headset },
+  { label: "Approvals", icon: ClipboardCheck },
   { label: "System Settings", icon: SettingsIcon },
 ];

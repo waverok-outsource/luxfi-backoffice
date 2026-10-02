@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  fetchAssetBrands,
   fetchAssetCategories,
+  fetchAssetCategoryDetails,
   fetchAssetClassDetails,
   fetchAssetClasses,
   fetchAssetClassTypes,
@@ -37,6 +39,20 @@ export const useAssetCategories = (query: string) =>
   useQuery({
     queryKey: keyFactory.assetManagement.categories.list(query),
     queryFn: () => fetchAssetCategories(query),
+  });
+
+export const useAssetCategoryDetails = (categoryId: string) =>
+  useQuery({
+    queryKey: keyFactory.assetManagement.categories.details(categoryId),
+    queryFn: () => fetchAssetCategoryDetails(categoryId),
+    enabled: !!categoryId,
+  });
+
+export const useAssetBrands = (query: string, enabled: boolean = true) =>
+  useQuery({
+    queryKey: keyFactory.assetManagement.brands.list(query),
+    queryFn: () => fetchAssetBrands(query),
+    enabled,
   });
 
 export const useAssets = (query: string, enabled: boolean = true) =>

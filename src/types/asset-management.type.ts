@@ -151,6 +151,23 @@ export type AssetPriceType = { value: number; currencyCode: string };
 export type AssetCaseType = { colour: string; size: number; unit: string };
 export type AssetWeightType = { value: number; unit: string };
 
+// ---- POST /v3/assets request payload ----
+// Brand selects the class and category. `assetClassId` is not accepted.
+export type CreateAssetV3PayloadType = {
+  name: string;
+  brandId: string;
+  price: AssetPriceType;
+  productionYear: number;
+  hasPapers?: boolean;
+  isBoxed?: boolean;
+  weight?: AssetWeightType;
+  case?: AssetCaseType;
+  dialColour?: string;
+  uploads: string[];
+  overrideParentClassConfigurations: boolean;
+  configuration?: Omit<CreateAssetClassPayloadType, "description">;
+};
+
 // ---- POST /v1/assets request payload ----
 // `overrideParentClassConfigurations`/`configuration` aren't in the sample body
 // we were given — they're sent by assumption, mirroring how asset categories
@@ -195,9 +212,10 @@ export type AssetItemType = {
   productionYear: string;
   hasPapers: boolean;
   isBoxed: boolean;
-  case: AssetCaseType;
-  weight: AssetWeightType;
-  dialColour: string;
+  // Optional on create, and omitted entirely when an asset has no case/weight/dial.
+  case?: AssetCaseType | null;
+  weight?: AssetWeightType | null;
+  dialColour?: string | null;
   uploads: string[];
   defectComment: string | null;
   watchChartId: string | null;
@@ -327,6 +345,44 @@ export type AssetCategoriesResponseType = PaginatedApiResponse<AssetCategoryType
 export type CreateAssetCategoryResponseType = ApiResponse<AssetCategoryType>;
 
 export type UpdateAssetCategoryResponseType = ApiResponse<AssetCategoryType>;
+
+export type AssetBrandStatus = "published" | "draft" | "unpublished";
+
+// ---- GET /v1/asset-brands (list item) ----
+// Brands belong to a category. The create payload's `category` field is the
+// category's public identifier (`assetCategoryId`).
+export type AssetBrandType = {
+  status: AssetBrandStatus | string;
+  name: string;
+  assetsCount: number;
+  brandId: string;
+  createdAt: string;
+  updatedAt?: string;
+  categoryName: string;
+  categoryRef: string;
+  categoryId: string;
+  brandRef: string;
+};
+
+export type AssetBrandsResponseType = PaginatedApiResponse<AssetBrandType[]>;
+
+// ---- POST /v1/asset-brands request payload ----
+export type CreateAssetBrandPayloadType = {
+  name: string;
+  category: string;
+  status?: AssetBrandStatus;
+};
+
+export type CreateAssetBrandResponseType = ApiResponse<AssetBrandType>;
+
+// ---- PATCH /v1/asset-brands/:brandId request payload ----
+export type UpdateAssetBrandPayloadType = {
+  name?: string;
+  category?: string;
+  status?: AssetBrandStatus;
+};
+
+export type UpdateAssetBrandResponseType = ApiResponse<AssetBrandType>;
 
 // ---- GET /v1/assets/verification-logs (list item) ----
 export type AssetVerificationLogEntry = {

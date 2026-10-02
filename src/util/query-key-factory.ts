@@ -4,6 +4,11 @@ const keyFactory = {
     list: (resource: string, query: string) => ["audits", resource, query],
   },
 
+  approvals: {
+    all: ["approvals"],
+    list: (query: string) => ["approvals", query],
+  },
+
   customers: {
     all: ["customers"],
     analytics: (query: string) => ["customers", "analytics", query],
@@ -27,6 +32,11 @@ const keyFactory = {
     categories: {
       all: ["asset-management", "categories"],
       list: (query: string) => ["asset-management", "categories", query],
+      details: (categoryId: string) => ["asset-management", "categories", categoryId],
+    },
+    brands: {
+      all: ["asset-management", "brands"],
+      list: (query: string) => ["asset-management", "brands", query],
     },
     assets: {
       all: ["asset-management", "assets"],
