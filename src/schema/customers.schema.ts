@@ -38,7 +38,7 @@ export const assetLoanReviewSchema = loanCaseApprovalSchema.extend({
   remarks: z.string(),
   submittedDate: z.date().optional(),
   examinationDate: z.date().optional(),
-  officerEmail: z.string().optional(),
+  examinedBy: z.string().optional(),
 });
 
 // Approved amount may only be reduced from the requested principal, never increased.

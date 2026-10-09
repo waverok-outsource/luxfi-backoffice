@@ -2,33 +2,63 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Loader2, Play, Upload, X } from "lucide-react";
+import { Film, Loader2, Play, Plus, X } from "lucide-react";
 
-import { LoanCaseCard, LoanCaseSection } from "@/module/dashboard/customers/customer-details/components/shared/loan-case-ui";
+import { Button } from "@/components/ui/button";
 import type { LoanMediaType } from "@/types/loan.type";
+
+export const MAX_VERIFICATION_MEDIA = 5;
+
+let pendingMediaId = 0;
+
+function nextPendingMediaId(file: File) {
+  pendingMediaId += 1;
+  return `${file.name}-${file.size}-${file.lastModified}-${pendingMediaId}`;
+}
+
+type PendingMedia = {
+  id: string;
+  file: File;
+  url: string;
+};
 
 type LoanMediaAssetsSectionProps = {
   media: LoanMediaType[];
-  /** Upload/remove are only offered while the loan is still under review. */
+  /** Selection and upload are only offered while the loan is still under review. */
   editable: boolean;
   pending: boolean;
-  onAddFiles: (files: File[]) => void;
-  onRemove: (index: number) => void;
+  onUpload: (files: File[]) => Promise<boolean>;
 };
 
-function MediaTile({
+const checkerboardClassName =
+  "absolute inset-0 bg-[linear-gradient(45deg,var(--color-primary-grey-undertone)_25%,transparent_25%,transparent_75%,var(--color-primary-grey-undertone)_75%,var(--color-primary-grey-undertone)),linear-gradient(45deg,var(--color-primary-grey-undertone)_25%,transparent_25%,transparent_75%,var(--color-primary-grey-undertone)_75%,var(--color-primary-grey-undertone))] bg-[length:20px_20px] bg-[position:0_0,10px_10px]";
+
+function MediaPreview({ item }: { item: LoanMediaType }) {
+  if (item.type === "video") {
+    return (
+      <>
+        <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-black/70 text-primary-white">
+            <Play className="h-4 w-4" />
+          </span>
+        </span>
+      </>
+    );
+  }
+
+  return <Image src={item.url} alt={item.fileName} fill unoptimized className="object-cover" />;
+}
+
+function FilledMediaCard({
   item,
-  editable,
-  disabled,
   onRemove,
 }: {
   item: LoanMediaType;
-  editable: boolean;
-  disabled: boolean;
-  onRemove: () => void;
+  onRemove?: () => void;
 }) {
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-2xl border border-primary-grey-stroke bg-primary-grey-undertone">
+    <div className="relative h-[176px] overflow-hidden rounded-2xl border border-primary-grey-stroke bg-primary-white sm:h-[192px]">
       <a
         href={item.url}
         target="_blank"
@@ -37,26 +67,17 @@ function MediaTile({
         aria-label={`Open ${item.fileName}`}
         title={item.fileName}
       >
-        {item.type === "video" ? (
-          <>
-            <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
-            <span className="absolute inset-0 flex items-center justify-center">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-black/70 text-primary-white">
-                <Play className="h-4 w-4" />
-              </span>
-            </span>
-          </>
-        ) : (
-          <Image src={item.url} alt={item.fileName} fill unoptimized className="object-cover" />
-        )}
+        <MediaPreview item={item} />
       </a>
-
-      {editable ? (
+      <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-primary-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-white">
+        {item.type === "video" ? <Film className="h-3 w-3" /> : null}
+        {item.type}
+      </span>
+      {onRemove ? (
         <button
           type="button"
-          disabled={disabled}
           onClick={onRemove}
-          className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-primary-black/70 text-primary-white transition hover:bg-primary-black disabled:opacity-50"
+          className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary-black/70 text-primary-white transition hover:bg-primary-black"
           aria-label={`Remove ${item.fileName}`}
         >
           <X className="h-4 w-4" />
@@ -70,70 +91,135 @@ export function LoanMediaAssetsSection({
   media,
   editable,
   pending,
-  onAddFiles,
-  onRemove,
+  onUpload,
 }: LoanMediaAssetsSectionProps) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const [selected, setSelected] = React.useState<PendingMedia[]>([]);
+  const selectedRef = React.useRef(selected);
+
+  React.useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+
+  React.useEffect(() => {
+    return () => {
+      selectedRef.current.forEach((entry) => URL.revokeObjectURL(entry.url));
+    };
+  }, []);
+
+  const usedCount = media.length + selected.length;
+  const canAdd = editable && usedCount < MAX_VERIFICATION_MEDIA && !pending;
+  const emptySlots = editable ? Math.max(MAX_VERIFICATION_MEDIA - usedCount, 0) : 0;
+
+  const openFilePicker = () => {
+    if (!canAdd) return;
+    inputRef.current?.click();
+  };
+
+  const addFiles = (fileList: FileList | null) => {
+    const available = MAX_VERIFICATION_MEDIA - media.length - selected.length;
+    const next = Array.from(fileList ?? []).slice(0, Math.max(available, 0));
+    if (!next.length) return;
+
+    setSelected((current) => [
+      ...current,
+      ...next.map((file) => ({
+        id: nextPendingMediaId(file),
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    ]);
+  };
+
+  const removeSelected = (id: string) => {
+    setSelected((current) => {
+      const target = current.find((entry) => entry.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return current.filter((entry) => entry.id !== id);
+    });
+  };
+
+  const handleUpload = async () => {
+    if (!selected.length || pending) return;
+    const uploaded = await onUpload(selected.map((entry) => entry.file));
+    if (!uploaded) return;
+    setSelected((current) => {
+      current.forEach((entry) => URL.revokeObjectURL(entry.url));
+      return [];
+    });
+  };
+
+  if (!editable && media.length === 0) {
+    return <p className="text-sm text-text-grey">No image or video proof was added for this loan.</p>;
+  }
+
   return (
-    <LoanCaseSection title="Media Assets">
-      <LoanCaseCard className="space-y-4">
-        <p className="text-xs text-text-grey">
-          {editable
-            ? "Upload image or video proof of the collateral asset. Files are saved to this loan immediately."
-            : "Image and video proof captured during the review of this loan."}
-        </p>
+    <div className="space-y-3">
+      <input
+        key={usedCount}
+        ref={inputRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        disabled={!canAdd}
+        className="hidden"
+        onChange={(event) => {
+          addFiles(event.target.files);
+          event.target.value = "";
+        }}
+      />
 
-        {media.length ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {media.map((item, index) => (
-              <MediaTile
-                key={item.url}
-                item={item}
-                editable={editable}
-                disabled={pending}
-                onRemove={() => onRemove(index)}
-              />
-            ))}
-          </div>
-        ) : !editable ? (
-          <p className="text-sm text-text-grey">No media assets were added for this loan.</p>
-        ) : null}
-
-        {editable ? (
-          <label
-            className={
-              pending
-                ? "flex cursor-wait items-center justify-between rounded-2xl border border-primary-grey-stroke px-4 py-3 opacity-70"
-                : "flex cursor-pointer items-center justify-between rounded-2xl border border-primary-grey-stroke px-4 py-3"
-            }
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {media.map((item) => (
+          <FilledMediaCard key={item.url} item={item} />
+        ))}
+        {selected.map((entry) => (
+          <FilledMediaCard
+            key={entry.id}
+            item={{
+              url: entry.url,
+              fileName: entry.file.name,
+              type: entry.file.type.startsWith("video/") ? "video" : "image",
+            }}
+            onRemove={pending ? undefined : () => removeSelected(entry.id)}
+          />
+        ))}
+        {Array.from({ length: emptySlots }, (_, index) => (
+          <Button
+            key={`empty-${index}`}
+            type="button"
+            variant="ghost"
+            disabled={!canAdd}
+            className="h-[176px] rounded-2xl border border-primary-grey-stroke bg-primary-white p-0 hover:bg-primary-white sm:h-[192px]"
+            aria-label={`Select asset image or video ${usedCount + index + 1}`}
+            onClick={openFilePicker}
           >
-            <span className="text-sm text-text-grey">
-              {pending
-                ? "Saving media..."
-                : media.length
-                  ? `${media.length} file${media.length === 1 ? "" : "s"} added. Add more image or video proof`
-                  : "No file added. Upload image or video proof"}
-            </span>
-            <input
-              // Remounted after each change so selecting the same file again still fires onChange.
-              key={media.length}
-              type="file"
-              accept="image/*,video/*"
-              multiple
-              disabled={pending}
-              className="hidden"
-              onChange={(event) => {
-                const files = Array.from(event.target.files ?? []);
-                if (files.length) onAddFiles(files);
-              }}
-            />
-            {pending ? (
-              <Loader2 className="h-4 w-4 animate-spin text-text-grey" />
-            ) : (
-              <Upload className="h-4 w-4 text-text-grey" />
-            )}
-          </label>
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl">
+              <div className={checkerboardClassName} />
+              <span className="relative z-10 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary-grey-stroke bg-primary-grey-undertone text-text-grey">
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </span>
+            </div>
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-grey">
+          {pending
+            ? "Uploading media..."
+            : editable
+              ? selected.length
+                ? `${selected.length} file${selected.length === 1 ? "" : "s"} ready to upload.`
+                : `${media.length} of ${MAX_VERIFICATION_MEDIA} files saved. Choose a card to select an image or video.`
+              : `${media.length} file${media.length === 1 ? "" : "s"} attached during review.`}
+        </p>
+        {editable ? (
+          <Button type="button" disabled={!selected.length || pending} pending={pending} onClick={handleUpload}>
+            Upload
+          </Button>
         ) : null}
-      </LoanCaseCard>
-    </LoanCaseSection>
+      </div>
+    </div>
   );
 }

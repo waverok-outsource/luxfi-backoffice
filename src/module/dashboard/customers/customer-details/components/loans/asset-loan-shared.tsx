@@ -9,7 +9,6 @@ import type { LoanType } from "@/types/loan.type";
 import { formatCurrency } from "@/util/format-currency";
 import {
   LoanCaseCard,
-  LoanCaseDetailList,
   LoanCaseDetailRow,
   LoanCaseSection,
   type LoanCaseStatus,
@@ -38,6 +37,7 @@ function safeCase(loan: LoanType): string {
 export function CollateralDetailsCard({
   loan,
   className,
+  framed = true,
   // Legacy props for mock pages that pass flat objects
   collateralValue,
   collateralTrendLabel,
@@ -53,6 +53,8 @@ export function CollateralDetailsCard({
 }: {
   loan?: LoanType;
   className?: string;
+  /** When false, render the body only so a parent section can supply the title and card. */
+  framed?: boolean;
   collateralValue?: number;
   collateralTrendLabel?: string;
   collateralVerified?: boolean;
@@ -72,9 +74,8 @@ export function CollateralDetailsCard({
   const hasImages = !isLegacy && loan!.collateral.media.length > 0;
   const showVerified = isLegacy ? collateralVerified : loan!.status !== "pending";
 
-  return (
-    <LoanCaseSection title="Collateral Asset Details">
-      <LoanCaseCard className={cn("space-y-4 rounded-[24px] p-5", className)}>
+  const body = (
+    <>
         {showVerified ? (
           <div className="flex justify-end">
             <Badge variant="success" showStatusDot>
@@ -89,18 +90,15 @@ export function CollateralDetailsCard({
             <p className="mt-2 text-[20px] font-bold text-text-black">
               {formatCurrency(displayCollateralValue, currencyCode)}
             </p>
-            <Badge
-              variant={isLegacy ? "success" : "neutral"}
-              className="mt-2 text-xs"
-              showStatusDot
-            >
-              {/* No real trend/change data exists on LoanType — this is not a fabricated value, just "-". */}
-              {isLegacy ? (collateralTrendLabel ?? "") : "-"}
-            </Badge>
+            {isLegacy && collateralTrendLabel ? (
+              <Badge variant="success" className="mt-2 text-xs" showStatusDot>
+                {collateralTrendLabel}
+              </Badge>
+            ) : null}
           </div>
 
           <div className="flex min-w-0 flex-1 justify-end">
-            <div className="w-full">
+            <div className="w-full max-w-[480px]">
               <div className="grid w-full grid-cols-3 gap-3">
                 {hasImages
                   ? loan!.collateral.media.slice(0, 3).map((url, index) => (
@@ -122,25 +120,29 @@ export function CollateralDetailsCard({
           </div>
         </div>
 
-        <div className="border-t border-primary-grey-stroke pt-4">
-          <LoanCaseDetailList
-            className="space-y-2"
-            items={[
-              { label: "Asset Name:", value: displayAssetName },
-              { label: "Brand (Category):", value: isLegacy ? (collateralBrandCategory ?? "-") : "-" },
-            ]}
+        <div className="grid grid-cols-1 gap-3 border-t border-primary-grey-stroke pt-4 md:grid-cols-2">
+          <LoanCaseDetailRow label="Asset Name" value={displayAssetName} />
+          <LoanCaseDetailRow
+            label="Brand (Category)"
+            value={isLegacy ? (collateralBrandCategory ?? "-") : "-"}
           />
-
-          <div className="mt-4 grid grid-cols-1 gap-3 border-t border-primary-grey-stroke pt-4 md:grid-cols-2">
-            <LoanCaseDetailRow label="Year" value={isLegacy ? (collateralYear ?? "-") : (loan!.collateral.productionYear ?? "-")} />
-            <LoanCaseDetailRow label="Box" value={isLegacy ? (collateralBox ?? "-") : (loan!.collateral.isBoxed ? "Yes" : "No")} />
-            <LoanCaseDetailRow label="Dial Colour" value={isLegacy ? (collateralDialColour ?? "-") : (loan!.collateral.dialColour ?? "-")} />
-            <LoanCaseDetailRow label="Case Colour" value={isLegacy ? (collateralCaseColour ?? "-") : (loan!.collateral.case?.colour ?? "-")} />
-            <LoanCaseDetailRow label="Weight" value={isLegacy ? (collateralWeight ?? "-") : safeWeight(loan!)} />
-            <LoanCaseDetailRow label="Case Size" value={isLegacy ? (collateralCaseSize ?? "-") : safeCase(loan!)} />
-          </div>
+          <LoanCaseDetailRow label="Year" value={isLegacy ? (collateralYear ?? "-") : (loan!.collateral.productionYear ?? "-")} />
+          <LoanCaseDetailRow label="Box" value={isLegacy ? (collateralBox ?? "-") : (loan!.collateral.isBoxed ? "Yes" : "No")} />
+          <LoanCaseDetailRow label="Dial Colour" value={isLegacy ? (collateralDialColour ?? "-") : (loan!.collateral.dialColour ?? "-")} />
+          <LoanCaseDetailRow label="Case Colour" value={isLegacy ? (collateralCaseColour ?? "-") : (loan!.collateral.case?.colour ?? "-")} />
+          <LoanCaseDetailRow label="Weight" value={isLegacy ? (collateralWeight ?? "-") : safeWeight(loan!)} />
+          <LoanCaseDetailRow label="Case Size" value={isLegacy ? (collateralCaseSize ?? "-") : safeCase(loan!)} />
         </div>
-      </LoanCaseCard>
+    </>
+  );
+
+  if (!framed) {
+    return <div className={cn("space-y-4", className)}>{body}</div>;
+  }
+
+  return (
+    <LoanCaseSection title="Collateral Asset Details">
+      <LoanCaseCard className={cn("space-y-4 rounded-[24px] p-5", className)}>{body}</LoanCaseCard>
     </LoanCaseSection>
   );
 }

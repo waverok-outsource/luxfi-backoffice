@@ -9,7 +9,11 @@ const LoanRoute = {
   rejectionReasons: `${baseUrl}/loans/rejection-reasons`,
   reject: (loanRef: string) => `${baseUrl}/loans/${loanRef}/reject`,
   approve: (loanRef: string) => `${baseUrl}/loans/${loanRef}/approve`,
-  media: (loanRef: string) => `${baseUrl}/loans/${loanRef}/media`,
+  collateralVerificationUploadUrl: (loanRef: string) =>
+    `${baseUrl}/loans/${loanRef}/collateral-verification/upload-url`,
+  collateralVerification: (loanRef: string) =>
+    `${baseUrl}/loans/${loanRef}/collateral-verification`,
+  approvedAmount: (loanRef: string) => `${baseUrl}/loans/${loanRef}/approved-amount`,
 };
 
 export default LoanRoute;

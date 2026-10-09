@@ -132,6 +132,8 @@ export type LoanType = {
   status: LoanStatus;
   amountDisbursed: AssetPriceType;
   amountRemaining: AssetPriceType;
+  /** Set by POST /v1/loans/:loanRef/approved-amount. Absent until an amount is saved. */
+  approvedAmount?: AssetPriceType | number | null;
   totalInterest: number;
   totalRepayable: number;
   apr: number;
@@ -152,7 +154,7 @@ export type LoanType = {
   disbursements?: LoanDisbursementRecordType[];
   /** Confirmed present on GET /v1/loans/:loanRef (single loan); not sampled on the list endpoint. */
   payments?: LoanPaymentRecordType[];
-  /** ASSUMPTION: not yet confirmed on a real payload — see UpdateLoanMediaPayloadType. */
+  /** Present when the loan payload includes previously saved verification files. */
   verificationMedia?: LoanMediaType[];
 };
 
@@ -213,9 +215,29 @@ export type ApproveLoanPayloadType = {
   approvedAmount?: { value: number; currencyCode: string };
 };
 
-// ASSUMPTION: PATCH /v1/loans/:loanRef/media replaces the loan's full media list (so the same
-// call handles add and remove) and returns the updated loan. Backend contract not yet confirmed.
-export type UpdateLoanMediaPayloadType = { media: LoanMediaType[] };
+// POST /v1/loans/:loanRef/collateral-verification
+export type SaveCollateralVerificationPayloadType = {
+  files: { fileUrl: string; fileName: string }[];
+};
+
+// PATCH /v1/loans/:loanRef/collateral-verification
+export type UpdateCollateralVerificationPayloadType = {
+  certificationPapersAvailable: boolean;
+  boxPackaged: boolean;
+  preOwned?: boolean;
+  anyPhysicalDefects?: boolean;
+  remarks?: string;
+  dateSubmitted?: string | null;
+  dateOfExamination?: string | null;
+  examinedBy?: string | null;
+  liquidationThreshold: AssetPriceType;
+  dateOfDisbursement: string;
+};
+
+// POST /v1/loans/:loanRef/approved-amount
+export type UpdateApprovedAmountPayloadType = {
+  approvedAmount: AssetPriceType;
+};
 
 export type ReviewLoanResponseType = ApiResponse<LoanType>;
 
