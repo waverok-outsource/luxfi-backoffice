@@ -43,3 +43,6 @@ AGENTS.md
 CLAUDE.md
 luxfi.postman_collection.json
 .claude
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
