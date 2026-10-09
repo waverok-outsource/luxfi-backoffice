@@ -2,7 +2,7 @@
 
 The internal operations dashboard for managing the LuxFi platform — luxury asset-backed lending, marketplace activity, customer portfolios, and platform configuration.
 
-This repository contains the **frontend only**. The backend API is external.
+This repository contains the **frontend only**. The backend API is external 
 
 ## Quick start
 
