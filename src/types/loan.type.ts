@@ -117,6 +117,49 @@ export type LoanMediaType = {
   uploadedAt?: string;
 };
 
+// Shape returned on GET /v1/loans/:loanRef under collateralVerification.media.
+export type CollateralVerificationMediaType = {
+  fileUrl: string;
+  fileName: string;
+  contentType: string;
+  mediaType: string;
+  uploadedAt?: string;
+};
+
+export type CollateralVerificationType = {
+  media: CollateralVerificationMediaType[];
+  note?: string;
+  certificationPapersAvailable: boolean | null;
+  boxPackaged: boolean | null;
+  preOwned: boolean | null;
+  anyPhysicalDefects: boolean | null;
+  remarks: string;
+  dateSubmitted: string | null;
+  dateOfExamination: string | null;
+  dateOfDisbursement: string | null;
+  liquidationThreshold: AssetPriceType | number | null;
+  examinedBy: string | null;
+  verifiedAt: string | null;
+  verifiedBy: { id: string; name: string; email: string } | null;
+};
+
+export function toVerificationMedia(loan: {
+  collateralVerification?: CollateralVerificationType | null;
+  verificationMedia?: LoanMediaType[];
+}): LoanMediaType[] {
+  const saved = loan.collateralVerification?.media ?? [];
+  if (saved.length) {
+    return saved.map((item) => ({
+      url: item.fileUrl,
+      type: item.mediaType === "video" || item.contentType?.startsWith("video/") ? "video" : "image",
+      fileName: item.fileName,
+      uploadedAt: item.uploadedAt,
+    }));
+  }
+
+  return loan.verificationMedia ?? [];
+}
+
 export type LoanType = {
   loanId: string;
   loanRef: string;
@@ -154,7 +197,8 @@ export type LoanType = {
   disbursements?: LoanDisbursementRecordType[];
   /** Confirmed present on GET /v1/loans/:loanRef (single loan); not sampled on the list endpoint. */
   payments?: LoanPaymentRecordType[];
-  /** Present when the loan payload includes previously saved verification files. */
+  collateralVerification?: CollateralVerificationType | null;
+  /** Older payloads may still return verification files at the top level. */
   verificationMedia?: LoanMediaType[];
 };
 
