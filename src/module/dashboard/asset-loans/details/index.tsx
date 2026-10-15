@@ -46,10 +46,11 @@ import {
   createAssetLoanReviewSchema,
   type AssetLoanReviewFormInputValues,
 } from "@/schema/customers.schema";
-import type {
-  LoanMediaType,
-  LoanType,
-  UpdateCollateralVerificationPayloadType,
+import {
+  toVerificationMedia,
+  type LoanMediaType,
+  type LoanType,
+  type UpdateCollateralVerificationPayloadType,
 } from "@/types/loan.type";
 import { formatCurrency } from "@/util/format-currency";
 import { formatDate, getFullName } from "@/util/helper";
@@ -442,7 +443,7 @@ export function AssetLoanDetailsDashboard() {
 
   const showPendingActions = loan.status === "pending";
   const showRepaymentBar = loan.status !== "pending" && loan.status !== "rejected";
-  const savedMedia = loan.verificationMedia ?? [];
+  const savedMedia = toVerificationMedia(loan);
   const verificationMedia = [
     ...savedMedia,
     ...sessionMedia.filter((item) => !savedMedia.some((saved) => saved.url === item.url)),
