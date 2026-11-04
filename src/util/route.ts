@@ -9,6 +9,13 @@ const route = {
   dashboard: {
     home: "/",
     customers: "/customers",
+    kyc: "/kyc",
+    kycConfigurationNew: "/kyc/configurations/new",
+    kycConfiguration: (kycRef: string) => `/kyc/configurations/${encodeURIComponent(kycRef)}`,
+    kycConfigurationEdit: (kycRef: string) =>
+      `/kyc/configurations/${encodeURIComponent(kycRef)}/edit`,
+    kycSubmission: (submissionId: string) =>
+      `/kyc/submissions/${encodeURIComponent(submissionId)}`,
     marketplace: "/marketplace",
     portfolioManagement: "/portfolio-management",
     assetManagement: "/asset-management",

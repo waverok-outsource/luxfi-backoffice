@@ -9,6 +9,20 @@ const keyFactory = {
     list: (query: string) => ["approvals", query],
   },
 
+  kyc: {
+    all: ["kyc"],
+    tiers: {
+      all: ["kyc", "tiers"],
+      list: (query: string) => ["kyc", "tiers", query],
+      details: (kycRef: string) => ["kyc", "tiers", kycRef],
+    },
+    submissions: {
+      all: ["kyc", "submissions"],
+      list: (query: string) => ["kyc", "submissions", query],
+      details: (submissionId: string) => ["kyc", "submissions", submissionId],
+    },
+  },
+
   customers: {
     all: ["customers"],
     analytics: (query: string) => ["customers", "analytics", query],

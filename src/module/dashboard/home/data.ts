@@ -1,4 +1,11 @@
-import { AlertTriangle, ClipboardCheck, Headset, Megaphone, ShoppingCart } from "lucide-react";
+import {
+  AlertTriangle,
+  ClipboardCheck,
+  Headset,
+  Megaphone,
+  ShieldCheck,
+  ShoppingCart,
+} from "lucide-react";
 import type { ElementType, SVGProps } from "react";
 import AssetLoanIcon from "@/components/icon/sidebar/asset";
 import AssetManagementIcon from "@/components/icon/sidebar/asset-management";
@@ -17,6 +24,7 @@ export type SidebarMenuItem = {
 export const sideMenu: SidebarMenuItem[] = [
   { label: "Home", icon: HomeIcon, active: true },
   { label: "Customers", icon: CustomerIcon },
+  { label: "KYC", icon: ShieldCheck },
   { label: "MarketPlace", icon: ShoppingCart },
   { label: "Asset Management", icon: AssetManagementIcon },
   { label: "Asset Loans", icon: AssetLoanIcon },
