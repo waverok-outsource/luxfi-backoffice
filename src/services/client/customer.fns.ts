@@ -1,6 +1,8 @@
 import type {
   CustomerAnalyticsResponseType,
   CustomerDetailResponseType,
+  CustomerKycOverviewResponse,
+  CustomerKycSubmissionsResponse,
   CustomerSessionLogsResponseType,
   CustomersResponseType,
   KycTiersResponseType,
@@ -42,6 +44,20 @@ export const fetchCustomerSessionLogs = async (id: string, query = "") => {
 
 // Defaults to a large perPage since the endpoint is paginated but callers
 // (the KYC tier dropdown on asset underwriting) need the full list.
+export const fetchCustomerKycOverview = async (customerId: string) => {
+  const { data } = await apiHandler.get<CustomerKycOverviewResponse>(
+    CustomerRoute.customerKyc(customerId),
+  );
+  return data;
+};
+
+export const fetchCustomerKycSubmissions = async (customerId: string) => {
+  const { data } = await apiHandler.get<CustomerKycSubmissionsResponse>(
+    CustomerRoute.customerKycSubmissions(customerId),
+  );
+  return data;
+};
+
 export const fetchKycTiers = async (query: string = "perPage=100") => {
   const { data } = await apiHandler.get<KycTiersResponseType>(
     `${CustomerRoute.kycTiers}${query ? `?${query}` : ""}`,

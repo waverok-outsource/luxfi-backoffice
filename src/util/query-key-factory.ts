@@ -29,6 +29,8 @@ const keyFactory = {
     list: (query: string) => ["customers", query],
     details: (id: string) => ["customers", id],
     sessionLogs: (id: string) => ["customers", id, "session-logs"],
+    kycOverview: (customerId: string) => ["customers", customerId, "kyc"],
+    kycSubmissions: (customerId: string) => ["customers", customerId, "kyc-submissions"],
     kycTiers: {
       all: ["customers", "kyc-tiers"],
       list: (query: string) => ["customers", "kyc-tiers", query],

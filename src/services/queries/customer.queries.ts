@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   fetchCustomer,
   fetchCustomerAnalytics,
+  fetchCustomerKycOverview,
+  fetchCustomerKycSubmissions,
   fetchCustomerSessionLogs,
   fetchCustomers,
   fetchKycTiers,
@@ -32,6 +34,20 @@ export const useCustomerSessionLogs = (customerId: string, query: string) =>
   useQuery({
     queryKey: [...keyFactory.customers.sessionLogs(customerId), query],
     queryFn: () => fetchCustomerSessionLogs(customerId, query),
+    enabled: Boolean(customerId),
+  });
+
+export const useCustomerKycOverview = (customerId: string) =>
+  useQuery({
+    queryKey: keyFactory.customers.kycOverview(customerId),
+    queryFn: () => fetchCustomerKycOverview(customerId),
+    enabled: Boolean(customerId),
+  });
+
+export const useCustomerKycSubmissions = (customerId: string) =>
+  useQuery({
+    queryKey: keyFactory.customers.kycSubmissions(customerId),
+    queryFn: () => fetchCustomerKycSubmissions(customerId),
     enabled: Boolean(customerId),
   });
 

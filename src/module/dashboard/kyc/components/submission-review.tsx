@@ -525,6 +525,6 @@ function isFileValue(requirement: KycSubmissionRequirement, value: string) {
 }
 
 function safeReturnPath(value: string | null) {
-  if (value && value.startsWith("/kyc")) return value;
+  if (value && (value.startsWith("/kyc") || value.startsWith("/customers"))) return value;
   return `${route.dashboard.kyc}?tab=submissions`;
 }

@@ -1,5 +1,6 @@
 import { ApiResponse, PaginatedApiResponse } from "./global";
 import type { ConnectivitySummary, MetricValue } from "./analytics.type";
+import type { KycSubmission } from "./kyc.type";
 
 // Not a fixed union: the backend's customer account status vocabulary has
 // already diverged from the team-member one ("blacklisted" vs "blacklist"),
@@ -121,6 +122,56 @@ export type CustomerAnalyticsType = {
 };
 
 export type CustomerAnalyticsResponseType = ApiResponse<CustomerAnalyticsType>;
+
+export type CustomerKycUiStatus =
+  | "completed"
+  | "in_progress"
+  | "submitted"
+  | "rejected"
+  | "not_started"
+  | "locked";
+
+export type CustomerKycTierProgress = {
+  required: number;
+  completed: number;
+  percent: number;
+};
+
+export type CustomerKycTierCard = {
+  kycRef: string;
+  tierNumber: number;
+  title: string;
+  severity: string;
+  uiStatus: CustomerKycUiStatus | string;
+  isLocked: boolean;
+  isCompleted: boolean;
+  canStart: boolean;
+  canSubmit?: boolean;
+  progress?: CustomerKycTierProgress;
+};
+
+export type CustomerKycOverview = {
+  customerId: string;
+  currentTierNumber: number | null;
+  highestApprovedTierNumber: number;
+  tiers: CustomerKycTierCard[];
+};
+
+export type CustomerKycOverviewResponse = ApiResponse<CustomerKycOverview>;
+
+export type CustomerKycSubmissions = {
+  customerId: string;
+  submissions: KycSubmission[];
+};
+
+export type CustomerKycSubmissionsResponse = ApiResponse<CustomerKycSubmissions>;
+
+export type ChangeCustomerKycTierResult = CustomerKycOverview & {
+  action: "upgrade" | "downgrade" | "reassign" | string;
+  reason: string | null;
+};
+
+export type ChangeCustomerKycTierResponse = ApiResponse<ChangeCustomerKycTierResult>;
 
 // ---- GET /v1/kyc-tiers ----
 // Paginated; dropdown callers pass a high perPage (same stopgap as valuation providers).

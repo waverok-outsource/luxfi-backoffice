@@ -34,7 +34,7 @@ export function CustomerDetailsTabs({ customerId }: { customerId: string }) {
   const { value, setURLQuery } = useURLQuery<{ tab?: string; page?: string; q?: string }>();
 
   const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
-    kyc: <KycCompliancePanel />,
+    kyc: <KycCompliancePanel customerId={customerId} />,
     transactions: <TransactionHistoryPanel />,
     loans: <AssetLoansPanel customerId={customerId} />,
     contracts: <SmartContractsPanel />,
