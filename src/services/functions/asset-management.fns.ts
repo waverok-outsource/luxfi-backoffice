@@ -15,6 +15,8 @@ import type {
   CreateAssetPayloadType,
   CreateAssetResponseType,
   CreateAssetV3PayloadType,
+  AssetVerificationDecision,
+  AssetVerificationDecisionPayloadType,
   UpdateAssetBrandPayloadType,
   UpdateAssetBrandResponseType,
   UpdateAssetCategoryPayloadType,
@@ -35,6 +37,7 @@ const useAssetManagementFns = () => {
     CREATE_ASSET: false,
     UPDATE_ASSET: false,
     DELETE_ASSET: false,
+    VERIFICATION_DECISION: false,
   });
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
@@ -231,6 +234,28 @@ const useAssetManagementFns = () => {
         toast.error(getErrorMessage(error));
       } finally {
         loadingFn("DELETE_ASSET", false);
+      }
+    },
+
+    decideAssetVerification: async (
+      verificationId: string,
+      decision: AssetVerificationDecision,
+      callback?: () => void,
+    ) => {
+      loadingFn("VERIFICATION_DECISION", true);
+
+      try {
+        const payload: AssetVerificationDecisionPayloadType = { decision };
+        await apiHandler.patch(AssetManagementRoute.verificationDecision(verificationId), payload);
+
+        await queryClient.invalidateQueries({ queryKey: keyFactory.assetManagement.all });
+
+        toast.success(decision === "approved" ? "Asset approved" : "Asset rejected");
+        callback?.();
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        loadingFn("VERIFICATION_DECISION", false);
       }
     },
   };

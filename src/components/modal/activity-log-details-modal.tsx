@@ -21,6 +21,8 @@ type ActivityLogDetailsModalProps = {
   rowGroups: ActivityLogDetailRow[][];
   /** Renders a skeleton body in place of rowGroups while data is still loading. */
   loading?: boolean;
+  /** Replaces the default "Close" footer action (e.g. approve/reject decisions). */
+  footer?: React.ReactNode;
 };
 
 /**
@@ -35,6 +37,7 @@ export function ActivityLogDetailsModal({
   description,
   rowGroups,
   loading = false,
+  footer,
 }: ActivityLogDetailsModalProps) {
   return (
     <ModalShell.Root
@@ -92,13 +95,15 @@ export function ActivityLogDetailsModal({
         </ModalShell.Body>
 
         <ModalShell.Footer className="pt-0" align="end">
-          <ModalShell.Action
-            type="button"
-            className="h-12 rounded-[14px] text-base font-semibold"
-            onClick={() => onOpenChange(false)}
-          >
-            Close
-          </ModalShell.Action>
+          {footer ?? (
+            <ModalShell.Action
+              type="button"
+              className="h-12 rounded-[14px] text-base font-semibold"
+              onClick={() => onOpenChange(false)}
+            >
+              Close
+            </ModalShell.Action>
+          )}
         </ModalShell.Footer>
       </div>
     </ModalShell.Root>

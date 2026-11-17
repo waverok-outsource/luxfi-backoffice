@@ -12,6 +12,7 @@ const AssetManagementRoute = {
   assetsUploadUrl: `${baseUrl}/assets/upload-url`,
   verificationLogs: `${baseUrl}/assets/verification-logs`,
   verificationLog: (logId: string) => `${baseUrl}/assets/verification-logs/${logId}`,
+  verificationDecision: (verificationId: string) => `/v3/assets/verifications/${verificationId}/decision`,
   customerOwnershipAggregates: `${baseUrl}/assets/customer-ownership-aggregates`,
 };
 

@@ -406,6 +406,8 @@ export type AssetVerificationLogsResponseType = PaginatedApiResponse<AssetVerifi
 // ---- GET /v1/assets/verification-logs/:logId ----
 // The list item shape plus the detail-only fields behind the summary row.
 export type AssetVerificationLogDetailsType = AssetVerificationLogEntry & {
+  /** ID the decision endpoint expects (e.g. "avr5391142"). Not yet confirmed on the detail DTO. */
+  verificationId?: string;
   comment: string | null;
   previousStatus: string;
   status: string;
@@ -426,6 +428,13 @@ export type AssetVerificationLogDetailsType = AssetVerificationLogEntry & {
 };
 
 export type AssetVerificationLogDetailsResponseType = ApiResponse<AssetVerificationLogDetailsType>;
+
+// ---- PATCH /v3/assets/verifications/:verificationId/decision ----
+export type AssetVerificationDecision = "approved" | "rejected";
+
+export type AssetVerificationDecisionPayloadType = {
+  decision: AssetVerificationDecision;
+};
 
 // ---- GET /v1/asset-valuation-providers ----
 // NOTE: paginated even though callers need the full list for a dropdown — see
