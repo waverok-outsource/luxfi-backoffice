@@ -169,3 +169,41 @@ export type VerifyRequirementResult = {
 };
 
 export type VerifyRequirementResponse = ApiResponse<VerifyRequirementResult>;
+
+export type KycAccessResource = {
+  resourceRef: string;
+  title: string | null;
+  description: string | null;
+};
+
+export type KycAccessTier = {
+  kycRef: string;
+  title: string | null;
+  tierNumber: number | null;
+  isActive: boolean | null;
+};
+
+export type KycAccessRule = {
+  kycAccessRef: string;
+  resource: KycAccessResource;
+  minimumKycTier: KycAccessTier;
+  isActive: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CreateKycAccessPayload = {
+  resourceId: string;
+  kycTierId: string;
+  isActive?: boolean;
+};
+
+export type UpdateKycAccessPayload = {
+  resourceId?: string;
+  kycTierId?: string;
+  isActive?: boolean;
+};
+
+export type KycAccessRulesResponse = PaginatedApiResponse<KycAccessRule[]>;
+export type KycAccessRuleResponse = ApiResponse<KycAccessRule>;
+export type KycAccessResourcesResponse = ApiResponse<KycAccessResource[]>;

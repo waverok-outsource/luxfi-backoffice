@@ -6,7 +6,16 @@ const keyFactory = {
 
   approvals: {
     all: ["approvals"],
-    list: (query: string) => ["approvals", query],
+    list: (scope: string, query: string) => ["approvals", scope, query],
+    detail: (approvalId: string) => ["approvals", "detail", approvalId],
+  },
+
+  fees: {
+    all: ["fees"],
+    options: ["fees", "options"],
+    list: (query: string) => ["fees", "list", query],
+    details: (feeId: string) => ["fees", feeId],
+    beneficiaries: (query: string) => ["fees", "beneficiaries", query],
   },
 
   kyc: {
@@ -20,6 +29,12 @@ const keyFactory = {
       all: ["kyc", "submissions"],
       list: (query: string) => ["kyc", "submissions", query],
       details: (submissionId: string) => ["kyc", "submissions", submissionId],
+    },
+    access: {
+      all: ["kyc", "resource-access"],
+      resources: ["kyc", "resource-access", "resources"],
+      list: (query: string) => ["kyc", "resource-access", "list", query],
+      details: (ruleId: string) => ["kyc", "resource-access", "detail", ruleId],
     },
   },
 

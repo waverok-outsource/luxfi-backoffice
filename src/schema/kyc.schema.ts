@@ -296,6 +296,14 @@ function readOptionalInteger(value: string, minimum: number) {
   return number;
 }
 
+export const kycAccessFormSchema = z.object({
+  resourceId: z.string().min(1, "Select a resource"),
+  kycTierId: z.string().min(1, "Select a KYC tier"),
+  isActive: z.boolean(),
+});
+
+export type KycAccessFormValues = z.infer<typeof kycAccessFormSchema>;
+
 export function splitMimeTypes(value: string) {
   return value
     .split(",")

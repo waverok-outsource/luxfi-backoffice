@@ -6,40 +6,35 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   DataTable,
   TableSearchToolbar,
-  createIdentifierColumn,
   createSerialColumn,
   createStatusColumn,
   createTextColumn,
 } from "@/components/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { ApprovalDetailsModal } from "@/module/dashboard/approvals/components/modals/approval-details-modal";
 import { APPROVAL_STATUS_CONFIG } from "@/module/dashboard/approvals/data";
 import useApprovalFns from "@/services/functions/approval.fns";
 import { useApprovals } from "@/services/queries/approval.queries";
-import {
-  getApprovalRequestTarget,
-  type ApprovalStatus,
-  type ApprovalType,
-} from "@/types/approval.type";
+import type { ApprovalListScope, ApprovalStatus, ApprovalType } from "@/types/approval.type";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
-import { getSerialNumberOffset } from "@/util/helper";
+import { formatDate, getSerialNumberOffset } from "@/util/helper";
 
 const PAGE_SIZE = 10;
 
 type ApprovalTableRow = {
   id: string;
-  approvalId: string;
-  method: string;
-  requestTarget: string;
   description: string;
   maker: string;
-  unit: string;
+  madeAt: string;
   status: ApprovalStatus | "unknown";
 };
 
-export function ApprovalsTable() {
+function formatMadeAt(value: string) {
+  return value ? formatDate(value, "dd MMM yyyy, h:mm a") : "-";
+}
+
+export function ApprovalsTable({ scope }: { scope: ApprovalListScope }) {
   const { value } = useURLQuery<{ page?: string; q?: string }>();
   const currentPage = Number(value.page) > 0 ? Number(value.page) : 1;
   const search = (value.q ?? "").trim();
@@ -48,16 +43,16 @@ export function ApprovalsTable() {
   const query = convertObjectToQuery({
     page: String(currentPage),
     limit: String(PAGE_SIZE),
-    ...(search ? { q: search } : {}),
+    ...(search ? { search } : {}),
   });
 
-  const { data: response, isLoading } = useApprovals(query);
+  const { data: response, isLoading } = useApprovals(scope, query);
   const approvals = React.useMemo(() => response?.data ?? [], [response?.data]);
   const approvalsById = React.useMemo(
     () => new Map(approvals.map((approval) => [approval.approvalId, approval])),
     [approvals],
   );
-  const { approveRequest, loading } = useApprovalFns();
+  const { approveRequest, rejectRequest, cancelRequest, loading } = useApprovalFns();
 
   const serialNumberOffset = getSerialNumberOffset({
     currentPage,
@@ -67,88 +62,59 @@ export function ApprovalsTable() {
 
   const rows: ApprovalTableRow[] = approvals.map((approval) => ({
     id: approval.approvalId,
-    approvalId: approval.approvalId,
-    method: approval.method,
-    requestTarget: getApprovalRequestTarget(approval),
-    description: approval.description?.trim() || "-",
-    maker: approval.maker?.trim() || "-",
-    unit: approval.unit?.trim() || "-",
+    description: approval.description || "-",
+    maker: approval.maker || "-",
+    madeAt: formatMadeAt(approval.createdAt),
     status: approval.status,
   }));
 
   const columns: ColumnDef<ApprovalTableRow, unknown>[] = [
-      createSerialColumn<ApprovalTableRow>({ offset: serialNumberOffset }),
-      createIdentifierColumn<ApprovalTableRow>("Approval ID", "approvalId"),
-      {
-        accessorKey: "method",
-        header: "Method",
-        cell: ({ getValue }) => (
-          <Badge variant="neutral" className="font-semibold">
-            {String(getValue() || "-")}
-          </Badge>
-        ),
+    createSerialColumn<ApprovalTableRow>({ offset: serialNumberOffset }),
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ getValue }) => {
+        const description = String(getValue() ?? "-");
+        return <span className="block min-w-40 whitespace-normal">{description}</span>;
       },
-      {
-        accessorKey: "requestTarget",
-        header: "Path",
-        cell: ({ getValue }) => {
-          const path = String(getValue() ?? "-");
-          return (
-            <span className="block max-w-[220px] truncate" title={path}>
-              {path}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "description",
-        header: "Description",
-        cell: ({ getValue }) => {
-          const description = String(getValue() ?? "-");
-          return (
-            <span className="block max-w-[220px] truncate" title={description}>
-              {description}
-            </span>
-          );
-        },
-      },
-      createTextColumn<ApprovalTableRow>("Maker", "maker", "block max-w-[160px]"),
-      createTextColumn<ApprovalTableRow>("Unit", "unit", "block max-w-[140px]"),
-      createStatusColumn<ApprovalTableRow, ApprovalStatus | "unknown">(
-        "Status",
-        APPROVAL_STATUS_CONFIG,
+    },
+    createTextColumn<ApprovalTableRow>("Made by", "maker", "block max-w-[180px]"),
+    createTextColumn<ApprovalTableRow>("Made on", "madeAt", "block whitespace-nowrap"),
+    createStatusColumn<ApprovalTableRow, ApprovalStatus | "unknown">("Status", APPROVAL_STATUS_CONFIG),
+    {
+      id: "rowActions",
+      header: "Action",
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 rounded-xl px-3 text-sm font-semibold"
+          disabled={!row.original.id}
+          onClick={() => {
+            const approval = approvalsById.get(row.original.id);
+            if (approval) {
+              setSelectedApproval(approval);
+            }
+          }}
+        >
+          View more
+        </Button>
       ),
-      {
-        id: "rowActions",
-        header: "Action",
-        cell: ({ row }) => (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 rounded-xl px-3 text-sm font-semibold"
-            onClick={() => {
-              const approval = approvalsById.get(row.original.id);
-              if (approval) {
-                setSelectedApproval(approval);
-              }
-            }}
-          >
-            View more
-          </Button>
-        ),
-      },
+    },
   ];
+
+  const actionPending = loading.APPROVE || loading.REJECT || loading.CANCEL;
 
   return (
     <>
       <div className="space-y-4">
-        <TableSearchToolbar placeholder="Search approval ID, maker, or unit" />
+        <TableSearchToolbar placeholder="Search description or maker" />
         <DataTable
           columns={columns}
           data={rows}
           loading={isLoading}
-          emptyStateLabel="No approvals found."
+          emptyStateLabel={scope === "mine" ? "You have not created any approvals." : "No approvals found."}
           stickyActionColumn
           pagination={{
             totalEntries: response?.pagination?.total ?? rows.length,
@@ -168,9 +134,19 @@ export function ApprovalsTable() {
             }
           }}
           approval={selectedApproval}
+          scope={scope}
           approvePending={loading.APPROVE}
-          onApprove={(approval, onSuccess) => {
-            void approveRequest(approval, onSuccess);
+          rejectPending={loading.REJECT}
+          cancelPending={loading.CANCEL}
+          actionPending={actionPending}
+          onApprove={(approvalId, onSuccess) => {
+            void approveRequest(approvalId, onSuccess);
+          }}
+          onReject={(approvalId, reason, onSuccess) => {
+            void rejectRequest(approvalId, reason, onSuccess);
+          }}
+          onCancel={(approvalId, reason, onSuccess) => {
+            void cancelRequest(approvalId, reason, onSuccess);
           }}
         />
       ) : null}

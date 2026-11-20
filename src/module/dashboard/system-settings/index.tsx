@@ -18,6 +18,11 @@ type SystemSettingsQuery = {
   q?: string;
   from?: string;
   to?: string;
+  trigger?: string;
+  feeType?: string;
+  bearer?: string;
+  scopeLevel?: string;
+  isActive?: string;
 };
 
 function isSystemSettingsTab(value: string | null | undefined): value is SystemSettingsTabValue {
@@ -41,6 +46,11 @@ export function SystemSettingsDashboard() {
       q: undefined,
       from: undefined,
       to: undefined,
+      trigger: undefined,
+      feeType: undefined,
+      bearer: undefined,
+      scopeLevel: undefined,
+      isActive: undefined,
     });
   };
 
@@ -48,12 +58,19 @@ export function SystemSettingsDashboard() {
     <div className="space-y-4">
       <DashboardPageHeader
         title="System Settings"
-        description="Real time analytics and overview at a glance"
+        description={
+          activeTab === "fees"
+            ? "Configure the fees charged on marketplace orders and loan defaults"
+            : "Real time analytics and overview at a glance"
+        }
       />
 
-      <AnalyticsToolbar />
-
-      <TeamManagementMetrics />
+      {activeTab === "fees" ? null : (
+        <>
+          <AnalyticsToolbar />
+          <TeamManagementMetrics />
+        </>
+      )}
 
       <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
