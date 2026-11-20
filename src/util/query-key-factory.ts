@@ -6,7 +6,8 @@ const keyFactory = {
 
   approvals: {
     all: ["approvals"],
-    list: (query: string) => ["approvals", query],
+    list: (scope: string, query: string) => ["approvals", scope, query],
+    detail: (approvalId: string) => ["approvals", "detail", approvalId],
   },
 
   kyc: {
