@@ -5,6 +5,7 @@ import type {
   CustomerKycSubmissionsResponse,
   CustomerSessionLogsResponseType,
   CustomersResponseType,
+  CustomerVirtualAccountsResponseType,
   KycTiersResponseType,
 } from "@/types/customer.type";
 import apiHandler from "../api-handler";
@@ -63,5 +64,12 @@ export const fetchKycTiers = async (query: string = "perPage=100") => {
     `${CustomerRoute.kycTiers}${query ? `?${query}` : ""}`,
   );
 
+  return data;
+};
+
+export const fetchCustomerVirtualAccounts = async (customerId: string) => {
+  const { data } = await apiHandler.get<CustomerVirtualAccountsResponseType>(
+    CustomerRoute.customerVirtualAccounts(customerId),
+  );
   return data;
 };

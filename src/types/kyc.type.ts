@@ -183,23 +183,60 @@ export type KycAccessTier = {
   isActive: boolean | null;
 };
 
+export const KYC_ACCESS_TARGET_TYPES = ["resource", "endpoint"] as const;
+export type KycAccessTargetType = (typeof KYC_ACCESS_TARGET_TYPES)[number];
+
+/** An item from GET /v1/kyc-resource-access/endpoints. Submit `key`, display `label`. */
+export type KycAccessEndpointOption = {
+  key: string;
+  method: string;
+  path: string;
+  label: string;
+  permission: string | null;
+  /** The resource the route already belongs to, if any. Shape is not fixed by the contract. */
+  resource: string | { resourceRef?: string; title?: string | null } | null;
+};
+
+/** The endpoint target as embedded in a rule. `exists === false` means the route was removed. */
+export type KycAccessRuleEndpoint = {
+  key: string;
+  label: string | null;
+  exists: boolean;
+};
+
 export type KycAccessRule = {
   kycAccessRef: string;
-  resource: KycAccessResource;
+  targetType: KycAccessTargetType;
+  resource: KycAccessResource | null;
+  endpoint: KycAccessRuleEndpoint | null;
   minimumKycTier: KycAccessTier;
   isActive: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
 
-export type CreateKycAccessPayload = {
-  resourceId: string;
-  kycTierId: string;
-  isActive?: boolean;
-};
+/**
+ * POST body. Only the field that matches `targetType` may be present:
+ * the backend rejects the other key even when it is "" or null.
+ */
+export type CreateKycAccessPayload =
+  | {
+      targetType: "resource";
+      resourceId: string;
+      kycTierId: string;
+      isActive?: boolean;
+      endpoint?: never;
+    }
+  | {
+      targetType: "endpoint";
+      endpoint: string;
+      kycTierId: string;
+      isActive?: boolean;
+      resourceId?: never;
+    };
 
+/** PATCH body. The target can't be changed, so only these two keys are allowed. */
 export type UpdateKycAccessPayload = {
-  resourceId?: string;
   kycTierId?: string;
   isActive?: boolean;
 };
@@ -207,3 +244,4 @@ export type UpdateKycAccessPayload = {
 export type KycAccessRulesResponse = PaginatedApiResponse<KycAccessRule[]>;
 export type KycAccessRuleResponse = ApiResponse<KycAccessRule>;
 export type KycAccessResourcesResponse = ApiResponse<KycAccessResource[]>;
+export type KycAccessEndpointsResponse = ApiResponse<KycAccessEndpointOption[]>;

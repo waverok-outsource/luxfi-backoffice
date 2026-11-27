@@ -11,11 +11,13 @@ import { AssetPortfolioPanel } from "@/module/dashboard/customers/customer-detai
 import { DeviceSessionLogsPanel } from "@/module/dashboard/customers/customer-details/components/sessions/device-session-logs-panel";
 import { SupportTicketsPanel } from "@/module/dashboard/customers/customer-details/components/support/support-tickets-panel";
 import { TransactionHistoryPanel } from "@/module/dashboard/customers/customer-details/components/transactions/transaction-history-panel";
+import { VirtualAccountsPanel } from "@/module/dashboard/customers/customer-details/components/virtual-accounts/virtual-accounts-panel";
 
 const DEFAULT_TAB = "kyc";
 
 const tabs = [
   { value: "kyc", label: "KYC & Compliance" },
+  { value: "virtual-accounts", label: "Virtual Accounts" },
   { value: "transactions", label: "Transactions History" },
   { value: "loans", label: "Asset Loans" },
   { value: "contracts", label: "Smart Contracts" },
@@ -35,6 +37,7 @@ export function CustomerDetailsTabs({ customerId }: { customerId: string }) {
 
   const TAB_PANELS: Record<CustomerDetailsTabValue, React.ReactNode> = {
     kyc: <KycCompliancePanel customerId={customerId} />,
+    "virtual-accounts": <VirtualAccountsPanel customerId={customerId} />,
     transactions: <TransactionHistoryPanel />,
     loans: <AssetLoansPanel customerId={customerId} />,
     contracts: <SmartContractsPanel />,

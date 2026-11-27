@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useHasPermission } from "@/hooks/useHasPermission";
 import { useURLQuery } from "@/hooks/useUrlQuery";
 import { AccessRulesTable } from "@/module/dashboard/kyc/components/access-rules-table";
 import { ConfigurationsTable } from "@/module/dashboard/kyc/components/configurations-table";
@@ -19,6 +20,7 @@ type KycDashboardQuery = {
   status?: string;
   tier?: string;
   resource?: string;
+  type?: string;
 };
 
 const TABS = [
@@ -38,6 +40,8 @@ export function KycDashboard() {
   const router = useRouter();
   const { value, setURLQuery } = useURLQuery<KycDashboardQuery>();
   const activeTab = resolveTab(value.tab);
+  // Creating rules needs approvekyc. Unknown (null) stays enabled and the backend's 403 is shown.
+  const canApproveKyc = useHasPermission("approvekyc") !== false;
 
   return (
     <div className="space-y-4">
@@ -55,7 +59,7 @@ export function KycDashboard() {
             Create configuration
           </Button>
         ) : null}
-        {activeTab === "resource-access" ? (
+        {activeTab === "resource-access" && canApproveKyc ? (
           <Button type="button" onClick={() => router.push(route.dashboard.kycResourceAccessNew)}>
             Create rule
           </Button>
@@ -73,6 +77,7 @@ export function KycDashboard() {
             status: undefined,
             tier: undefined,
             resource: undefined,
+            type: undefined,
           })
         }
       >

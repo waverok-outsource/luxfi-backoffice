@@ -7,7 +7,13 @@ import { ConfirmDialogContent, ModalRoot } from "@/components/modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DetailBreadcrumbHeader } from "@/components/ui/detail-breadcrumb-header";
-import { resourceTitle, tierLabel } from "@/module/dashboard/kyc/access";
+import {
+  isEndpointMissing,
+  ruleTargetTitle,
+  targetTypeLabel,
+  tierLabel,
+} from "@/module/dashboard/kyc/access";
+import { useHasPermission } from "@/hooks/useHasPermission";
 import useKycAccessFns from "@/services/functions/kyc-access.fns";
 import { useKycAccessRule } from "@/services/queries/kyc-access.queries";
 import { formatDate } from "@/util/helper";
@@ -20,6 +26,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
   const { data, isLoading, isError } = useKycAccessRule(ruleId);
   const { updateRule, deleteRule, loading } = useKycAccessFns();
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const canApprove = useHasPermission("approvekyc") !== false;
   const rule = data?.data ?? null;
 
   if (isLoading && !rule) {
@@ -47,11 +54,14 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
 
   const isActive = rule.isActive !== false;
   const busy = loading.UPDATE_RULE || loading.DELETE_RULE;
+  const target = ruleTargetTitle(rule);
+  const endpointMissing = isEndpointMissing(rule);
 
   const confirmAction = async () => {
     if (pendingAction === "delete") {
       const removed = await deleteRule(rule.kycAccessRef);
       if (!removed) return;
+      setPendingAction(null);
       router.push(route.dashboard.kycResourceAccess);
       return;
     }
@@ -63,7 +73,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
         { isActive: nextActive },
         nextActive ? "Access rule reactivated" : "Access rule deactivated",
       );
-      if (updated) setPendingAction(null);
+      if (updated.ok) setPendingAction(null);
     }
   };
 
@@ -71,7 +81,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
     <div className="space-y-4">
       <DetailBreadcrumbHeader
         title="KYC"
-        entityId={resourceTitle(rule.resource?.title)}
+        entityId={target}
         idPrefix="Rule"
         onBack={() => router.push(route.dashboard.kycResourceAccess)}
         actions={
@@ -79,6 +89,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
             <Button
               type="button"
               variant="outline"
+              disabled={!canApprove}
               onClick={() => router.push(route.dashboard.kycResourceAccessEdit(rule.kycAccessRef))}
             >
               Edit rule
@@ -86,12 +97,12 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
             <Button
               type="button"
               variant="outline"
-              disabled={busy}
+              disabled={busy || !canApprove}
               onClick={() => setPendingAction(isActive ? "deactivate" : "activate")}
             >
               {isActive ? "Deactivate" : "Reactivate"}
             </Button>
-            <Button type="button" variant="danger" disabled={busy} onClick={() => setPendingAction("delete")}>
+            <Button type="button" variant="danger" disabled={busy || !canApprove} onClick={() => setPendingAction("delete")}>
               Delete
             </Button>
           </div>
@@ -99,8 +110,24 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
       />
 
       <section className="grid gap-3 rounded-[24px] border border-primary-grey-stroke bg-primary-white p-5 sm:grid-cols-2 lg:grid-cols-4">
-        <DetailItem label="Resource" value={resourceTitle(rule.resource?.title)} />
-        <DetailItem label="Description" value={rule.resource?.description?.trim() || "-"} />
+        <DetailItem label="Target type" value={targetTypeLabel(rule.targetType)} />
+        <DetailItem
+          label={rule.targetType === "endpoint" ? "Endpoint" : "Resource"}
+          value={
+            <span className="flex flex-wrap items-center gap-2">
+              {target}
+              {endpointMissing ? <Badge variant="warning">Route removed</Badge> : null}
+            </span>
+          }
+        />
+        <DetailItem
+          label={rule.targetType === "endpoint" ? "Endpoint key" : "Description"}
+          value={
+            rule.targetType === "endpoint"
+              ? rule.endpoint?.key || "-"
+              : rule.resource?.description?.trim() || "-"
+          }
+        />
         <DetailItem label="Minimum KYC tier" value={tierLabel(rule.minimumKycTier)} />
         <DetailItem
           label="Tier number"
@@ -132,12 +159,19 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
         />
       </section>
 
+      {endpointMissing ? (
+        <section className="rounded-[24px] bg-alertSoft-warning p-5 text-sm text-alert-warning">
+          This endpoint no longer exists in the backend code, so this rule has nothing to gate.
+          Delete it, or create a rule for the route that replaced it.
+        </section>
+      ) : null}
+
       <section className="rounded-[24px] border border-primary-grey-stroke bg-primary-white p-5">
         <h2 className="text-base font-semibold text-text-black">How this rule is applied</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-text-grey">
           {isActive
-            ? `Customers must hold ${tierLabel(rule.minimumKycTier)} or a higher tier before they can use ${resourceTitle(rule.resource?.title)}.`
-            : `This rule is inactive, so ${resourceTitle(rule.resource?.title)} does not currently require a KYC tier. Reactivate it to enforce ${tierLabel(rule.minimumKycTier)} again.`}
+            ? `Customers must hold ${tierLabel(rule.minimumKycTier)} or a higher tier before they can use ${target}.`
+            : `This rule is inactive, so ${target} does not currently require a KYC tier. Reactivate it to enforce ${tierLabel(rule.minimumKycTier)} again.`}
         </p>
       </section>
 
@@ -153,7 +187,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
         >
           <ConfirmDialogContent
             title={confirmCopy(pendingAction).title}
-            description={confirmCopy(pendingAction, resourceTitle(rule.resource?.title)).description}
+            description={confirmCopy(pendingAction, target).description}
             confirmLabel={confirmCopy(pendingAction).confirmLabel}
             confirmVariant={pendingAction === "activate" ? "success" : "danger"}
             pending={busy}
@@ -168,7 +202,7 @@ export function AccessRuleDetails({ ruleId }: { ruleId: string }) {
   );
 }
 
-function confirmCopy(action: Exclude<PendingAction, null>, resource = "this resource") {
+function confirmCopy(action: Exclude<PendingAction, null>, resource = "this target") {
   if (action === "delete") {
     return {
       title: "Delete this rule?",

@@ -38,6 +38,7 @@ const route = {
     approvals: "/approvals",
     systemSettings: "/system-settings",
     systemSettingsFees: "/system-settings?tab=fees",
+    systemSettingsFxRates: "/system-settings?tab=exchange-rates",
     feeNew: "/system-settings/fees/new",
     fee: (feeId: string) => `/system-settings/fees/${encodeURIComponent(feeId)}`,
     feeEdit: (feeId: string) => `/system-settings/fees/${encodeURIComponent(feeId)}/edit`,

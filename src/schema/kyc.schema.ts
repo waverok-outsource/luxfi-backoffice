@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  KYC_ACCESS_TARGET_TYPES,
   KYC_CAPTURE_TYPES,
   KYC_DOCUMENT_SIDES,
   KYC_FIELD_TYPES,
@@ -296,13 +297,43 @@ function readOptionalInteger(value: string, minimum: number) {
   return number;
 }
 
-export const kycAccessFormSchema = z.object({
-  resourceId: z.string().min(1, "Select a resource"),
-  kycTierId: z.string().min(1, "Select a KYC tier"),
+const OBJECT_ID_PATTERN = /^[a-f\d]{24}$/i;
+
+const kycTierIdSchema = z
+  .string()
+  .min(1, "Select a KYC tier")
+  .regex(OBJECT_ID_PATTERN, "Select a valid KYC tier");
+
+/** Create form. Both pickers live in the form, but only the one matching `targetType` is validated and sent. */
+export const kycAccessFormSchema = z
+  .object({
+    targetType: z.enum(KYC_ACCESS_TARGET_TYPES),
+    resourceId: z.string(),
+    endpoint: z.string(),
+    kycTierId: kycTierIdSchema,
+    isActive: z.boolean(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.targetType === "resource") {
+      if (!values.resourceId) {
+        ctx.addIssue({ code: "custom", path: ["resourceId"], message: "Select a resource" });
+      } else if (!OBJECT_ID_PATTERN.test(values.resourceId)) {
+        ctx.addIssue({ code: "custom", path: ["resourceId"], message: "Select a valid resource" });
+      }
+    }
+    if (values.targetType === "endpoint" && !values.endpoint.trim()) {
+      ctx.addIssue({ code: "custom", path: ["endpoint"], message: "Select an endpoint" });
+    }
+  });
+
+/** Edit form. The target is fixed, so only the tier and status are editable. */
+export const kycAccessEditSchema = z.object({
+  kycTierId: kycTierIdSchema,
   isActive: z.boolean(),
 });
 
 export type KycAccessFormValues = z.infer<typeof kycAccessFormSchema>;
+export type KycAccessEditValues = z.infer<typeof kycAccessEditSchema>;
 
 export function splitMimeTypes(value: string) {
   return value
