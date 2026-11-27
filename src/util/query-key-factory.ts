@@ -18,6 +18,27 @@ const keyFactory = {
     beneficiaries: (query: string) => ["fees", "beneficiaries", query],
   },
 
+  fxRates: {
+    all: ["fx-rates"],
+    current: ["fx-rates", "current"],
+    history: (base: string, quote: string, purpose: string, limit: number) => [
+      "fx-rates",
+      "history",
+      base,
+      quote,
+      purpose,
+      limit,
+    ],
+    quote: (from: string, to: string, amount: string, purpose: string) => [
+      "fx-rates",
+      "quote",
+      from,
+      to,
+      amount,
+      purpose,
+    ],
+  },
+
   kyc: {
     all: ["kyc"],
     tiers: {
@@ -33,6 +54,8 @@ const keyFactory = {
     access: {
       all: ["kyc", "resource-access"],
       resources: ["kyc", "resource-access", "resources"],
+      endpoints: ["kyc", "resource-access", "endpoints"],
+      tiers: (query: string) => ["kyc", "resource-access", "tiers", query],
       list: (query: string) => ["kyc", "resource-access", "list", query],
       details: (ruleId: string) => ["kyc", "resource-access", "detail", ruleId],
     },
@@ -46,6 +69,7 @@ const keyFactory = {
     sessionLogs: (id: string) => ["customers", id, "session-logs"],
     kycOverview: (customerId: string) => ["customers", customerId, "kyc"],
     kycSubmissions: (customerId: string) => ["customers", customerId, "kyc-submissions"],
+    virtualAccounts: (customerId: string) => ["customers", customerId, "virtual-accounts"],
     kycTiers: {
       all: ["customers", "kyc-tiers"],
       list: (query: string) => ["customers", "kyc-tiers", query],

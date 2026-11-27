@@ -9,6 +9,8 @@ const CustomerRoute = {
     `${baseUrl}/customers/${customerId}/kyc/submissions`,
   customerKycTier: (customerId: string, tierId: string) =>
     `${baseUrl}/customers/${customerId}/kyc/${tierId}`,
+  customerVirtualAccounts: (customerId: string) =>
+    `${baseUrl}/customers/${customerId}/virtual-accounts`,
 };
 
 export default CustomerRoute;

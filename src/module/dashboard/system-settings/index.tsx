@@ -61,11 +61,13 @@ export function SystemSettingsDashboard() {
         description={
           activeTab === "fees"
             ? "Configure the fees charged on marketplace orders and loan defaults"
-            : "Real time analytics and overview at a glance"
+            : activeTab === "exchange-rates"
+              ? "Set the exchange rates used to pay out loans and collect repayments across currencies"
+              : "Real time analytics and overview at a glance"
         }
       />
 
-      {activeTab === "fees" ? null : (
+      {activeTab === "fees" || activeTab === "exchange-rates" ? null : (
         <>
           <AnalyticsToolbar />
           <TeamManagementMetrics />

@@ -7,6 +7,7 @@ import {
   fetchCustomerKycSubmissions,
   fetchCustomerSessionLogs,
   fetchCustomers,
+  fetchCustomerVirtualAccounts,
   fetchKycTiers,
 } from "@/services/client/customer.fns";
 import keyFactory from "@/util/query-key-factory";
@@ -55,4 +56,11 @@ export const useKycTiers = () =>
   useQuery({
     queryKey: keyFactory.customers.kycTiers.list("perPage=100"),
     queryFn: () => fetchKycTiers(),
+  });
+
+export const useCustomerVirtualAccounts = (customerId: string) =>
+  useQuery({
+    queryKey: keyFactory.customers.virtualAccounts(customerId),
+    queryFn: () => fetchCustomerVirtualAccounts(customerId),
+    enabled: Boolean(customerId),
   });

@@ -98,6 +98,16 @@ export function RegisteredCustomersTable() {
       ),
     },
     {
+      id: "virtualAccount",
+      header: "Virtual Account",
+      cell: ({ row }) =>
+        row.original.hasVirtualAccount ? (
+          <Badge variant="success">Yes</Badge>
+        ) : (
+          <Badge variant="disabled">No</Badge>
+        ),
+    },
+    {
       id: "dateOnboarded",
       header: "Date Onboarded",
       cell: ({ row }) => (

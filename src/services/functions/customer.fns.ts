@@ -8,6 +8,8 @@ import type {
   BlacklistCustomerPayloadType,
   BlacklistCustomerResponseType,
   ChangeCustomerKycTierResponse,
+  CreateCustomerVirtualAccountPayload,
+  CreateCustomerVirtualAccountResponseType,
 } from "@/types/customer.type";
 import getErrorMessage from "@/util/get-error-message";
 import keyFactory from "@/util/query-key-factory";
@@ -17,6 +19,7 @@ const useCustomerFns = () => {
   const [loading, setLoading] = useState({
     BLACKLIST_CUSTOMER: false,
     CHANGE_KYC_TIER: false,
+    CREATE_VIRTUAL_ACCOUNT: false,
   });
 
   const loadingFn = (state: keyof typeof loading, value: boolean) => {
@@ -73,6 +76,31 @@ const useCustomerFns = () => {
         return false;
       } finally {
         loadingFn("CHANGE_KYC_TIER", false);
+      }
+    },
+
+    createVirtualAccount: async (
+      customerId: string,
+      payload: CreateCustomerVirtualAccountPayload = {},
+    ) => {
+      loadingFn("CREATE_VIRTUAL_ACCOUNT", true);
+
+      try {
+        const { data } = await apiHandler.post<CreateCustomerVirtualAccountResponseType>(
+          CustomerRoute.customerVirtualAccounts(customerId),
+          payload,
+        );
+
+        // Refreshes the list column, the details flag and the accounts tab.
+        await queryClient.invalidateQueries({ queryKey: keyFactory.customers.all });
+
+        toast.success("Virtual account created");
+        return data.data;
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error));
+        return null;
+      } finally {
+        loadingFn("CREATE_VIRTUAL_ACCOUNT", false);
       }
     },
   };

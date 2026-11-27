@@ -14,7 +14,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useURLQuery } from "@/hooks/useUrlQuery";
-import { resourceTitle, tierLabel } from "@/module/dashboard/kyc/access";
+import {
+  isEndpointMissing,
+  resourceTitle,
+  ruleTargetTitle,
+  targetTypeLabel,
+  tierLabel,
+} from "@/module/dashboard/kyc/access";
 import { PAGE_SIZE } from "@/module/dashboard/kyc/data";
 import { useKycAccessResources, useKycAccessRules } from "@/services/queries/kyc-access.queries";
 import convertObjectToQuery from "@/util/convertObjectToQuery";
@@ -25,11 +31,14 @@ type AccessRulesQuery = {
   page?: string;
   status?: string;
   resource?: string;
+  type?: string;
 };
 
 type AccessRuleRow = {
   id: string;
-  resource: string;
+  target: string;
+  targetType: string;
+  endpointMissing: boolean;
   description: string;
   tier: string;
   updatedAt: string;
@@ -42,6 +51,12 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ] as const;
 
+const TYPE_OPTIONS = [
+  { value: "all", label: "All targets" },
+  { value: "resource", label: "Resources" },
+  { value: "endpoint", label: "Endpoints" },
+] as const;
+
 export function AccessRulesTable() {
   const router = useRouter();
   const { value, setURLQuery } = useURLQuery<AccessRulesQuery>();
@@ -49,11 +64,15 @@ export function AccessRulesTable() {
   const status = value.status === "active" || value.status === "inactive" ? value.status : undefined;
   const { data: resourcesResponse } = useKycAccessResources();
   const resources = resourcesResponse?.data ?? [];
-  const resourceId = /^[a-f\d]{24}$/i.test(value.resource ?? "") ? value.resource : undefined;
+  const targetType = value.type === "resource" || value.type === "endpoint" ? value.type : undefined;
+  // A resource filter only makes sense for resource rules.
+  const resourceId =
+    targetType !== "endpoint" && /^[a-f\d]{24}$/i.test(value.resource ?? "") ? value.resource : undefined;
 
   const query = convertObjectToQuery({
     page: String(currentPage),
     limit: String(PAGE_SIZE),
+    ...(targetType ? { targetType } : {}),
     ...(resourceId ? { resourceId } : {}),
     ...(status ? { isActive: status === "active" ? "true" : "false" } : {}),
   });
@@ -68,8 +87,13 @@ export function AccessRulesTable() {
 
   const rows: AccessRuleRow[] = rules.map((rule) => ({
     id: rule.kycAccessRef,
-    resource: resourceTitle(rule.resource?.title),
-    description: rule.resource?.description?.trim() || "-",
+    target: ruleTargetTitle(rule),
+    targetType: targetTypeLabel(rule.targetType),
+    endpointMissing: isEndpointMissing(rule),
+    description:
+      rule.targetType === "endpoint"
+        ? rule.endpoint?.key || "-"
+        : rule.resource?.description?.trim() || "-",
     tier: tierLabel(rule.minimumKycTier),
     updatedAt: rule.updatedAt ? formatDate(rule.updatedAt, "dd MMM yyyy") : "-",
     isActive: rule.isActive !== false,
@@ -77,8 +101,26 @@ export function AccessRulesTable() {
 
   const columns: ColumnDef<AccessRuleRow, unknown>[] = [
     createSerialColumn<AccessRuleRow>({ offset: serialNumberOffset }),
-    createTextColumn<AccessRuleRow>("Resource", "resource", "block max-w-[220px] font-semibold"),
-    createTextColumn<AccessRuleRow>("Description", "description", "block max-w-[280px]"),
+    {
+      accessorKey: "target",
+      header: "Target",
+      cell: ({ row }) => (
+        <div className="flex max-w-[260px] flex-col gap-1">
+          <span className="font-semibold">{row.original.target}</span>
+          {row.original.endpointMissing ? (
+            <Badge variant="warning" title="This route was removed from the backend code">
+              Route removed
+            </Badge>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "targetType",
+      header: "Type",
+      cell: ({ getValue }) => <Badge variant="neutral">{String(getValue())}</Badge>,
+    },
+    createTextColumn<AccessRuleRow>("Details", "description", "block max-w-[280px]"),
     createTextColumn<AccessRuleRow>("Minimum tier", "tier", "block max-w-[240px]"),
     {
       accessorKey: "isActive",
@@ -107,16 +149,43 @@ export function AccessRulesTable() {
     },
   ];
 
-  const hasFilters = Boolean(status || resourceId);
+  const hasFilters = Boolean(status || resourceId || targetType);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <Select
+          value={targetType ?? "all"}
+          onValueChange={(next) =>
+            setURLQuery({
+              type: next === "resource" || next === "endpoint" ? next : undefined,
+              resource: next === "endpoint" ? undefined : value.resource,
+              page: undefined,
+            })
+          }
+        >
+          <SelectTrigger className="w-[170px]" size="sm">
+            <SelectValue>
+              {(selected: string | null) =>
+                TYPE_OPTIONS.find((option) => option.value === selected)?.label ?? "All targets"
+              }
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {TYPE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          disabled={targetType === "endpoint"}
           value={resourceId ?? "all"}
           onValueChange={(next) =>
             setURLQuery({
               resource: next && next !== "all" ? String(next) : undefined,
+              type: next && next !== "all" ? "resource" : value.type,
               page: undefined,
             })
           }

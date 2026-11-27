@@ -23,6 +23,9 @@ export type CustomerType = {
   kycTier?: string;
   kycTierNumber?: number;
   riskLevel: string;
+  // Set by the backend once an account is opened. Older customers may have an
+  // account without the flag, so the details page also checks the account list.
+  hasVirtualAccount?: boolean;
 };
 
 export type CustomerAnalyticsGrowthPattern = "upward" | "downward";
@@ -188,3 +191,30 @@ export type KycTierType = {
 };
 
 export type KycTiersResponseType = PaginatedApiResponse<KycTierType[]>;
+
+// ---- /v1/customers/:customerId/virtual-accounts ----
+// A virtual account is a fiat wallet at a payment provider. The backend
+// stores the bank in addressName, the account number in addressNumber and
+// the provider's account id in addressId.
+export type CustomerVirtualAccountType = {
+  _id?: string;
+  addressName: string;
+  addressNumber: string;
+  addressId: string;
+  currencyCode: string;
+  currencyName?: string;
+  processor: string;
+  balance?: number;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type CustomerVirtualAccountsResponseType = ApiResponse<CustomerVirtualAccountType[]>;
+
+export type CreateCustomerVirtualAccountPayload = {
+  // Both optional: with no processor the platform picks a healthy provider.
+  processor?: string;
+  bankCode?: string;
+};
+
+export type CreateCustomerVirtualAccountResponseType = ApiResponse<CustomerVirtualAccountType>;
